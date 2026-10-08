@@ -1,0 +1,37 @@
+rules_version = '2';
+// Sicherheitsregeln für den Live-Klassenraum.
+// - Jeder Raum gehört dem Gerät der Lehrkraft (anonyme Anmeldung), nur sie steuert ihn.
+// - Schüler schreiben nur ihren eigenen Eintrag und sehen nur den Raum, nicht die anderen.
+// - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function room(code) { return get(/databases/$(database)/documents/rooms/$(code)).data; }
+    function isOwner(code) { return signedIn() && room(code).owner == request.auth.uid; }
+
+    match /rooms/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && code.matches('^[A-Z2-9]{6}$')
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.keys().hasOnly(['owner','open','gameId','round','phase','decisions','createdAt','expireAt']);
+      allow update: if signedIn() && resource.data.owner == request.auth.uid
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.keys().hasOnly(['owner','open','gameId','round','phase','decisions','createdAt','expireAt']);
+      allow delete: if signedIn() && resource.data.owner == request.auth.uid;
+
+      match /players/{uid} {
+        allow get: if signedIn() && (request.auth.uid == uid || isOwner(code));
+        allow list: if isOwner(code);
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && room(code).open == true
+          && request.resource.data.nick is string
+          && request.resource.data.nick.size() > 0 && request.resource.data.nick.size() <= 20
+          && request.resource.data.fig in ['mia','jonas','sabine','tobias','daniel','gisela','lea','paul']
+          && request.resource.data.keys().hasOnly(['nick','fig','r','ph','votes','checks','choices','konto','goalOk','mood','hs','joinedAt','updatedAt','expireAt']);
+        allow delete: if signedIn() && (request.auth.uid == uid || isOwner(code));
+      }
+    }
+  }
+}
