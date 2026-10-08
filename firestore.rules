@@ -1,13 +1,48 @@
 rules_version = '2';
-// Sicherheitsregeln für den Live-Klassenraum.
+// Sicherheitsregeln für den Live-Klassenraum aller Themen im WR-Lab.
 // - Jeder Raum gehört dem Gerät der Lehrkraft (anonyme Anmeldung), nur sie steuert ihn.
+// - Ein Raum gehört zu genau einem Thema (Feld topic), das sich nachträglich nicht ändern lässt.
 // - Schüler schreiben nur ihren eigenen Eintrag und sehen nur den Raum, nicht die anderen.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
+// - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function room(code) { return get(/databases/$(database)/documents/rooms/$(code)).data; }
     function isOwner(code) { return signedIn() && room(code).owner == request.auth.uid; }
+    // Kürzel für Themen und Figuren: Kleinbuchstaben, Ziffern, Bindestrich
+    function isSlug(s, max) { return s is string && s.size() <= max && s.matches('^[a-z0-9-]+$'); }
+    function isSmallMap(m) { return m is map && m.size() <= 30; }
+    function isTime(t) { return t is timestamp; }
+
+    function validRoom(d) {
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','createdAt','expireAt'])
+        && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
+        && d.owner is string
+        && d.open is bool
+        && isSlug(d.topic, 32)
+        && d.gameId is string && d.gameId.size() <= 32
+        && d.round is int && d.round >= 0 && d.round <= 30
+        && d.phase is string && d.phase.size() <= 20
+        && d.decisions is list && d.decisions.size() <= 30
+        && (!('createdAt' in d) || isTime(d.createdAt))
+        && (!('expireAt' in d) || isTime(d.expireAt));
+    }
+
+    function validPlayer(d) {
+      return d.keys().hasOnly(['nick','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+        && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
+        && isSlug(d.fig, 24)
+        && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
+        && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))
+        && (!('votes' in d) || isSmallMap(d.votes))
+        && (!('checks' in d) || isSmallMap(d.checks))
+        && (!('choices' in d) || isSmallMap(d.choices))
+        && (!('stats' in d) || isSmallMap(d.stats))
+        && (!('joinedAt' in d) || isTime(d.joinedAt))
+        && (!('updatedAt' in d) || isTime(d.updatedAt))
+        && (!('expireAt' in d) || isTime(d.expireAt));
+    }
 
     match /rooms/{code} {
       allow get: if signedIn();
@@ -15,10 +50,11 @@ service cloud.firestore {
       allow create: if signedIn()
         && code.matches('^[A-Z2-9]{6}$')
         && request.resource.data.owner == request.auth.uid
-        && request.resource.data.keys().hasOnly(['owner','open','gameId','round','phase','decisions','createdAt','expireAt']);
+        && validRoom(request.resource.data);
       allow update: if signedIn() && resource.data.owner == request.auth.uid
         && request.resource.data.owner == resource.data.owner
-        && request.resource.data.keys().hasOnly(['owner','open','gameId','round','phase','decisions','createdAt','expireAt']);
+        && request.resource.data.topic == resource.data.topic
+        && validRoom(request.resource.data);
       allow delete: if signedIn() && resource.data.owner == request.auth.uid;
 
       match /players/{uid} {
@@ -26,10 +62,7 @@ service cloud.firestore {
         allow list: if isOwner(code);
         allow create, update: if signedIn() && request.auth.uid == uid
           && room(code).open == true
-          && request.resource.data.nick is string
-          && request.resource.data.nick.size() > 0 && request.resource.data.nick.size() <= 20
-          && request.resource.data.fig in ['mia','jonas','sabine','tobias','daniel','gisela','lea','paul']
-          && request.resource.data.keys().hasOnly(['nick','fig','r','ph','votes','checks','choices','konto','goalOk','mood','hs','joinedAt','updatedAt','expireAt']);
+          && validPlayer(request.resource.data);
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(code));
       }
     }
