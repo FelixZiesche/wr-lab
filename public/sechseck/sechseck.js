@@ -1,6 +1,6 @@
 // Lernwerkstatt Magisches Sechseck: Werkstätten, Wissen und Planspiel „Sechseck-Leben“.
 // Gerüst, Navigation und Planspiel-Mechanik kommen aus /shared/, hier stehen nur die Inhalte.
-import { $, $$, fmt, sgn, clamp, esc, store, teacher } from '../shared/js/ui.js';
+import { $, $$, fmt, sgn, clamp, esc, store } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
 import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, START, GOAL_IMG } from './daten.js';
@@ -168,8 +168,7 @@ html(){return `
 </div>
 <div class="panel"><h3>Zuordnung: Welcher Indikator misst welches Ziel?</h3><div id="gl-match"></div>
 <div class="row" style="margin-top:10px"><button class="btn primary" id="gl-check" type="button">Prüfen</button><span id="gl-res" class="small"></span></div></div>
-${erkHTML('grundlagen')}
-${teacher(['Einstieg: Sechseck an die Tafel, Schüler sammeln Vorwissen zu den Ecken, dann Erweiterung live per Klick zeigen.','Impulsfrage: Warum stehen Verteilung und Umwelt nicht im StabG von 1967? (Zeitgeist der Nachkriegszeit: Wachstum und Stabilität im Vordergrund; Umweltbewegung erst ab den 1970ern)','Methodische Reserve: Schüler formulieren für jedes Ziel eine Schlagzeile, die das Ziel als verfehlt zeigt.'])}`},
+${erkHTML('grundlagen')}`},
 init(root){
   let six=false, sel='P';
   const draw=()=>{
@@ -243,8 +242,7 @@ html(){return `
 </div>
 <div class="panel"><h3>Hintergrund: So misst das Statistische Bundesamt</h3><p>Rund 300.000 Preise für etwa 650 Güterarten gehen monatlich in den Verbraucherpreisindex ein. Jedes Gut hat ein Gewicht nach seinem Anteil an den Ausgaben aller Haushalte (Wägungsschema, Basisjahr 2020) – Wohnen und Energie zählen am meisten. Weil jeder anders konsumiert, weicht die persönliche Inflation von der amtlichen ab: Wer viel tankt und heizt, spürt 2026 die Energiepreise stärker. Das Bundesamt bietet dafür einen <a href="https://www.destatis.de/DE/Service/InflationsRechner/inflationsrechner.html" target="_blank" rel="noopener">persönlichen Inflationsrechner</a>.</p>
 <p style="margin-top:8px"><b>Begriffe:</b> Inflation (Preisniveau steigt) · Deflation (Preisniveau sinkt) · Disinflation (Preise steigen langsamer) · Kerninflation (ohne Energie und Nahrungsmittel) · Stagflation (Inflation bei Stagnation).</p></div>
-${erkHTML('preis')}
-${teacher(['Vorab Hausaufgabe: Schüler notieren eine Woche lang Preise ihrer typischen Ausgaben; Vorjahrespreise per Recherche oder Elternbefragung.','Vergleich Gruppen: Wer hat die höchste persönliche Inflation – und warum? (Gewichtung!)','Impulsfrage: Warum strebt die EZB 2 % an und nicht 0 %? (Sicherheitsabstand zur Deflation, Messfehler, Spielraum für Zinssenkungen)','Methodische Reserve: Reallohn-Rechner mit Ausbildungsvergütung durchspielen.'])}`},
+${erkHTML('preis')}`},
 init(root){
   let items=store('ms6-basket')||BASKET.map(o=>({...o}));
   const body=$('#pr-body',root);
@@ -333,8 +331,7 @@ html(){return `
 <div class="panel"><h3>Fall-Sortierung: Welche Art von Arbeitslosigkeit?</h3><div id="al-cases"></div>
 <div class="row" style="margin-top:10px"><button class="btn primary" id="al-check" type="button">Prüfen</button><span class="small" id="al-res"></span></div>
 <div class="grid3" style="margin-top:10px">${Object.entries(CAUSE).map(([k,v])=>`<div class="fb neu"><b>${k[0].toUpperCase()+k.slice(1)}</b><br><span class="small">${v}</span></div>`).join('')}</div></div>
-${erkHTML('beschaeftigung')}
-${teacher(['Rechenweg an der Tafel festhalten; Thüringen-Preset zeigt, dass die Bezugsgröße (rund 1,1 Mio. Erwerbspersonen) viel kleiner ist.','Impulsfrage: Warum gibt es gleichzeitig 660.000 offene Stellen und 3 Mio. Arbeitslose? (Mismatch nach Qualifikation, Region, Branche)','Transfer: Welche Instrumente helfen gegen welche Art? (Weiterbildung → strukturell, Konjunkturprogramm/Kurzarbeit → konjunkturell, Jobbörsen → friktionell)','Methodische Reserve: Eigenen Fall aus der Region formulieren und von der Nachbargruppe zuordnen lassen.'])}`},
+${erkHTML('beschaeftigung')}`},
 init(root){
   const PR={de:[2994,43790],th:[71,1024],vb:[1300,44500]};
   const upd=()=>{const a=+$('#al-a',root).value,e=+$('#al-e',root).value;const q=a/(a+e)*100;
@@ -383,8 +380,7 @@ html(){return `
    <p class="small muted">Das nominale BIP misst in aktuellen Preisen. Steigen nur die Preise, wächst es, ohne dass mehr produziert wird. Deshalb zählt für das Wachstumsziel das reale (preisbereinigte) BIP.</p></div>
 </div>
 <div class="panel"><h3>Kritik am BIP als Wohlstandsmaß</h3><p>Das BIP erfasst keine unbezahlte Arbeit (Pflege, Ehrenamt), keine Umweltschäden und keine Verteilung. Ein Unfall mit Reparatur und Krankenhausaufenthalt erhöht das BIP sogar. Alternativen wie der Nationale Wohlfahrtsindex oder die Wohlfahrtsmessung der OECD ergänzen es. Deshalb steht neben dem Wachstum auch Umweltschutz im Sechseck.</p></div>
-${erkHTML('wachstum')}
-${teacher(['Regler langsam bewegen und Schüler Phasen vorhersagen lassen, bevor die Tabelle umspringt.','Impulsfrage: Warum reagiert die Arbeitslosigkeit verzögert? (Kündigungsfristen, Kurzarbeit, Unternehmen halten Fachkräfte)','Diskussion: Ist „angemessenes“ Wachstum bei schrumpfender Erwerbsbevölkerung noch 1,5 %? Oder brauchen wir ein Wachstumsziel überhaupt?','Methodische Reserve: Aktuelle Schlagzeilen (z. B. tagesschau.de) einer Konjunkturphase zuordnen.'])}`},
+${erkHTML('wachstum')}`},
 init(root){
   const draw=t=>{
     const W=600,H=260,x0=40,x1=W-14,y0=210,sx=v=>x0+v/100*(x1-x0);
@@ -445,8 +441,7 @@ html(){return `
    <p><b>Pro:</b> Exportstärke sichert Arbeitsplätze in Industrie und Mittelstand (in Thüringen z. B. Optik, Automobilzulieferer, Maschinenbau). Überschüsse bilden Auslandsvermögen, etwa für eine alternde Gesellschaft.</p>
    <p style="margin-top:6px"><b>Contra:</b> Einem Überschuss steht immer ein Defizit anderer Länder gegenüber – sie verschulden sich. Abhängigkeit von der Weltkonjunktur, Konflikte um Zölle (USA). Überschuss heißt auch: Ersparnisse fließen ins Ausland statt in Investitionen im Inland.</p></div>
 </div>
-${erkHTML('aussen')}
-${teacher(['Vorwissen: Warum heißt es „Gleichgewicht“, obwohl Deutschland stolz auf den „Exportweltmeister“ war?','Wechselkurs-Labor mit Beamer: Schüler rufen Vorhersage, bevor der Regler bewegt wird.','Kontroverse: Rollenspiel deutsche Exportwirtschaft vs. US-Handelsbeauftragter.','Methodische Reserve: Etiketten von Kleidung und Elektronik im Raum prüfen – woher kommen unsere Importe?'])}`},
+${erkHTML('aussen')}`},
 init(root){
   const PRE={de:[196,-56,122,-62],null:[40,-20,20,-40],def:[-120,-10,-15,-35]};
   const ids=['w','d','p','s'];
@@ -512,8 +507,7 @@ html(){return `
    <dt>Primärverteilung</dt><dd>Verteilung über den Markt (Löhne, Gewinne, Zinsen, Mieten)</dd>
    <dt>Sekundärverteilung</dt><dd>Korrektur durch den Staat: progressive Einkommensteuer, Sozialabgaben, Transfers wie Kindergeld, Wohngeld, Grundsicherung</dd></dl></div>
 </div>
-${erkHTML('verteilung')}
-${teacher(['Einstieg: 10 Schokoriegel auf 5 Schüler verteilen, wie es dem Vermögen in Deutschland entspricht (oberstes Fünftel bekommt rund 7).','Impulsfrage: Warum ist der Unterschied zwischen Markteinkommen und verfügbarem Einkommen so groß? Welche Instrumente bewirken das?','Kontroverse: Vermögensteuer, Erbschaftsteuer, höherer Mindestlohn – Pro und Contra.','Methodische Reserve: Positionslinie im Raum zur These „Der Mindestlohn sollte auf 15 € steigen“.'])}`},
+${erkHTML('verteilung')}`},
 init(root){
   let cur=LZ.verf.v.slice();
   const gini=s=>{const t=s.reduce((a,b)=>a+b,0)||1;let cum=0,prev=0,A=0;s.forEach(v=>{cum+=v/t;A+=(prev+cum)*0.2;prev=cum});return 1-A};
@@ -565,8 +559,7 @@ html(){return `
    <p style="margin-top:6px"><b>Entkopplung:</b> Seit 1990 ist die deutsche Wirtschaftsleistung real um rund die Hälfte gewachsen, die Emissionen sind um 48 % gesunken. Wachstum und Umweltschutz schließen sich also nicht zwingend aus – reicht das Tempo aber?</p>
    <p style="margin-top:6px"><b>Klimageld:</b> Wird das Geld aus dem CO₂-Preis pro Kopf zurückgezahlt, profitieren Haushalte mit geringem Verbrauch – oft die mit geringerem Einkommen.</p></div>
 </div>
-${erkHTML('umwelt')}
-${teacher(['Rechenaufgabe: Wie viel Minderung pro Jahr wäre nötig, um 2030 genau 438 Mio. t zu erreichen? (≈ 42 Mio. t/Jahr – das Dreifache der Minderung der letzten Jahre)','Impulsfrage: Wer trägt die Last eines höheren CO₂-Preises? Pendler im ländlichen Thüringen vs. Studierende in Jena.','Bezug Rechtsprechung: Klimabeschluss des BVerfG 2021 – Freiheitsrechte künftiger Generationen.','Methodische Reserve: Eigenen CO₂-Fußabdruck mit dem UBA-CO₂-Rechner schätzen.'])}`},
+${erkHTML('umwelt')}`},
 init(root){
   const draw=()=>{
     const red=+$('#th-r',root).value;$('#th-ro',root).textContent=fmt(red,0)+' Mio. t';
@@ -631,8 +624,7 @@ html(){return `
  <dt>Zielkonflikt</dt><dd>Die Förderung des einen Ziels beeinträchtigt das andere (konkurrierend).</dd>
  <dt>Zielneutralität</dt><dd>Die Ziele beeinflussen sich nicht (indifferent).</dd>
  <dt>ambivalent</dt><dd>Je nach Ursache, Zeitraum und Ausgangslage Harmonie oder Konflikt.</dd></dl></div>
-${erkHTML('beziehungen')}
-${teacher(['Gruppen erhalten je 3 Paare, begründen ihre Einschätzung mit Wirkungskette (Pfeildiagramm) und präsentieren.','Wichtig: Es gibt Spielraum! Gut begründete Abweichungen von der Lösung anerkennen – gerade bei ambivalenten Paaren.','Impulsfrage: Welche zwei Ziele würdet ihr priorisieren, wenn ihr nur zwei erreichen könntet?','Methodische Reserve: Wirkungskette für ein Paar als Hefteintrag zeichnen.'])}`},
+${erkHTML('beziehungen')}`},
 init(root){
   let pick=[], seen=new Set(store('ms6-rel')||[]), guess=null;
   const draw=()=>{
@@ -686,8 +678,7 @@ html(){return `
    <p><b>Erklärung:</b> Die Kurve gilt am ehesten bei Nachfrageschwankungen. Bei Angebotsschocks (teure Energie) steigen Kosten und Preise, während die Produktion sinkt: <b>Stagflation</b>. Außerdem passen Menschen ihre Inflationserwartungen an – dauerhaft lässt sich Arbeitslosigkeit nicht mit Inflation „kaufen“ (Friedman, Phelps).</p>
    <div id="ph-info" class="fb neu small">Tippt auf einen Punkt für Details.</div></div>
 </div>
-${erkHTML('phillips')}
-${teacher(['Vor dem Aufdecken: Schüler skizzieren, wie die Punkte liegen müssten, wenn die Theorie stimmt.','Impulsfrage: Was unterscheidet 2022 von 2017? (Ursache der Inflation: Energiepreise statt Nachfrageüberhang)','Aktueller Bezug: Energiepreisschock 2026 durch den Iran-Krieg – droht erneut Stagflation?','Methodische Reserve: Kurzvortrag zur Ölkrise 1973 und den Sonntagsfahrverboten.'])}`},
+${erkHTML('phillips')}`},
 init(root){
   let theo=false,stag=false;
   const draw=()=>{
@@ -738,8 +729,7 @@ html(){return `
 </div>
 <div class="panel"><h3>Maßnahmen <span class="small muted" id="ps-n"></span></h3><div class="measures" id="ps-m"></div></div>
 <p class="small muted">Modell: Jede Maßnahme verschiebt die Ziele qualitativ um bis zu ±2 Stufen (je 9 Punkte). Echte Wirkungen hängen von Ausmaß, Zeitpunkt und Lage ab und sind teils umstritten. Genau darüber lohnt sich die Diskussion.</p>
-${erkHTML('politik')}
-${teacher(['Gruppen vertreten Parteien oder Verbände (Gewerkschaft, Arbeitgeber, Umweltverband, Sozialverband) und wählen Maßnahmen aus ihrer Sicht – anschließend Vergleich der Sechsecke.','Achtung Akteure: Die EZB ist unabhängig und gehört nicht zur Bundesregierung – gut für eine Nachfrage.','Impulsfrage: Warum ist es unmöglich, alle Ziele über 70 zu bringen? Was folgt daraus für Politik?','Methodische Reserve: „Regierungserklärung“ in 60 Sekunden, die das gewählte Paket rechtfertigt.'])}`},
+${erkHTML('politik')}`},
 init(root){
   let st='de',on=new Set();
   const MAX=4;
@@ -795,8 +785,7 @@ html(){return `
 <div class="panel"><h3>Die Messlatte (normative Setzung!)</h3><div class="tbl-wrap"><table><tbody>${ORDER.map(k=>`<tr><td>${hexDot(k)} ${G[k].short}</td><td class="mono small">${SCORE[k].rule}</td></tr>`).join('')}</tbody></table></div>
 <p class="small" style="margin-top:8px">Diskussionsfragen: Ist ein Leistungsbilanzüberschuss genauso schlecht wie ein Defizit? Warum 1,75 % Wachstum – und nicht 0 %? Wie misst man „gerechte“ Verteilung mit einer Zahl?</p>
 <p class="small" style="margin-top:6px"><b>Regional:</b> Thüringen hatte im Juli 2026 eine Arbeitslosenquote von 6,5 % – etwas mehr als der Bundesdurchschnitt.</p></div>
-${erkHTML('check')}
-${teacher(['Einstieg: Sechseck 2019 vs. 2023 zeigen, Schüler beschreiben die Verformung und nennen Ursachen (Corona, Energiekrise).','Wichtig: Die Punkteskala ist eine didaktische Setzung, keine amtliche Statistik – genau das ist Lerngegenstand.','Methodische Reserve: Eigene Bewertungsregel entwerfen und das Jahr 2025 neu bewerten.'])}`},
+${erkHTML('check')}`},
 init(root){
   let a='2026*',b='2019';
   const score=(k,y)=>clamp(Math.round(SCORE[k].f(YEARS[y][k])),0,100);
@@ -832,8 +821,7 @@ const QUIZ=[
   ['Welche Rechtsgrundlage stützt das Ziel „Schutz der natürlichen Lebensgrundlagen“?',['Art. 20a GG','§ 1 StabG','Art. 127 AEUV','Art. 9 GG'],0,'Seit 1994 Staatsziel im Grundgesetz; konkretisiert durch das Klimaschutzgesetz.']
 ];
 tool({id:'quiz',ch:6,goals:ORDER,title:'Abi-Check',sub:'14 Fragen zum magischen Sechseck mit Erklärungen',
-html(){return `<p class="task"><b>Auftrag:</b> Beantwortet die Fragen allein oder als Team. Nach jeder Antwort gibt es eine Erklärung.</p><div class="panel" id="qz"></div>
-${teacher(['Als Quiz-Battle mit dem Beamer: Teams stimmen per Handzeichen ab, dann Auflösung.','Die Reihenfolge der Antworten wird bei jedem Start gemischt.'])}`},
+html(){return `<p class="task"><b>Auftrag:</b> Beantwortet die Fragen allein oder als Team. Nach jeder Antwort gibt es eine Erklärung.</p><div class="panel" id="qz"></div>`},
 init(root){
   let i=0,pts=0,order=[];
   const start=()=>{i=0;pts=0;order=QUIZ.map((q,k)=>({q,perm:[0,1,2,3].sort(()=>Math.random()-.5)}));show()};
@@ -855,8 +843,7 @@ init(root){
 tool({id:'leben',ch:5,goals:ORDER,title:'Planspiel Sechseck-Leben',sub:'In die Rolle einer Person aus Thüringen schlüpfen, vier Jahre Wirtschaftspolitik erleben – allein oder als ganze Klasse',
 html(){return `
 <div id="lb-app" class="stack"></div>
-${erkHTML('leben')}
-${teacher(['Live-Klassenraum: „Klassenspiel – Lehrkraft“ am Beamer öffnen und „Live-Klassenraum erstellen“ wählen. Die Schüler scannen den QR-Code oder geben den Code ein, wählen einen Spitznamen und eine Figur. Ohne Konto, ohne App.','Pro Figur zwei bis vier Schüler, damit sich in der Debatte Interessengruppen bilden. Die Verteilung siehst du in der Lobby.','Pro Runde rund 10 Minuten: Ereignis und Infopunkte (2) – Wirkung auf die eigene Figur prüfen (2) – Debatte aus Sicht der Figuren (4) – Abstimmung auf den Handys und Beschluss (2). Vier Runden passen in eine Doppelstunde.','Beamer-Modus: blendet Spitznamen aus und zeigt nur Figuren. Unpassende Spitznamen kannst du in der Lobby entfernen.','Ohne eingerichteten Live-Modus (oder in der Vorschau): Schüler halten ihre Stimmkarte hoch, du zählst per Klick; den Beschluss tippen die Schüler als Buchstaben ein.','Die Tabelle „Wer gewinnt?“ in der Abstimmungsphase zunächst verdeckt lassen und erst nach der Debatte zeigen.','Auswertung: Wer hat am Ende gewonnen, wer verloren? Waren die Beschlüsse gerecht – und für wen? Was bedeutet der Schuldenstand für künftige Generationen?','Nach der Stunde: „Raum beenden“ löscht alle Daten sofort. Sonst laufen Räume nach 24 Stunden ab.','Hinweis: Runde 1 beruht auf echten Daten von Oktober 2026, Runden 2 bis 4 sind plausible, aber erfundene Szenarien. Alle Social-Media-Posts sind fiktiv.'])}`},
+${erkHTML('leben')}`},
 init(root){
   mountPlanspiel($('#lb-app',root),SPIEL);
   bindErk(root);

@@ -200,10 +200,6 @@ td.r,th.r{text-align:right}
 .erk .erk-h{display:flex;align-items:center;gap:8px;font-weight:500}
 .erk ul{margin:0;padding-left:1.2em}
 .erk .btn.primary{background:var(--md-tertiary);color:var(--md-on-tertiary)}
-.teacher{background:var(--md-surface-container-low);border-radius:var(--r-l)}
-.teacher>summary{cursor:pointer;padding:12px 16px;font-weight:500;font-size:.875rem;display:flex;align-items:center;gap:8px;border-radius:var(--r-l);list-style:none}
-.teacher>div{padding:0 16px 16px;font-size:.875rem;display:flex;flex-direction:column;gap:6px}
-.teacher ul{margin:0;padding-left:1.2em}
 .choice{display:flex;flex-wrap:wrap;gap:8px}
 .choice button{border:1px solid var(--md-outline-variant);background:transparent;border-radius:var(--r-s);padding:6px 16px;min-height:32px;cursor:pointer;font-size:.875rem;font-weight:500;color:var(--md-on-surface-variant);overflow:hidden}
 .choice button.sel{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}

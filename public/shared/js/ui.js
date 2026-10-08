@@ -9,9 +9,6 @@ export const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':
 /** Liest (ein Argument) oder schreibt (zwei Argumente) einen Wert im localStorage dieses Browsers. */
 export function store(k,v){try{ if(v===undefined){return JSON.parse(localStorage.getItem(k)||'null')} localStorage.setItem(k,JSON.stringify(v)) }catch(e){return null}}
 
-/** Aufklappbarer Kasten mit Hinweisen für die Lehrkraft. */
-export function teacher(items){return `<details class="teacher"><summary><span class="ms sm">co_present</span>Für die Lehrkraft</summary><div><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></div></details>`}
-
 /* ---------- Foto mit Infopunkten ----------
    p = {src, alt, credit, hs:[{x, y, t, d}]}  (x, y in Prozent)
    key = Speicherschlüssel für die bereits entdeckten Infopunkte, z. B. 'ms6-hs-0' */

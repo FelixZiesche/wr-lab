@@ -32,7 +32,8 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Aktuelle virale Inhalte:** Trends, Memes, Jugendwörter, Social-Media-Formate und Ereignisse, über die gerade alle reden. Sie müssen sachlich richtig eingesetzt werden. Erfundene Posts tragen den Hinweis „fiktiver Beitrag“, erfundene Szenarien den Hinweis „Szenario“.
 - **Regionalbezug:** Beispiele, Figuren, Orte und Fotos möglichst aus Apolda, Jena, Weimar, Erfurt oder anderswo in Thüringen.
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
-- **Lehrplanbezug:** Der Thüringer Lehrplan Wirtschaft und Recht (Oberstufe) wird bei „Für die Lehrkraft“ genannt.
+- **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Funktionen für die Lehrkraft (z. B. der Lehrkraft-Modus im Planspiel) bleiben erlaubt.
+- **Lehrplanbezug:** Der Thüringer Lehrplan Wirtschaft und Recht (Oberstufe) steht in der README in der Themenübersicht.
 
 ## Design: Material Design 3
 
@@ -87,7 +88,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
 4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen mit `speicher` (neues Präfix), `logo`, `bereiche`, `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`.
    - Werkstätten mit `tool({id, ch, title, sub, html(), init(root)})` anlegen.
-   - Jede Werkstatt hat einen Auftrag (`<p class="task">`), eine Erkenntnis (`erkHTML` / `bindErk`) und Hinweise für die Lehrkraft (`teacher([...])`).
+   - Jede Werkstatt hat einen Auftrag (`<p class="task">`) und eine Erkenntnis (`erkHTML` / `bindErk`).
 5. **Planspiel (optional):** Inhalte in eine eigene Datei nach dem Muster von `sechseck/leben.js`.
    - Die Schnittstelle steht oben in `shared/js/planspiel.js`.
    - `thema` ist die Ordner-`id`. Pro Runde gibt es die Optionen A, B und C.
@@ -97,7 +98,8 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 6. **Inhalte prüfen:**
    - nie gendern, kein „SuS“
    - schülernah, mit aktuellen Anlässen und Regionalbezug
-   - Daten mit Stand und Quelle, Lehrplanbezug bei „Für die Lehrkraft“
+   - Daten mit Stand und Quelle, Lehrplanbezug in der README
+   - keine Hinweise „Für die Lehrkraft“ auf der Seite
 7. **Fotos** in `img/` mit Bildnachweis am Bild, in der Quellenliste und in der README.
 8. **Startseite:** Eintrag in `public/themen.js` mit `id`, `titel`, `bereich`, `text`, `stichworte`, `bild`, `alt` und `foto`.
 9. **Tests:** `tests/<id>.spec.mjs` nach dem Muster der Sechseck-Tests:

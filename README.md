@@ -6,9 +6,9 @@ Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
 ## Themen
 
-| Thema | Inhalt |
-| --- | --- |
-| [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Dazu Glossar, Wissensspeicher und Abi-Check. |
+| Thema | Inhalt | Lehrplan Thüringen |
+| --- | --- | --- |
+| [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Dazu Glossar, Wissensspeicher und Abi-Check. | *noch ergänzen* |
 
 ## Aufbau
 
