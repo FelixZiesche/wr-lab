@@ -1,0 +1,45 @@
+# Jeder Push auf main: erst testen, dann Seite und Firestore-Regeln veröffentlichen.
+name: Veröffentlichen
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WR_LAB }}
+    steps:
+      - name: Ist Firebase verbunden?
+        if: env.FIREBASE_SA == ''
+        run: echo "::warning::Das Secret FIREBASE_SERVICE_ACCOUNT_WR_LAB fehlt. Die Seite wurde nicht veröffentlicht (siehe README, Abschnitt „GitHub mit Firebase verbinden“)."
+      - uses: actions/checkout@v4
+        if: env.FIREBASE_SA != ''
+      - uses: actions/setup-node@v4
+        if: env.FIREBASE_SA != ''
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.FIREBASE_SA != ''
+        run: npm ci
+      - name: Bei Google Cloud anmelden
+        if: env.FIREBASE_SA != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WR_LAB }}
+      - name: Seite und Firestore-Regeln veröffentlichen
+        if: env.FIREBASE_SA != ''
+        run: npx firebase deploy --only hosting,firestore:rules --project wr-lab --non-interactive --message "${GITHUB_SHA::7}"

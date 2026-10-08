@@ -1,0 +1,42 @@
+# Jeder Pull Request: erst testen, dann eine Vorschau-Adresse (7 Tage gültig) als Kommentar im PR.
+name: Vorschau
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  preview:
+    needs: test
+    # Pull Requests aus Forks bekommen keine Secrets und damit keine Vorschau.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    env:
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WR_LAB }}
+    steps:
+      - name: Ist Firebase verbunden?
+        if: env.FIREBASE_SA == ''
+        run: echo "::warning::Das Secret FIREBASE_SERVICE_ACCOUNT_WR_LAB fehlt. Ohne Secret gibt es keine Vorschau (siehe README, Abschnitt „GitHub mit Firebase verbinden“)."
+      - uses: actions/checkout@v4
+        if: env.FIREBASE_SA != ''
+      - name: Vorschau veröffentlichen
+        if: env.FIREBASE_SA != ''
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WR_LAB }}
+          projectId: wr-lab
+          expires: 7d
