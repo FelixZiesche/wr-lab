@@ -2,11 +2,12 @@
 // Gerüst, Navigation und Planspiel-Mechanik kommen aus /shared/, hier stehen nur die Inhalte.
 import { $, $$, fmt, sgn, clamp, esc, store } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
-import { schreibfeld, zuordnen, lueckentext, test as kurztest, impuls } from '../shared/js/aufgaben.js';
+import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls } from '../shared/js/aufgaben.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
 import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, START, GOAL_IMG } from './daten.js';
 import { SPIEL, PHOTOS } from './leben.js';
 import { HINWEISE, WAND, IMPULS } from './wand.js';
+import { WISSENSCHECK } from './wissenscheck.js';
 
 /* ---------- Merksätze ---------- */
 const MS={
@@ -74,7 +75,7 @@ const DEST=[
   {id:'ziele',icon:'hexagon',label:'Ziele',title:'Die sechs Ziele messen',ch:[2],desc:'Sechs Werkstätten: Warenkorb, Arbeitsmarkt, Konjunktur, Leistungsbilanz, Lorenzkurve, Klima'},
   {id:'abwaegen',icon:'balance',label:'Abwägen',title:'Zielbeziehungen und Politik',ch:[3,4],desc:'Zielkonflikte aufdecken, Phillips-Kurve prüfen, Politik simulieren, Deutschland bewerten'},
   {id:'spiel',icon:'sports_esports',label:'Planspiel',title:'Planspiel Sechseck-Leben',ch:[5],tool:'leben',desc:'Acht Figuren aus Thüringen, vier Jahre Wirtschaftspolitik – allein oder als Klasse'},
-  {id:'wissen',icon:'school',label:'Wissen',title:'Sichern und wiederholen',ch:[6],render:wissenHTML,desc:'Abi-Check, Fachbegriffe und deine gesammelten Merksätze'}
+  {id:'wissen',icon:'school',label:'Wissen',title:'Sichern und wiederholen',ch:[6],render:wissenHTML,desc:'Hefteintrag, Wissenscheck in drei Stufen, Fachbegriffe und deine gesammelten Merksätze'}
 ];
 
 const W=createWerkstatt({
@@ -829,42 +830,6 @@ init(root){
   btns('#ck-a',()=>a,v=>a=v);btns('#ck-b',()=>b,v=>b=v);draw();bindErk(root);
 }});
 
-/* 12 Quiz */
-const QUIZ=[
-  ['Welches Gesetz legte 1967 die vier Ziele des magischen Vierecks fest?',['Stabilitäts- und Wachstumsgesetz (StabG)','Grundgesetz, Art. 20a','Gesetz gegen Wettbewerbsbeschränkungen','Bundes-Klimaschutzgesetz'],0,'§ 1 StabG nennt Preisniveaustabilität, hohen Beschäftigungsstand, außenwirtschaftliches Gleichgewicht und stetiges, angemessenes Wachstum.'],
-  ['Warum heißt das Sechseck „magisch“?',['Weil die Ziele nicht alle gleichzeitig vollständig erreichbar sind','Weil die Zielwerte geheim sind','Weil es sich jedes Jahr automatisch anpasst','Weil nur die EZB es steuern kann'],0,'Zwischen den Zielen bestehen Konflikte; sie gleichzeitig zu erreichen, gleicht Zauberei.'],
-  ['Die Inflationsrate sinkt von 3,3 % auf 2,5 %. Was stimmt?',['Die Preise steigen weiter, nur langsamer (Disinflation)','Die Preise sinken (Deflation)','Das Preisniveau bleibt gleich','Die Kaufkraft steigt um 0,8 %'],0,'Eine sinkende, aber positive Inflationsrate heißt: Das Preisniveau steigt weiter, nur weniger schnell.'],
-  ['Welches Inflationsziel verfolgt die EZB?',['2 % mittelfristig, symmetrisch','0 % jederzeit','unter 3 % pro Quartal','genau die Lohnsteigerung'],0,'Seit 2021 strebt die EZB symmetrisch 2 % auf mittlere Sicht an.'],
-  ['Der Nominallohn steigt um 4 %, die Inflation beträgt 3,3 %. Wie verändert sich der Reallohn ungefähr?',['+0,7 %','+7,3 %','−0,7 %','+4 %'],0,'Reallohn ≈ Nominallohn − Inflation = 4 % − 3,3 % ≈ 0,7 %.'],
-  ['Ein Gini-Koeffizient von 0 bedeutet …',['… völlige Gleichverteilung','… völlige Ungleichverteilung','… keine Armut, aber Ungleichheit','… dass keine Daten vorliegen'],0,'0 = alle haben gleich viel, 1 = eine Person hat alles.'],
-  ['Deutschland hat einen hohen Leistungsbilanzüberschuss. Das heißt:',['Deutschland nimmt aus dem Ausland mehr ein, als es ausgibt, und baut Forderungen gegenüber dem Ausland auf','Der Staatshaushalt hat einen Überschuss','Deutschland importiert mehr als es exportiert','Die Bundesbank hat mehr Gold gekauft'],0,'Leistungsbilanz ≠ Staatshaushalt. Der Überschuss bedeutet Kapitalexport: Deutschland wird Gläubiger des Auslands.'],
-  ['Die Phillips-Kurve beschreibt einen Zielkonflikt zwischen …',['Preisniveaustabilität und hohem Beschäftigungsstand','Wachstum und Umweltschutz','Verteilung und Außenwirtschaft','Wachstum und Beschäftigung'],0,'Weniger Arbeitslosigkeit gehe mit höherer Inflation einher – und umgekehrt.'],
-  ['Was ist Stagflation?',['Hohe Inflation bei gleichzeitig schwachem Wachstum und steigender Arbeitslosigkeit','Stillstand der Preise','Eine besonders stabile Wachstumsphase','Sinkende Preise im Boom'],0,'Stagnation + Inflation, typisch nach Angebotsschocks wie der Ölkrise 1973 oder der Energiekrise 2022.'],
-  ['Ein Dachdecker ist im Januar wegen Frost ohne Arbeit. Das ist …',['saisonale Arbeitslosigkeit','strukturelle Arbeitslosigkeit','konjunkturelle Arbeitslosigkeit','friktionelle Arbeitslosigkeit'],0,'Sie hängt von der Jahreszeit ab.'],
-  ['Welche Maßnahme erzeugt typischerweise einen Konflikt zwischen Umweltschutz und Preisniveaustabilität?',['Ein höherer CO₂-Preis','Mehr Weiterbildung','Eine Leitzinserhöhung','Eine Vermögensteuer'],0,'Der CO₂-Preis verteuert fossile Energie und damit viele Güter.'],
-  ['Das nominale BIP wächst um 4 %, die Preise um 2,5 %. Das reale Wachstum beträgt ungefähr …',['1,5 %','6,5 %','4 %','−1,5 %'],0,'Real ≈ nominal − Preissteigerung.'],
-  ['Wer ist in Deutschland für die Geldpolitik zuständig?',['Die Europäische Zentralbank','Das Bundesfinanzministerium','Der Sachverständigenrat','Der Bundestag'],0,'Seit 1999 bestimmt die unabhängige EZB die Geldpolitik im Euroraum; die Bundesbank ist Teil des Eurosystems.'],
-  ['Welche Rechtsgrundlage stützt das Ziel „Schutz der natürlichen Lebensgrundlagen“?',['Art. 20a GG','§ 1 StabG','Art. 127 AEUV','Art. 9 GG'],0,'Seit 1994 Staatsziel im Grundgesetz; konkretisiert durch das Klimaschutzgesetz.']
-];
-tool({id:'quiz',hinweise:HINWEISE.quiz,ch:6,goals:ORDER,title:'Abi-Check',sub:'14 Fragen zum magischen Sechseck mit Erklärungen',
-html(){return `<p class="task"><b>Auftrag:</b> Beantwortet die Fragen allein oder als Team. Nach jeder Antwort gibt es eine Erklärung.</p><div class="panel" id="qz"></div>`},
-init(root){
-  let i=0,pts=0,order=[];
-  const start=()=>{i=0;pts=0;order=QUIZ.map((q,k)=>({q,perm:[0,1,2,3].sort(()=>Math.random()-.5)}));show()};
-  const show=()=>{
-    const box=$('#qz',root);
-    if(i>=order.length){box.innerHTML=`<h3>Geschafft: ${pts} von ${order.length} Punkten</h3><p>${pts>=12?'Abi-reif!':pts>=8?'Solide Basis – schaut euch die Werkstätten zu den falschen Antworten noch einmal an.':'Geht noch einmal durch Kapitel 1 bis 3.'}</p><button class="btn primary" type="button" id="qz-r" style="margin-top:10px">Noch einmal</button>`;$('#qz-r',box).addEventListener('click',start);return}
-    const {q,perm}=order[i];
-    box.innerHTML=`<p class="eyebrow">Frage ${i+1} von ${order.length} · ${pts} Punkte</p><h3 style="margin:6px 0 10px">${q[0]}</h3><div class="choice" style="flex-direction:column">${perm.map(p=>`<button type="button" data-p="${p}" style="text-align:left">${q[1][p]}</button>`).join('')}</div><div id="qz-fb" style="margin-top:10px"></div>`;
-    $$('[data-p]',box).forEach(b=>b.addEventListener('click',()=>{
-      if(box.dataset.done==='1')return;box.dataset.done='1';const r=+b.dataset.p===q[2];if(r)pts++;
-      $$('[data-p]',box).forEach(x=>{if(+x.dataset.p===q[2])x.classList.add('right');else if(x===b)x.classList.add('wrong')});
-      $('#qz-fb',box).innerHTML=`<div class="fb ${r?'ok':'bad'}"><b>${r?'Richtig.':'Nicht ganz.'}</b> ${q[3]}</div><button class="btn primary" type="button" id="qz-n" style="margin-top:8px">Weiter</button>`;
-      $('#qz-n',box).addEventListener('click',()=>{box.dataset.done='0';i++;show()})}));
-  };
-  start();
-}});
-
 /* 12b Hefteintrag und Kurztest */
 tool({id:'sichern',ch:6,goals:ORDER,hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, Schlagzeilen den Zielen zuordnen und ein Test mit einem Versuch',
 html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Pro Frage habt ihr nur einen Versuch.</p>
@@ -888,6 +853,14 @@ ${schreibfeld(WAND.sichern)}
 ${impuls(IMPULS.sichern)}
 ${erkHTML('sichern')}`},
 init(root){bindErk(root)}});
+
+/* 12c Wissenscheck (Aufgaben in wissenscheck.js) */
+tool({id:'wissenscheck',ch:6,goals:ORDER,hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:'31 Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Erwartungshorizont und Auswertung',
+html(){return `<p class="task"><b>Auftrag:</b> Prüft, was ihr könnt. Fangt bei den Grundlagen an und arbeitet euch bis zum Beurteilen vor. Den Erwartungshorizont seht ihr erst, nachdem ihr geantwortet habt. Am Ende zeigt die Auswertung, was ihr noch wiederholen solltet.</p>
+${wissenscheck(WISSENSCHECK)}
+${schreibfeld(WAND.wissenscheck)}
+${impuls(IMPULS.wissenscheck)}`},
+init(){}});
 
 /* 13 Planspiel (Inhalte in leben.js, Ablauf in shared/js/planspiel.js) */
 tool({id:'leben',hinweise:HINWEISE.leben,ch:5,goals:ORDER,title:'Planspiel Sechseck-Leben',sub:'In die Rolle einer Person aus Thüringen schlüpfen, vier Jahre Wirtschaftspolitik erleben – allein oder als ganze Klasse',
@@ -919,6 +892,7 @@ function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m
   <li>Gemeinschaftsdiagnose Herbst 2026 (24.09.2026): Prognosen BIP, Inflation, Arbeitslosenquote, Leistungsbilanz</li>
   <li>Umweltbundesamt: Treibhausgas-Emissionen in Deutschland (Stand Juli 2026)</li>
   <li>Gesetzestexte: § 1 StabG, Art. 20 und 20a GG, Art. 127 AEUV, Bundes-Klimaschutzgesetz</li>
+  <li>Deutschlandticket: Beschluss der Verkehrsministerkonferenz vom 18.09.2025 (63 € ab Januar 2026); Correctiv-Faktencheck vom 15.01.2026 zum TikTok-Video über 129,99 €</li>
   <li>Fotos: engin akyurt, Jacob Meissner, Lukas D., Md. Hasanuzzaman Himel, Yosuke Ota, Remy Gieling, Artem Labunsky, Wolfgang Weiser, Karsten Würth, Marcel Strauß – alle über Unsplash (Unsplash-Lizenz)</li></ul>
   <p>Modellwerkzeuge (Simulator, Planspiel, Bewertungsskalen) sind didaktische Vereinfachungen und keine Prognosen. Spielstände und Merksätze werden nur in diesem Browser gespeichert.</p>
   <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}

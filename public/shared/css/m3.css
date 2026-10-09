@@ -176,7 +176,7 @@ details>summary::-webkit-details-marker{display:none}
 .ctrl label{font-size:.875rem;display:flex;justify-content:space-between;gap:8px}
 .ctrl label output{font-weight:600;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--md-primary);height:24px}
-input[type=number],input[type=text],input[type=search],select{border:1px solid var(--md-outline);background:transparent;border-radius:var(--r-m);padding:6px 10px;min-width:0;min-height:40px;color:var(--md-on-surface)}
+input[type=number],input[type=text],input[type=search],input[type=url],select{border:1px solid var(--md-outline);background:transparent;border-radius:var(--r-m);padding:6px 10px;min-width:0;min-height:40px;color:var(--md-on-surface)}
 input[type=number]{width:6.5em;font-variant-numeric:tabular-nums}
 input:focus,select:focus{outline:none;border:2px solid var(--md-primary);padding:5px 9px}
 .tbl-wrap{overflow-x:auto}
@@ -371,9 +371,9 @@ div.opt::before{display:none}
 .zu-karte[aria-pressed="true"]{outline:3px solid var(--md-primary);outline-offset:1px;background:var(--md-primary-container);color:var(--md-on-primary-container)}
 .zu-karte.right,.test-opt.right{background:var(--md-ok-container);color:var(--md-on-ok-container);border-color:transparent}
 .zu-karte.wrong,.test-opt.wrong{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
-:is(.zu-karte,.test-opt).right::after,:is(.zu-karte,.test-opt).wrong::after{font-family:"Material Symbols Rounded";font-size:18px;line-height:1;font-feature-settings:"liga";margin-left:8px;vertical-align:middle}
-:is(.zu-karte,.test-opt).right::after{content:"check"}
-:is(.zu-karte,.test-opt).wrong::after{content:"close"}
+:is(.zu-karte,.test-opt,.wc-zu-k,.wc-schritt).right::after,:is(.zu-karte,.test-opt,.wc-zu-k,.wc-schritt).wrong::after{font-family:"Material Symbols Rounded";font-size:18px;line-height:1;font-feature-settings:"liga";margin-left:8px;vertical-align:middle}
+:is(.zu-karte,.test-opt,.wc-zu-k,.wc-schritt).right::after{content:"check"}
+:is(.zu-karte,.test-opt,.wc-zu-k,.wc-schritt).wrong::after{content:"close"}
 :is(.zu-karte,.zu-ziel)::before{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .15s;z-index:-1}
 :is(.zu-karte,.zu-ziel):hover::before{opacity:.08}
 .lt-text p{line-height:2.5rem}
@@ -387,6 +387,48 @@ input.lt-luecke.wrong{border-bottom-color:var(--md-error);background:var(--md-er
 .test-opt{display:flex;gap:10px;align-items:center;border:1px solid var(--md-outline-variant);border-radius:var(--r-m);padding:8px 12px;min-height:44px;cursor:pointer}
 .test-opt input{accent-color:var(--md-primary);width:18px;height:18px;margin:0;flex:none}
 .test-opt:has(input:focus-visible){outline:2px solid var(--md-secondary);outline-offset:2px}
+
+/* Wissenscheck (aufgaben.js) */
+.wc-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.wc-tabs button{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px solid var(--md-outline);border-radius:var(--r-s);background:transparent;color:var(--md-on-surface-variant);font-size:.875rem;font-weight:500;cursor:pointer;position:relative;isolation:isolate;overflow:hidden}
+.wc-tabs button::before{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .2s var(--ease);z-index:-1}
+.wc-tabs button:hover::before{opacity:.08}
+.wc-tabs button[aria-pressed="true"]{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}
+.wc-tab-n{font-size:.75rem;font-weight:400}
+.wc-p{margin-left:auto;font-weight:400;color:var(--md-on-surface-variant);white-space:nowrap}
+.wc-opts{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.wc-opts legend{padding:0;margin-bottom:8px}
+.wc-rf{flex-direction:row;flex-wrap:wrap}
+.wc-rf .test-opt{flex:1 1 140px}
+.wc-material{border-left:4px solid var(--md-tertiary);background:var(--md-surface-container);border-radius:0 var(--r-m) var(--r-m) 0;padding:10px 14px;font-size:.875rem;line-height:1.25rem}
+.wc-zahl input{width:9em;font-variant-numeric:tabular-nums}
+.wc-zahl input.right{background:var(--md-ok-container);color:var(--md-on-ok-container)}
+.wc-zahl input.wrong{background:var(--md-error-container);color:var(--md-on-error-container)}
+.wc-reihe{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:schritt}
+.wc-schritt{display:flex;align-items:center;gap:10px;border:1px solid var(--md-outline-variant);border-radius:var(--r-m);padding:4px 4px 4px 12px;min-height:48px;background:var(--md-surface);counter-increment:schritt}
+.wc-schritt::before{content:counter(schritt) ".";font-weight:600;min-width:1.4em;color:var(--md-primary)}
+.wc-schritt>span:first-of-type{flex:1;font-size:.875rem;line-height:1.25rem;padding:6px 0}
+.wc-schritt.right,.wc-zu-k.right{background:var(--md-ok-container);color:var(--md-on-ok-container);border-color:transparent}
+.wc-schritt.wrong,.wc-zu-k.wrong{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
+.wc-schritt:is(.right,.wrong)::before{color:inherit}
+.wc-schritt:is(.right,.wrong){padding-right:12px}
+.wc-pfeile{display:flex;flex:none}
+.wc-zu{display:flex;flex-direction:column;gap:8px}
+.wc-zu-k{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border:1px solid var(--md-outline-variant);border-radius:var(--r-m);padding:8px 12px;font-size:.875rem;line-height:1.25rem}
+.wc-zu-k>span{flex:1 1 180px}
+.wc-zu-k select{flex:0 1 auto;max-width:100%}
+.wc-eh{border:1px solid var(--md-outline-variant);border-radius:var(--r-m);padding:12px 14px;background:var(--md-surface-container-lowest)}
+.wc-eh .title-s,.wc-hinweise .title-s{display:flex;align-items:center;gap:6px}
+.wc-eh ol,.wc-eh ul,.wc-hinweise ul{margin:4px 0 0;padding-left:1.4em}
+.wc-hinweise{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container);border-radius:var(--r-m);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.wc-hinweise .muted{color:inherit}
+.wc-hinweise .wc-gut{list-style:none;padding:0;font-size:.875rem;display:flex;flex-direction:column;gap:4px}
+.wc-gut li{display:flex;gap:6px;align-items:flex-start}
+.wc-gut li::before{content:"check_circle";font-family:"Material Symbols Rounded";font-size:18px;line-height:1.25rem;font-feature-settings:"liga";flex:none}
+.wc-erg{display:flex;flex-direction:column;gap:6px}
+.wc-balken{height:8px;border-radius:var(--r-full);background:var(--md-surface-container-highest);overflow:hidden}
+.wc-balken span{display:block;height:100%;background:var(--md-primary);border-radius:inherit;transition:width .4s var(--ease)}
+.wc-ki{white-space:pre-wrap;font-family:var(--mono);font-size:.75rem;line-height:1.125rem;max-height:320px;overflow:auto;margin:0;background:var(--md-surface-container-lowest);color:var(--md-on-surface);border-radius:var(--r-s);padding:8px}
 
 /* Druckansicht der Lernraum-Antworten (schwarz auf weiß) */
 #druck{display:none}

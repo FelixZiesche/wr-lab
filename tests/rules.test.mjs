@@ -125,3 +125,19 @@ test('Antworten an die Wand: nur eigene, begrenzt, nur im offenen Raum, lesen nu
   await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ open: false }));
   await assertFails(ref('schueler', 'schueler_zu').set(antwort('schueler', 'zu')));
 });
+
+test('Wissenscheck und KI-Coach: nur Punkte als kurze Zeichenkette, Link nur von der Lehrkraft', async () => {
+  const ich = db('schueler').doc(`rooms/${CODE}/players/schueler`);
+  await assertSucceeds(ich.set({ wc: 'a5-0--9a' }, { merge: true }));
+  await assertSucceeds(ich.set({ wc: '' }, { merge: true }));
+  await assertFails(ich.set({ wc: 'Meine Antwort: weil die Preise steigen' }, { merge: true }));
+  await assertFails(ich.set({ wc: 'a'.repeat(61) }, { merge: true }));
+  await assertFails(ich.set({ wc: 7 }, { merge: true }));
+  // AIS.chat-Link: nur https, begrenzt, nur die Lehrkraft
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: 'https://chat.example.de/szenario/abc123' }));
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: '' }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: 'javascript:alert(1)' }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: 'https://x.de/' + 'a'.repeat(300) }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: 'https://x.de/mit leerzeichen' }));
+  await assertFails(db('schueler').doc(`rooms/${CODE}`).update({ ki: 'https://boese.example/' }));
+});
