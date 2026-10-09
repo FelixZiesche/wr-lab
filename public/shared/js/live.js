@@ -1,18 +1,21 @@
-// Live-Klassenraum über Firebase (Firestore + anonyme Anmeldung).
+// Verbindung zum Server für den Lernraum über Firebase (Firestore + anonyme Anmeldung).
 // Das ist die einzige Datei, die Firebase kennt. Wer Firebase gegen eine andere Lösung tauschen will,
 // ersetzt nur diese Datei und behält die Schnittstelle bei:
 //
 //   connect()                      → Promise mit dem Live-Objekt, oder null, wenn kein Live-Modus möglich ist
 //   live.uid                       → Kennung dieses Geräts
 //   live.createRoom(topic, gameId) → neuer Raumcode (6 Zeichen aus ABCDEFGHJKLMNPQRSTUVWXYZ23456789)
-//   live.getRoom(code)             → Raumdaten {owner, open, topic, gameId, round, phase, decisions} oder null
+//   live.getRoom(code)             → Raumdaten oder null: {owner, open, topic, gameId, round, phase, decisions}
+//                                    und für den Lernraum {pause, ziel, zielN, gesperrt}
 //   live.updateRoom(code, patch)   → nur das Gerät, das den Raum erstellt hat
 //   live.watchRoom(code, cb)       → cb(raum oder null), gibt eine Abmeldefunktion zurück
-//   live.watchPlayers(code, cb)    → cb([{uid, nick, fig, r, ph, votes, checks, choices, stats, joinedAt}])
+//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, fig, r, ph, votes, checks, choices, stats, joinedAt}])
 //   live.watchMe(code, cb)         → cb(eigener Eintrag existiert: true/false)
 //   live.joinRoom(code, data)      → eigenen Eintrag anlegen
 //   live.updatePlayer(code, data)  → eigenen Eintrag ändern
 //   live.kick(code, uid)           → Eintrag entfernen (Lehrkraft oder man selbst)
+//   live.sendAnswer(code, aufgabe, text) → eigene Antwort „an die Wand“ schicken (überschreibt die vorige)
+//   live.watchAnswers(code, cb)    → cb([{uid, aufgabe, text, at}]), nur für die Lehrkraft
 //   live.closeRoom(code)           → Raum beenden: alle sehen „beendet“, danach werden alle Daten gelöscht
 //
 // Die Zugangsdaten kommen automatisch von Firebase Hosting (/__/firebase/init.json).
@@ -75,7 +78,8 @@ async function init() {
         const code = newCode();
         const snap = await F.getDoc(roomRef(code));
         if (snap.exists()) continue;
-        await F.setDoc(roomRef(code), { owner: uid, open: true, topic, gameId, round: 0, phase: 'lobby', decisions: [], createdAt: F.serverTimestamp(), expireAt: expire() });
+        await F.setDoc(roomRef(code), { owner: uid, open: true, topic, gameId, round: 0, phase: 'lobby', decisions: [],
+          pause: false, ziel: '', zielN: 0, gesperrt: [], createdAt: F.serverTimestamp(), expireAt: expire() });
         return code;
       }
       throw new Error('Kein freier Code gefunden');
@@ -97,12 +101,20 @@ async function init() {
     joinRoom: (code, data) => F.setDoc(playerRef(code), { ...data, joinedAt: F.serverTimestamp(), updatedAt: F.serverTimestamp(), expireAt: expire() }),
     updatePlayer: (code, data) => F.setDoc(playerRef(code), { ...data, updatedAt: F.serverTimestamp() }, { merge: true }),
     kick: (code, id) => F.deleteDoc(playerRef(code, id)),
+    sendAnswer: (code, aufgabe, text) => F.setDoc(F.doc(db, 'rooms', code, 'antworten', `${uid}_${aufgabe}`),
+      { uid, aufgabe, text, at: F.serverTimestamp(), expireAt: expire() }),
+    watchAnswers(code, cb) {
+      return F.onSnapshot(F.collection(db, 'rooms', code, 'antworten'),
+        s => cb(s.docs.map(d => d.data())), e => console.warn('Antworten', e));
+    },
     async closeRoom(code) {
       // Zuerst schließen, damit alle Geräte „beendet“ anzeigen, dann löschen.
-      // Die Einträge der Schüler müssen vor dem Raum weg, weil die Regeln dafür den Raum prüfen.
+      // Einträge und Antworten der Schüler müssen vor dem Raum weg, weil die Regeln dafür den Raum prüfen.
       await F.updateDoc(roomRef(code), { open: false, phase: 'closed' }).catch(() => {});
-      const s = await F.getDocs(F.collection(db, 'rooms', code, 'players'));
-      await Promise.all(s.docs.map(d => F.deleteDoc(d.ref)));
+      for (const sammlung of ['antworten', 'players']) {
+        const s = await F.getDocs(F.collection(db, 'rooms', code, sammlung));
+        await Promise.all(s.docs.map(d => F.deleteDoc(d.ref)));
+      }
       await F.deleteDoc(roomRef(code));
     }
   };

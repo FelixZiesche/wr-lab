@@ -83,3 +83,45 @@ test('Einträge lesen und entfernen: Schüler nur den eigenen, Lehrkraft alle', 
   await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}/players/kalle`).delete());
   await assertSucceeds(db('schueler').doc(`rooms/${CODE}/players/schueler`).delete());
 });
+
+test('Lernraum: Steuerfelder nur für die Lehrkraft und mit gültigen Typen', async () => {
+  await assertSucceeds(db('neu').doc('rooms/ABCDEP').set(room('neu', { pause: false, ziel: '', zielN: 0, gesperrt: [] })));
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ pause: true, ziel: 'preis', zielN: 3, gesperrt: ['phillips', 'quiz'] }));
+  await assertFails(db('schueler').doc(`rooms/${CODE}`).update({ pause: false }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ pause: 'ja' }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ ziel: 'x'.repeat(41) }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ gesperrt: Array(61).fill('a') }));
+});
+
+test('Lernraum: Beitritt ohne Figur, Ort begrenzt', async () => {
+  const { fig, ...ohneFigur } = player();
+  await assertSucceeds(db('neu').doc(`rooms/${CODE}/players/neu`).set({ ...ohneFigur, ort: 'preis' }));
+  await assertFails(db('neu2').doc(`rooms/${CODE}/players/neu2`).set({ ...ohneFigur, ort: 'x'.repeat(41) }));
+});
+
+test('Antworten an die Wand: nur eigene, begrenzt, nur im offenen Raum, lesen nur die Lehrkraft', async () => {
+  const antwort = (uid, aufgabe, extra = {}) => ({ uid, aufgabe, text: 'Weil die Preise sonst sinken.', at: new Date(), expireAt: new Date(), ...extra });
+  const ref = (uid, id) => db(uid).doc(`rooms/${CODE}/antworten/${id}`);
+  await assertSucceeds(ref('schueler', 'schueler_preis-wand').set(antwort('schueler', 'preis-wand')));
+  await assertSucceeds(ref('schueler', 'schueler_preis-wand').set(antwort('schueler', 'preis-wand', { text: 'Geändert.' })));
+  await assertFails(ref('schueler', 'fremd_preis-wand').set(antwort('schueler', 'preis-wand')));
+  await assertFails(ref('schueler', 'schueler_andere').set(antwort('schueler', 'preis-wand')));
+  await assertFails(ref('schueler', 'schueler_x').set(antwort('fremd', 'x')));
+  await assertFails(ref('schueler', 'schueler_lang').set(antwort('schueler', 'lang', { text: 'x'.repeat(1001) })));
+  await assertFails(ref('schueler', 'schueler_leer').set(antwort('schueler', 'leer', { text: '' })));
+  await assertFails(ref('schueler', 'schueler_Gross').set(antwort('schueler', 'Gross')));
+  await assertFails(ref('schueler', 'schueler_extra').set(antwort('schueler', 'extra', { nick: 'Testi' })));
+  // Wer nicht (mehr) im Raum ist, schreibt nichts an die Wand
+  await assertFails(ref('aussen', 'aussen_preis-wand').set(antwort('aussen', 'preis-wand')));
+  // Lesen: eigene ja, fremde und Liste nur die Lehrkraft
+  await env.withSecurityRulesDisabled(ctx => ctx.firestore().doc(`rooms/${CODE}/antworten/kalle_preis-wand`).set(antwort('kalle', 'preis-wand')));
+  await assertSucceeds(ref('schueler', 'schueler_preis-wand').get());
+  await assertFails(ref('schueler', 'kalle_preis-wand').get());
+  await assertFails(db('schueler').collection(`rooms/${CODE}/antworten`).get());
+  await assertSucceeds(db('lehrkraft').collection(`rooms/${CODE}/antworten`).get());
+  await assertFails(ref('schueler', 'kalle_preis-wand').delete());
+  await assertSucceeds(ref('lehrkraft', 'kalle_preis-wand').delete());
+  // Geschlossener Raum: keine neuen Antworten mehr
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ open: false }));
+  await assertFails(ref('schueler', 'schueler_zu').set(antwort('schueler', 'zu')));
+});

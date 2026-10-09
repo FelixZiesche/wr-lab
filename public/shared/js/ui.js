@@ -9,9 +9,6 @@ export const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':
 /** Liest (ein Argument) oder schreibt (zwei Argumente) einen Wert im localStorage dieses Browsers. */
 export function store(k,v){try{ if(v===undefined){return JSON.parse(localStorage.getItem(k)||'null')} localStorage.setItem(k,JSON.stringify(v)) }catch(e){return null}}
 
-/** Aufklappbarer Kasten mit Hinweisen für die Lehrkraft. */
-export function teacher(items){return `<details class="teacher"><summary><span class="ms sm">co_present</span>Für die Lehrkraft</summary><div><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></div></details>`}
-
 /* ---------- Foto mit Infopunkten ----------
    p = {src, alt, credit, hs:[{x, y, t, d}]}  (x, y in Prozent)
    key = Speicherschlüssel für die bereits entdeckten Infopunkte, z. B. 'ms6-hs-0' */
@@ -26,3 +23,11 @@ export function bindPhoto(root){$$('.photo',root).forEach(fig=>{
     info.hidden=false;info.innerHTML=`<span class="ms">info</span><div><p class="title-s">${esc(h.t)}</p><p class="small" style="margin-top:4px">${esc(h.d)}</p></div><button class="icon-btn" type="button" aria-label="Infopunkt schließen"><span class="ms">close</span></button>`;
     $('button',info).addEventListener('click',()=>{info.hidden=true;b.setAttribute('aria-expanded','false');b.focus()});upd()}));
   upd()})}
+
+/** Kurzer Hinweis am unteren Rand (M3-Snackbar), verschwindet nach einigen Sekunden. */
+let snackT=null;
+export function zeigeHinweis(text){
+  let el=document.getElementById('snackbar');
+  if(!el){el=document.createElement('div');el.id='snackbar';el.className='snackbar';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.append(el)}
+  el.textContent=text;el.classList.add('zeigen');clearTimeout(snackT);snackT=setTimeout(()=>el.classList.remove('zeigen'),4500);
+}

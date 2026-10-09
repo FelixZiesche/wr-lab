@@ -3,6 +3,7 @@ rules_version = '2';
 // - Jeder Raum gehört dem Gerät der Lehrkraft (anonyme Anmeldung), nur sie steuert ihn.
 // - Ein Raum gehört zu genau einem Thema (Feld topic), das sich nachträglich nicht ändern lässt.
 // - Schüler schreiben nur ihren eigenen Eintrag und sehen nur den Raum, nicht die anderen.
+// - Antworten „an die Wand“ sieht nur die Lehrkraft; jeder schreibt nur seine eigenen, solange er im Raum ist.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 service cloud.firestore {
@@ -16,7 +17,7 @@ service cloud.firestore {
     function isTime(t) { return t is timestamp; }
 
     function validRoom(d) {
-      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','createdAt','expireAt'])
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','createdAt','expireAt'])
         && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
         && d.owner is string
         && d.open is bool
@@ -25,14 +26,19 @@ service cloud.firestore {
         && d.round is int && d.round >= 0 && d.round <= 30
         && d.phase is string && d.phase.size() <= 20
         && d.decisions is list && d.decisions.size() <= 30
+        && (!('pause' in d) || d.pause is bool)
+        && (!('ziel' in d) || (d.ziel is string && d.ziel.size() <= 40))
+        && (!('zielN' in d) || (d.zielN is int && d.zielN >= 0 && d.zielN <= 100000))
+        && (!('gesperrt' in d) || (d.gesperrt is list && d.gesperrt.size() <= 60))
         && (!('createdAt' in d) || isTime(d.createdAt))
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
     function validPlayer(d) {
-      return d.keys().hasOnly(['nick','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+      return d.keys().hasOnly(['nick','ort','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
         && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
-        && isSlug(d.fig, 24)
+        && (!('ort' in d) || (d.ort is string && d.ort.size() <= 40))
+        && (!('fig' in d) || isSlug(d.fig, 24))
         && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
         && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))
         && (!('votes' in d) || isSmallMap(d.votes))
@@ -41,6 +47,15 @@ service cloud.firestore {
         && (!('stats' in d) || isSmallMap(d.stats))
         && (!('joinedAt' in d) || isTime(d.joinedAt))
         && (!('updatedAt' in d) || isTime(d.updatedAt))
+        && (!('expireAt' in d) || isTime(d.expireAt));
+    }
+
+    function validAntwort(d) {
+      return d.keys().hasOnly(['uid','aufgabe','text','at','expireAt'])
+        && d.uid == request.auth.uid
+        && isSlug(d.aufgabe, 40)
+        && d.text is string && d.text.size() > 0 && d.text.size() <= 1000
+        && isTime(d.at)
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
@@ -64,6 +79,18 @@ service cloud.firestore {
           && room(code).open == true
           && validPlayer(request.resource.data);
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(code));
+      }
+
+      // Dokument-ID: <uid>_<aufgabe>, also eine Antwort pro Schüler und Aufgabe
+      match /antworten/{id} {
+        allow get: if signedIn() && (resource.data.uid == request.auth.uid || isOwner(code));
+        allow list: if isOwner(code);
+        allow create, update: if signedIn()
+          && id == request.auth.uid + '_' + request.resource.data.aufgabe
+          && room(code).open == true
+          && exists(/databases/$(database)/documents/rooms/$(code)/players/$(request.auth.uid))
+          && validAntwort(request.resource.data);
+        allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isOwner(code));
       }
     }
   }
