@@ -1,13 +1,13 @@
 # WR-Lab – Standards für jede Sitzung
 
-WR-Lab ist eine Website mit interaktiven Lernwerkstätten für **Wirtschaft und Recht in der Oberstufe in Thüringen**. Sie wird über **Firebase Hosting** veröffentlicht (Projekt-ID `wr-lab`). Der Lernraum (Live-Klassenraum) nutzt Firestore und die anonyme Anmeldung. Diese Regeln gelten für jede Änderung, auch für kleine.
+WR-Lab ist eine Website mit interaktiven Lernwerkstätten für **Wirtschaft und Recht in den Klassenstufen 9 bis 12 in Thüringen**. Sie wird über **Firebase Hosting** veröffentlicht (Projekt-ID `wr-lab`). Der Lernraum (Live-Klassenraum) nutzt Firestore und die anonyme Anmeldung. Diese Regeln gelten für jede Änderung, auch für kleine.
 
 ## Aufbau
 
 ```
 public/                 nur dieser Ordner wird veröffentlicht
   index.html, start.js  Startseite mit Themenkarten
-  themen.js             Liste aller Themen (Startseite, Hinweis bei fremden Raumcodes)
+  themen.js             Liste aller Themen mit Klassenstufe (Startseite, Hinweis bei fremden Raumcodes)
   shared/               gemeinsam für alle Themen
     css/m3.css          Material Design 3: Farbrollen, Typografie, Komponenten, App-Shell
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
@@ -25,17 +25,30 @@ tests/                  Playwright-Tests und Regeltests (laufen gegen den Fireba
 
 Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http://127.0.0.1:5000), `npm test` (alle Tests, braucht Java 21).
 
+## Arbeitsweise
+
+- **Erst der Plan, dann bauen:** Vor einem neuen Thema oder einer größeren Änderung den Plan kurz vorstellen und auf die Freigabe der Lehrkraft warten. Der Plan nennt Klassenstufe, Aufbau (Werkstätten oder Lektionen), Planspiel ja oder nein und neue Bausteine in `shared/`. Kleine Korrekturen direkt umsetzen.
+- **Lehrplan:** Lernbereich und Ziele aus dem Thüringer Lehrplan gibt die Lehrkraft vor, denn das Schulportal blockiert automatische Abrufe. Fehlt die Angabe, nachfragen statt raten.
+- **Pushen:** Ist `npm test` grün, direkt auf den Arbeitsbranch pushen, ohne nachzufragen.
+- **Veröffentlichen:** Pull Request nach `main` öffnen, er bekommt eine Vorschau-Adresse. Erst der Merge veröffentlicht auf https://wr-lab.web.app. Gemergt wird nur, wenn die Lehrkraft es sagt.
+- **Geheime Schlüssel** trägt die Lehrkraft selbst in GitHub ein. Nie im Chat danach fragen.
+
 ## Sprache und Inhalte
 
 - **Deutsch.** Schüler werden mit „du“ oder „ihr“ angesprochen.
 - **Nie gendern:** kein Sternchen, kein Doppelpunkt, kein Binnen-I, keine Doppelnennung wie „Schülerinnen und Schüler“. Geschrieben wird „die Schüler“, „die Lehrkraft“, „die Verbraucher“.
 - **Nie „SuS“** – immer „Schüler“ ausschreiben.
 - **Schülernah für 15- bis 19-Jährige:** kurze Sätze und konkrete Beispiele aus ihrem Alltag (Ausbildungsvergütung, Handyvertrag, Deutschlandticket, Führerschein, erster Job, Streaming).
+- **Abwechslungsreich und faszinierend:** Jedes Thema soll die Schüler packen und neugierig machen.
+  - Aufgabenformen abwechseln: rechnen, schieben, zuordnen, abstimmen, entscheiden, an die Wand schreiben, Planspiel. Zwei Werkstätten nacheinander haben möglichst nie dieselbe Form.
+  - Mit etwas Überraschendem einsteigen: eine verblüffende Zahl, ein Rätsel, ein Fall mit offenem Ende, „Was würdest du tun?“.
+  - Lieber ausprobieren lassen als erklären: Die Schüler treffen Entscheidungen und sehen die Folgen.
 - **Aktuelle virale Inhalte:** Trends, Memes, Jugendwörter, Social-Media-Formate und Ereignisse, über die gerade alle reden. Sie müssen sachlich richtig eingesetzt werden. Erfundene Posts tragen den Hinweis „fiktiver Beitrag“, erfundene Szenarien den Hinweis „Szenario“.
 - **Regionalbezug:** Beispiele, Figuren, Orte und Fotos möglichst aus Apolda, Jena, Weimar, Erfurt oder anderswo in Thüringen.
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
 - **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt.
-- **Lehrplanbezug:** Der Thüringer Lehrplan Wirtschaft und Recht (Oberstufe) steht in der README in der Themenübersicht.
+- **Klassenstufen:** Jedes Thema gehört zu einer Klassenstufe: 9, 10, 11 oder 12 (Feld `stufe` in `themen.js`). Die Startseite sortiert die Themen danach. Sprache, Tempo und Anspruch passen zur Stufe: in Klasse 9 kürzere Texte und mehr Hilfen, in Klasse 11 und 12 mit Blick auf das Abitur.
+- **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht stehen in der README in der Themenübersicht.
 
 ## Design: Material Design 3
 
@@ -122,14 +135,16 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
 6. **Inhalte prüfen:**
    - nie gendern, kein „SuS“
    - schülernah, mit aktuellen Anlässen und Regionalbezug
+   - abwechslungsreich: Aufgabenformen wechseln, Einstieg mit Überraschung
+   - Anspruch passend zur Klassenstufe
    - Daten mit Stand und Quelle, Lehrplanbezug in der README
    - keine Hinweise „Für die Lehrkraft“ auf der Seite
 7. **Fotos** in `img/` mit Bildnachweis am Bild, in der Quellenliste und in der README.
-8. **Startseite:** Eintrag in `public/themen.js` mit `id`, `titel`, `bereich`, `text`, `stichworte`, `bild`, `alt` und `foto`.
+8. **Startseite:** Eintrag in `public/themen.js` mit `id`, `titel`, `stufe` (9, 10, 11 oder 12), `bereich`, `text`, `stichworte`, `bild`, `alt` und `foto`.
 9. **Tests:** `tests/<id>.spec.mjs` nach dem Muster der Sechseck-Tests:
    - Navigation
    - alle Werkstätten öffnen
    - Planspiel allein und live, falls vorhanden
    - Lernraum: eine Antwort an die Wand schicken, Lehrerpanel nur bei der Lehrkraft (Muster: `tests/lernraum.spec.mjs`)
-10. **README:** Thema in der Übersicht ergänzen und Bildnachweise eintragen.
+10. **README:** Thema mit Klassenstufe und Lehrplanbezug in der Übersicht ergänzen und Bildnachweise eintragen.
 11. **Abschluss:** `npm test` muss grün sein. Danach Screenshots prüfen (390 px und 1280 px, hell und dunkel) und erst dann committen.

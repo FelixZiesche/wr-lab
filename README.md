@@ -1,21 +1,23 @@
 # WR-Lab
 
-Interaktive Lernwerkstätten für **Wirtschaft und Recht in der Oberstufe** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Alles lässt sich allein bearbeiten oder als ganze Klasse im **Lernraum**: Die Lehrkraft öffnet einen Raum, die Schüler treten mit Code oder QR-Code bei, schicken Antworten an die Wand und spielen das Planspiel gemeinsam.
+Interaktive Lernwerkstätten für **Wirtschaft und Recht in den Klassen 9 bis 12** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Alles lässt sich allein bearbeiten oder als ganze Klasse im **Lernraum**: Die Lehrkraft öffnet einen Raum, die Schüler treten mit Code oder QR-Code bei, schicken Antworten an die Wand und spielen das Planspiel gemeinsam.
 
 Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
 ## Themen
 
-| Thema | Inhalt | Lehrplan Thüringen |
-| --- | --- | --- |
-| [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und Abi-Check. | *noch ergänzen* |
+Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und 12.
+
+| Klasse | Thema | Inhalt | Lehrplan Thüringen |
+| --- | --- | --- | --- |
+| 11 | [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und Abi-Check. | *noch ergänzen* |
 
 ## Aufbau
 
 ```
 public/                 wird veröffentlicht
   index.html, start.js  Startseite mit Themenkarten
-  themen.js             Liste aller Themen
+  themen.js             Liste aller Themen mit Klassenstufe
   shared/               gemeinsam für alle Themen
     css/m3.css          Material Design 3 (Farbrollen, Google Sans, Komponenten, App-Shell)
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
@@ -132,12 +134,12 @@ Kurzfassung (die vollständige Checkliste steht in [CLAUDE.md](CLAUDE.md)):
 1. Ordner `public/<id>/` anlegen, z. B. `public/kaufvertrag/`, mit `index.html`, `<id>.css`, `<id>.js` und `img/`. Als Vorlage dient `public/sechseck/`.
 2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen, Lückentext, Test) kommen aus `shared/js/aufgaben.js`. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel.
 3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`, live läuft es im Lernraum des Themas.
-4. Das Thema in `public/themen.js` eintragen. Es erscheint dann als Karte auf der Startseite.
+4. Das Thema mit seiner Klassenstufe (`stufe`: 9, 10, 11 oder 12) in `public/themen.js` eintragen. Es erscheint dann auf der Startseite als Karte unter dieser Klassenstufe.
 5. Tests in `tests/<id>.spec.mjs` ergänzen, `npm test` ausführen, Pull Request öffnen und die Vorschau prüfen.
 
 Der Lernraum und die Sicherheitsregeln funktionieren für jedes Thema ohne weitere Einrichtung: Jeder Raum speichert sein Thema. Wer einen Code auf der falschen Themenseite eingibt, bekommt einen Hinweis mit Link zum richtigen Thema.
 
-In einer Sitzung mit Claude Code reicht ein Auftrag wie „Leg das Thema Kaufvertrag an“. Die Standards aus `CLAUDE.md` gelten dann automatisch.
+In einer Sitzung mit Claude Code reicht ein Auftrag wie „Leg das Thema Kaufvertrag für Klasse 10 an, Lernbereich …“. Die Standards aus `CLAUDE.md` gelten dann automatisch, und Claude stellt zuerst den Plan vor.
 
 ## Lokal entwickeln und testen
 
