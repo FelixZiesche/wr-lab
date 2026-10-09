@@ -23,6 +23,7 @@ import { bindAufgaben } from './aufgaben.js';
  *   hash:        hash => Bereich, falls das Thema eigene Sprungadressen hat (z. B. #join=CODE)
  * }
  * Werkstätten: tool({id, ch, title, sub, goals, hinweise:[…], html(), init(root)}); hinweise erscheinen nur im Lehrerpanel.
+ * Überall auf der Seite öffnet ein Knopf mit data-gehzu="id" die Werkstatt oder den Bereich id.
  */
 export function createWerkstatt(cfg){
   const P=cfg.speicher, DEST=cfg.bereiche, CH=cfg.kapitel, MS=cfg.merksaetze, GLOSS=cfg.glossar||[];
@@ -168,7 +169,11 @@ export function createWerkstatt(cfg){
     if(!hw.length&&!auf.length)return '';
     return `<details class="lehrerpanel"><summary><span class="ms sm">co_present</span>Lehrerpanel <span class="small muted">nur auf deinem Gerät, im Beamer-Modus ausgeblendet</span></summary><div class="stack">
       ${hw.length?`<div><p class="title-s">Hinweise</p><ul>${hw.map(h=>`<li>${h}</li>`).join('')}</ul></div>`:''}
-      ${auf.length?`<div class="stack"><p class="title-s">Erwartungshorizont und Lösungen</p>${auf.map(a=>`<div><p class="small"><b>${a.frage}</b></p><ul class="small">${a.loesung.map(l=>`<li>${l}</li>`).join('')}</ul></div>`).join('')}</div>`:''}</div></details>`;
+      ${auf.length?`<div class="stack"><p class="title-s">Erwartungshorizont und Lösungen</p>${auf.map(a=>`<div><p class="small"><b>${a.frage}</b></p><ul class="small">${a.loesung.map(l=>`<li>${l}</li>`).join('')}</ul></div>`).join('')}</div>`:''}
+      ${auf.filter(a=>a.ki).map(a=>`<div class="stack"><p class="title-s">KI-Coach mit AIS.chat</p>
+        <ol class="small"><li>Anweisung kopieren und in AIS.chat ein Lernszenario damit anlegen.</li><li>Das Lernszenario teilen und den Link im Lernraum-Dashboard unter „KI-Coach“ einfügen.</li><li>Dann erscheint bei den offenen Aufgaben der Knopf „KI-Coach“.</li></ol>
+        <details class="hilfe"><summary><span class="ms sm">smart_toy</span>Anweisung anzeigen</summary><pre class="wc-ki" id="ki-${esc(a.id)}">${esc(a.ki)}</pre></details>
+        <div class="row"><button class="btn small" type="button" data-kopiere="#ki-${esc(a.id)}"><span class="ms">content_copy</span>Anweisung kopieren</button></div></div>`).join('')}</div></details>`;
   }
   function aktualisiereLehrerpanel(){
     const imModal=!modal.hidden&&offenesTool,d=DEST.find(x=>x.id===curView);
@@ -202,6 +207,9 @@ export function createWerkstatt(cfg){
       vorbereiten:()=>TOOLS.forEach(t=>{try{imTool(t.id,()=>t.html())}catch(e){console.warn(e)}})});
     raum.on(raumGeaendert);raumGeaendert('start');
     $$('[data-raum-btn]').forEach(b=>b.addEventListener('click',()=>raum.oeffneDialog()));
+    // Knöpfe mit data-gehzu (z. B. „Wiederholen“ im Wissenscheck) öffnen eine Werkstatt oder einen Bereich
+    // (gesperrte Werkstätten bleiben gesperrt)
+    document.addEventListener('click',e=>{const b=e.target.closest('[data-gehzu]');if(!b)return;e.preventDefault();const id=b.dataset.gehzu;if(DEST.find(d=>d.id===id&&!d.tool))go(id);else openTool(id)});
     const raumCode=h=>{const m=/^raum=([A-Za-z0-9]+)/.exec(h);return m?normCode(m[1]):''};
     const own=h=>cfg.hash?cfg.hash(h):null;
     window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1),c=raumCode(h);if(c){go('start');raum.oeffneDialog(c);return}const d=own(h);if(d)go(d)});

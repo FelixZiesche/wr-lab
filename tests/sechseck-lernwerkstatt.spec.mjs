@@ -5,7 +5,7 @@ const BEREICHE = {
   start: ['grundlagen'],
   ziele: ['preis', 'beschaeftigung', 'wachstum', 'aussen', 'verteilung', 'umwelt'],
   abwaegen: ['beziehungen', 'phillips', 'politik', 'check'],
-  wissen: ['quiz', 'sichern']
+  wissen: ['sichern', 'wissenscheck']
 };
 
 test('Startansicht mit Sechseck, Kennzahlen und Navigation', async ({ page }) => {

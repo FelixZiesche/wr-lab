@@ -28,8 +28,10 @@ export const HINWEISE={
     'Achtung Akteure: Die EZB ist unabhängig und gehört nicht zur Bundesregierung – gut für eine Nachfrage.'],
   check:['Einstieg: Sechseck 2019 und 2023 vergleichen; die Schüler beschreiben die Verformung und nennen Ursachen (Corona, Energiekrise).',
     'Wichtig: Die Punkteskala ist eine didaktische Setzung, keine amtliche Statistik – genau das ist Lerngegenstand.'],
-  quiz:['Als Quiz-Battle am Beamer: Teams stimmen per Handzeichen ab, dann Auflösung.',
-    'Die Reihenfolge der Antworten wird bei jedem Start gemischt.'],
+  wissenscheck:['Abschluss der Reihe oder Vorbereitung auf eine Leistungskontrolle: drei Stufen nach den Anforderungsbereichen I bis III, insgesamt 31 Aufgaben. Gut in Etappen: Grundlagen und Anwenden im Unterricht, Beurteilen als Hausaufgabe.',
+    'Im Lernraum siehst du im Dashboard unter „Wissenscheck“ die Punkte der Klasse pro Stufe und die schwierigsten Aufgaben. Übertragen werden nur Punkte, keine Texte.',
+    'Offene Aufgaben: Die Schüler holen sich zuerst ein automatisches Feedback ohne KI, sehen nach „Fertig“ den Erwartungshorizont und schätzen ihre Punkte selbst ein. Die Selbsteinschätzung ist bewusst Teil der Aufgabe – Stichproben im Plenum besprechen.',
+    'Die Fragen des früheren Abi-Checks sind in den Stufen Grundlagen und Anwenden enthalten.'],
   sichern:['Geeignet als Abschluss der Reihe oder als Wiederholung vor einer Leistungskontrolle.',
     'Der Kurztest hat einen Versuch pro Durchgang; über „Noch einmal“ können die Schüler neu starten.'],
   leben:['Lernraum: Oben über das Symbol „Lernraum“ oder hier unter „Lehrkraft (Beamer)“ einen Raum öffnen. Die Schüler treten mit Code oder QR-Code bei, wählen einen Spitznamen und eine Figur. Ohne Konto, ohne App.',
@@ -121,6 +123,12 @@ export const WAND={
     erwartung:['Persönliche Gewichtung mit Bezug zum eigenen Alltag begründet (z. B. Ausbildung, Miete, Klima).',
       'Zielbeziehung benannt (Konflikt oder Harmonie).',
       'Erkannt: Gewichtung ist eine Wertentscheidung – darum streitet die Politik.']},
+  wissenscheck:{id:'wissenscheck-wand',frage:'Bei welcher Aufgabe im Wissenscheck warst du am unsichersten – und was willst du dir deshalb noch einmal ansehen?',
+    anfaenge:['Am unsichersten war ich bei Aufgabe …, weil …','Noch einmal ansehen will ich …','Leichter fiel mir …'],
+    tipp:'Schau in deine Auswertung: Auf welcher Stufe hast du die wenigsten Punkte?',
+    erwartung:['Konkrete Aufgabe oder Stufe benannt und die Unsicherheit begründet.',
+      'Passende Werkstatt oder passender Merksatz zum Wiederholen gewählt.',
+      'Erkannt, welche Stufe schwerfällt, z. B. beim Beurteilen ein fehlendes eigenes Urteil.']},
   leben:{id:'leben-wand',frage:'War eure Politik gerecht – und für wen? Begründe aus Sicht deiner Figur.',
     anfaenge:['Für meine Figur war die Politik …, weil …','Am meisten profitiert hat …','Ungerecht fand ich …'],
     erwartung:['Bezug zur eigenen Figur: Kontostand, Ziel, Stimmung.',
@@ -141,5 +149,6 @@ export const IMPULS={
   phillips:'Energiepreisschock 2026: Droht wieder Stagflation? Sammelt Argumente dafür und dagegen.',
   politik:'Haltet in 60 Sekunden eine „Regierungserklärung“: Warum ist euer Paket das richtige?',
   check:'Vergleicht zwei Messlatten von der Wand: Welche ist strenger – und wer würde sie wählen?',
-  sichern:'Blitzumfrage: Welches Ziel landet bei euch auf Platz 1 – und passt das zur aktuellen Politik?'
+  sichern:'Blitzumfrage: Welches Ziel landet bei euch auf Platz 1 – und passt das zur aktuellen Politik?',
+  wissenscheck:'Erklärt euch zu zweit gegenseitig die Aufgabe, bei der ihr am unsichersten wart. Wer es erklären kann, hat es verstanden.'
 };

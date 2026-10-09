@@ -4,6 +4,7 @@ rules_version = '2';
 // - Ein Raum gehört zu genau einem Thema (Feld topic), das sich nachträglich nicht ändern lässt.
 // - Schüler schreiben nur ihren eigenen Eintrag und sehen nur den Raum, nicht die anderen.
 // - Antworten „an die Wand“ sieht nur die Lehrkraft; jeder schreibt nur seine eigenen, solange er im Raum ist.
+// - Aus dem Wissenscheck kommen nur Punkte als kurze Zeichenkette (wc), nie Texte.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 service cloud.firestore {
@@ -17,7 +18,7 @@ service cloud.firestore {
     function isTime(t) { return t is timestamp; }
 
     function validRoom(d) {
-      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','createdAt','expireAt'])
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','createdAt','expireAt'])
         && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
         && d.owner is string
         && d.open is bool
@@ -30,14 +31,18 @@ service cloud.firestore {
         && (!('ziel' in d) || (d.ziel is string && d.ziel.size() <= 40))
         && (!('zielN' in d) || (d.zielN is int && d.zielN >= 0 && d.zielN <= 100000))
         && (!('gesperrt' in d) || (d.gesperrt is list && d.gesperrt.size() <= 60))
+        // Link zum geteilten Lernszenario in AIS.chat (KI-Coach), leer = aus
+        && (!('ki' in d) || (d.ki is string && d.ki.size() <= 300 && (d.ki == '' || d.ki.matches('^https://[^ ]+$'))))
         && (!('createdAt' in d) || isTime(d.createdAt))
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
     function validPlayer(d) {
-      return d.keys().hasOnly(['nick','ort','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+      return d.keys().hasOnly(['nick','ort','wc','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
         && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
         && (!('ort' in d) || (d.ort is string && d.ort.size() <= 40))
+        // Wissenscheck: ein Zeichen pro Aufgabe („-“ offen, „0“–„9“ Zehntel der Punkte, „a“ volle Punkte)
+        && (!('wc' in d) || (d.wc is string && d.wc.size() <= 60 && d.wc.matches('^[-0-9a]*$')))
         && (!('fig' in d) || isSlug(d.fig, 24))
         && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
         && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))

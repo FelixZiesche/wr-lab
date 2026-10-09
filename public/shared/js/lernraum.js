@@ -2,6 +2,7 @@
 // Die Lehrkraft öffnet den Raum, die Schüler treten mit Code und Spitznamen bei, ohne Konto.
 // Die Lehrkraft sieht, wer gerade wo arbeitet, sammelt Antworten „an der Wand“, hält alle Geräte an,
 // holt alle in eine Werkstatt, gibt Werkstätten frei und sieht in jeder Werkstatt das Lehrerpanel.
+// Aus dem Wissenscheck kommen nur Punkte (keine Texte); ein AIS.chat-Link der Lehrkraft schaltet den KI-Coach frei.
 // Die Verbindung läuft ausschließlich über live.js. Eingebunden wird der Lernraum von werkstatt.js.
 import { $, $$, esc, store } from './ui.js';
 import { connect } from './live.js';
@@ -15,7 +16,8 @@ export const linkZu=(code,art='raum')=>location.href.split('#')[0]+'#'+art+'='+c
 
 /* ---------- Verzeichnis der Aufgaben ----------
    Aufgaben mit Lösung oder Antwort melden sich hier an: {id, frage, loesung:[…], wand:true|false, tool}.
-   Das Lehrerpanel und die Druckansicht lesen daraus. */
+   Der Wissenscheck meldet zusätzlich check:{stufen, aufgaben:[{afb, p, kurz}]} und ki (Anweisung für AIS.chat).
+   Das Lehrerpanel, das Dashboard und die Druckansicht lesen daraus. */
 export const AUFGABEN=new Map();
 let aktuellesTool=null;
 /** Führt f aus und ordnet alle dabei angemeldeten Aufgaben der Werkstatt id zu. */
@@ -23,7 +25,7 @@ export function imTool(id,f){const alt=aktuellesTool;aktuellesTool=id;try{return
 export function registriere(def){AUFGABEN.set(def.id,{...def,tool:aktuellesTool||AUFGABEN.get(def.id)?.tool||null});return def}
 
 /* ---------- Sitzung ---------- */
-let cfg={}, L=null, s=null, z={raum:null,spieler:[],antworten:[]}, abos=[], ortT=null, gemeldet='';
+let cfg={}, L=null, s=null, z={raum:null,spieler:[],antworten:[]}, abos=[], ortT=null, gemeldet='', ergT=null, ergGemeldet='';
 const hoerer=new Set();
 const speichern=()=>store(cfg.speicher+'-raum',s);
 function melde(art){hoerer.forEach(f=>{try{f(art)}catch(e){console.warn(e)}})}
@@ -100,7 +102,7 @@ export const raum={
     const gleich=s&&s.rolle==='schueler'&&s.code===code;
     if(gleich)await L.updatePlayer(code,{nick});
     else await L.joinRoom(code,{nick,ort:String(cfg.ort?cfg.ort():'').slice(0,40)});
-    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{}};speichern();gemeldet='';
+    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{}};speichern();gemeldet='';ergGemeldet='';
     await anbinden();melde('start');return r;
   },
   async verlassen(){if(!s)return;const c=s.code;ende(null);try{await L.kick(c,L.uid)}catch(e){}},
@@ -114,6 +116,13 @@ export const raum={
     s.gesendet={...(s.gesendet||{}),[aufgabe]:text};speichern();melde('gesendet');
   },
   gesendet:aufgabe=>s&&s.gesendet?s.gesendet[aufgabe]:undefined,
+  /** Schüler: Punkte aus dem Wissenscheck melden, ein Zeichen pro Aufgabe (siehe aufgaben.js). */
+  sendeErgebnis(code){if(!s||s.rolle!=='schueler'||!L)return;clearTimeout(ergT);ergT=setTimeout(()=>{if(!s||code===ergGemeldet)return;ergGemeldet=code;L.updatePlayer(s.code,{wc:String(code).slice(0,60)}).catch(e=>console.warn('Wissenscheck',e))},800)},
+  /** Link zum geteilten Lernszenario in AIS.chat, den die Lehrkraft im Dashboard einträgt. */
+  kiLink:()=>(s&&z.raum&&z.raum.ki)||'',
+  setzeKi:url=>steuern({ki:url}),
+  /** Titel einer Werkstatt oder eines Bereichs. */
+  titel:id=>ortName(id),
   pause:b=>steuern({pause:!!b}),
   holen:id=>steuern({ziel:id,zielN:((z.raum&&z.raum.zielN)||0)+1}),
   sperren:ids=>steuern({gesperrt:ids}),
@@ -188,7 +197,9 @@ function dashboard(box){
       <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="lr-alle-frei"><span class="ms">lock_open</span>Alle freigeben</button><button class="btn small" type="button" id="lr-alle-zu"><span class="ms">lock</span>Alle sperren</button></div></details>
   </section>
   <section class="panel stack" id="lr-teil"></section>
-  <section class="panel stack" id="lr-antw"></section></div>`;
+  <section class="panel stack" id="lr-wc" hidden></section>
+  <section class="panel stack" id="lr-antw"></section>
+  ${kiHTML()}</div>`;
   $('#lr-beamer',box).addEventListener('click',()=>raum.setBeamer(!raum.beamer()));
   $('#lr-ende',box).addEventListener('click',()=>{$('#lr-ende-q',box).hidden=false});
   $('#lr-ende-n',box).addEventListener('click',()=>{$('#lr-ende-q',box).hidden=true});
@@ -199,6 +210,13 @@ function dashboard(box){
   $('#lr-alle-frei',box).addEventListener('click',()=>raum.sperren([]));
   $('#lr-alle-zu',box).addEventListener('click',()=>raum.sperren(werk.map(o=>o.id)));
   $('#lr-frei-liste',box).addEventListener('click',e=>{const b=e.target.closest('[data-frei]');if(!b)return;const id=b.dataset.frei,g=new Set((z.raum&&z.raum.gesperrt)||[]);g.has(id)?g.delete(id):g.add(id);raum.sperren([...g])});
+  if($('#lr-ki',box)){
+    const inp=$('#lr-ki-link',box),st=$('#lr-ki-st',box);
+    $('#lr-ki-ok',box).addEventListener('click',async()=>{const url=inp.value.trim();
+      if(!/^https:\/\/[^ ]+$/.test(url)||url.length>300){st.textContent='Bitte den vollständigen Link aus AIS.chat einfügen. Er beginnt mit https://.';return}
+      await raum.setzeKi(url);st.textContent='Gespeichert. Die Schüler sehen jetzt bei offenen Aufgaben den Knopf „KI-Coach“.'});
+    $('#lr-ki-weg',box).addEventListener('click',async()=>{await raum.setzeKi('');inp.value='';st.textContent='Entfernt. Der Knopf „KI-Coach“ ist ausgeblendet.'});
+  }
   aktualisiere(box);
 }
 
@@ -214,11 +232,43 @@ function aktualisiere(box){
   $('#lr-teil',box).innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Teilnehmer</h3><span class="small muted">${n} ${n===1?'Person':'Personen'} im Raum</span></div>
     ${n?`<div class="tbl-wrap"><table><thead><tr><th>${beamer?'Gerät':'Spitzname'}</th><th>Gerade in</th><th class="r">Antworten</th>${beamer?'':'<th></th>'}</tr></thead><tbody>${z.spieler.map(p=>`<tr><td>${esc(raum.name(p.uid))}</td><td>${esc(ortName(p.ort))}</td><td class="r num">${anzahl(p.uid)}</td>${beamer?'':`<td class="r"><button class="icon-btn" type="button" data-lr-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen"><span class="ms">person_remove</span></button></td>`}</tr>`).join('')}</tbody></table></div>`:'<p class="small muted">Noch niemand im Raum.</p>'}`;
   $$('[data-lr-kick]',box).forEach(b=>b.addEventListener('click',()=>raum.kick(b.dataset.lrKick).catch(e=>console.warn(e))));
+  wissenscheck($('#lr-wc',box),beamer);
+  if($('#lr-ki-weg',box))$('#lr-ki-weg',box).hidden=!r.ki;
   const wand=[...AUFGABEN.values()].filter(a=>a.wand);
   $('#lr-antw',box).innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Antworten an der Wand</h3><button class="btn small" type="button" id="lr-druck"><span class="ms">print</span>Alle Antworten drucken</button></div>
     <div class="tbl-wrap"><table><tbody>${wand.map(a=>{const k=(antw.get(a.id)||[]).length;return `<tr><td>${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r num">${k}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-wand="${esc(a.tool)}">Zur Wand</button>`:''}</td></tr>`}).join('')}</tbody></table></div>`;
   $$('[data-lr-wand]',box).forEach(b=>b.addEventListener('click',()=>cfg.gehZu&&cfg.gehZu(b.dataset.lrWand)));
   $('#lr-druck',box).addEventListener('click',drucken);
+}
+
+/* ---------- Wissenscheck und KI-Coach im Dashboard ---------- */
+// Ein Zeichen pro Aufgabe: „-“ offen, „0“–„9“ Zehntel der Punkte, „a“ volle Punkte
+const anteile=code=>[...String(code||'')].map(c=>c==='-'?null:c==='a'?1:+c/10);
+function wissenscheck(el,beamer){
+  const chk=[...AUFGABEN.values()].find(a=>a.check);
+  el.hidden=!chk;if(!chk)return;
+  const A=chk.check.aufgaben,N=chk.check.stufen,mit=z.spieler.filter(p=>anteile(p.wc).some(x=>x!=null));
+  // Anteil der Punkte, bezogen auf die bearbeiteten Aufgaben
+  const quote=(liste,filter)=>{let p=0,max=0,n=0;liste.forEach(sp=>anteile(sp.wc).forEach((x,i)=>{if(x==null||!A[i]||!filter(A[i],i))return;p+=x*A[i].p;max+=A[i].p;n++}));return {q:max?Math.round(p/max*100):null,n}};
+  const stufen=[1,2,3].map(k=>({k,...quote(mit,a=>a.afb===k)}));
+  const schwer=A.map((a,i)=>({i,a,...quote(mit,(b,j)=>j===i)})).filter(x=>x.n).sort((x,y)=>x.q-y.q).slice(0,3).filter(x=>x.q<75);
+  const zelle=(sp,k)=>{const r=quote([sp],a=>a.afb===k);return r.n?`${r.q} %`:'–'};
+  el.innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Wissenscheck</h3><span class="small muted">${mit.length} von ${z.spieler.length} haben Aufgaben bearbeitet</span></div>
+    ${mit.length?`<p class="small muted">Anteil der erreichten Punkte in den bearbeiteten Aufgaben</p>
+    ${stufen.map(s=>`<div class="wc-erg"><div class="row" style="justify-content:space-between"><span class="title-s">${esc(N[s.k-1])}</span><span class="small num">${s.n?`${s.q} % · ${s.n} ${s.n===1?'Bearbeitung':'Bearbeitungen'}`:'noch nichts bearbeitet'}</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${s.q||0}%"></span></div></div>`).join('')}
+    ${schwer.length?`<div><p class="title-s">Am schwierigsten</p><ul class="small">${schwer.map(x=>`<li>${esc(x.a.kurz)} … – ${x.q} %</li>`).join('')}</ul></div>`:''}
+    ${beamer?'':`<div class="tbl-wrap"><table><thead><tr><th>Spitzname</th>${N.map(n=>`<th class="r">${esc(n)}</th>`).join('')}</tr></thead><tbody>${mit.map(sp=>`<tr><td>${esc(sp.nick)}</td>${[1,2,3].map(k=>`<td class="r num">${zelle(sp,k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}`
+    :'<p class="small muted">Sobald die Schüler im Wissenscheck Aufgaben prüfen, siehst du hier die Ergebnisse pro Stufe. Texte werden nicht übertragen.</p>'}`;
+}
+function kiHTML(){
+  const chk=[...AUFGABEN.values()].find(a=>a.ki);if(!chk)return '';
+  return `<section class="panel stack" id="lr-ki"><h3 class="title-l">KI-Coach mit AIS.chat</h3>
+    <p class="small">Teilst du ein Lernszenario aus AIS.chat, erscheint bei den offenen Aufgaben im Wissenscheck der Knopf „KI-Coach“. Er kopiert die Antwort und öffnet AIS.chat. AIS.chat ist das KI-Angebot des Landes im Thüringer Schulportal.</p>
+    <ol class="small"><li>Anweisung kopieren und in AIS.chat ein Lernszenario damit anlegen.</li><li>Das Lernszenario teilen und den Link hier einfügen.</li></ol>
+    <div class="row"><button class="btn small" type="button" data-kopiere="#lr-ki-text"><span class="ms">content_copy</span>Anweisung kopieren</button></div>
+    <pre class="wc-ki" id="lr-ki-text" hidden>${esc(chk.ki)}</pre>
+    <div class="row"><label for="lr-ki-link" class="small">Link zum Lernszenario</label><input id="lr-ki-link" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://…" value="${esc((z.raum&&z.raum.ki)||'')}" style="flex:1;min-width:200px"></div>
+    <div class="row"><button class="btn small primary" type="button" id="lr-ki-ok"><span class="ms">link</span>Link speichern</button><button class="btn text small" type="button" id="lr-ki-weg" hidden><span class="ms">link_off</span>Link entfernen</button><span class="small" id="lr-ki-st" role="status"></span></div></section>`;
 }
 
 /** Druckansicht aller Antworten (im Browser „Als PDF speichern“). Im Beamer-Modus ohne Spitznamen. */

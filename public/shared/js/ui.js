@@ -31,3 +31,17 @@ export function zeigeHinweis(text){
   if(!el){el=document.createElement('div');el.id='snackbar';el.className='snackbar';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.append(el)}
   el.textContent=text;el.classList.add('zeigen');clearTimeout(snackT);snackT=setTimeout(()=>el.classList.remove('zeigen'),4500);
 }
+
+/** Text in die Zwischenablage kopieren. Gibt ein Promise mit true oder false zurück. */
+export function kopieren(text){
+  const alt=()=>{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;opacity:0';document.body.append(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok};
+  try{if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(text).then(()=>true,alt)}catch(e){}
+  return Promise.resolve(alt());
+}
+// Knöpfe mit data-kopiere="#id" kopieren den Text des Elements
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-kopiere]');if(!b)return;
+  const el=document.querySelector(b.dataset.kopiere);if(!el)return;
+  zeigeHinweis(await kopieren(el.textContent)?'Kopiert.':'Kopieren hat nicht geklappt. Markiere den Text und kopiere ihn selbst.');
+});

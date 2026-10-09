@@ -13,7 +13,8 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
     js/werkstatt.js     Gerüst einer Lernwerkstatt (Navigation, Werkstätten, Erkenntnisse, Glossar, Lehrerpanel)
     js/lernraum.js      Lernraum: ein Live-Raum pro Thema für Werkstätten und Planspiel, Lehrkraft-Dashboard
-    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Hilfen, Impuls
+    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls
+    js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
     vendor/             selbst ausgelieferte Bibliotheken (QR-Code)
@@ -46,7 +47,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Aktuelle virale Inhalte:** Trends, Memes, Jugendwörter, Social-Media-Formate und Ereignisse, über die gerade alle reden. Sie müssen sachlich richtig eingesetzt werden. Erfundene Posts tragen den Hinweis „fiktiver Beitrag“, erfundene Szenarien den Hinweis „Szenario“.
 - **Regionalbezug:** Beispiele, Figuren, Orte und Fotos möglichst aus Apolda, Jena, Weimar, Erfurt oder anderswo in Thüringen.
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
-- **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt.
+- **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt. Einzige Ausnahme ist der Wissenscheck: Dort sehen die Schüler den Erwartungshorizont, aber erst nach ihrer eigenen Antwort.
 - **Klassenstufen:** Jedes Thema gehört zu einer Klassenstufe: 9, 10, 11 oder 12 (Feld `stufe` in `themen.js`). Die Startseite sortiert die Themen danach. Sprache, Tempo und Anspruch passen zur Stufe: in Klasse 9 kürzere Texte und mehr Hilfen, in Klasse 11 und 12 mit Blick auf das Abitur.
 - **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht stehen in der README in der Themenübersicht.
 
@@ -72,6 +73,24 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Dashboard der Lehrkraft:** Teilnehmer und ihr aktueller Ort, „Alle anhalten“, „Alle holen nach …“, Werkstätten freigeben oder sperren, Beamer-Modus (keine Spitznamen, kein Lehrerpanel), Antworten drucken, Raum beenden.
 - **Antworten „an die Wand“** kommen nur aus `schreibfeld()`. Sie liegen in `rooms/{code}/antworten`, sind höchstens 1000 Zeichen lang und nur für die Lehrkraft lesbar. „Raum beenden“ löscht sie.
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
+- **Wissenscheck im Lernraum:** Es gehen nur Punkte an die Lehrkraft (Feld `wc` der Teilnehmer, ein Zeichen pro Aufgabe), nie Texte. Das Dashboard zeigt die Punkte pro Stufe, die schwierigsten Aufgaben und (nicht im Beamer-Modus) eine Tabelle mit Spitznamen.
+- **KI-Coach mit AIS.chat:** AIS.chat ist das KI-Angebot des Landes Thüringen im Schulportal, Datenschutz vom Land geklärt. Die Lehrkraft trägt im Dashboard den Link zu einem geteilten Lernszenario ein (Feld `ki` im Raum). Dann kopiert der Knopf „KI-Coach“ bei offenen Aufgaben die Antwort und öffnet AIS.chat. Die Anweisung für das Lernszenario erzeugt der Wissenscheck selbst (Lehrerpanel, Dashboard).
+
+## Wissenscheck: Pflicht für jedes Thema
+
+Jedes Thema endet mit einem Wissenscheck, damit die Schüler ihr Wissen abschließend prüfen können. Baustein: `wissenscheck()` aus `shared/js/aufgaben.js`, Inhalte in `<id>/wissenscheck.js` mit dem Export `WISSENSCHECK` (Muster: `sechseck/wissenscheck.js`). Der Inhaltstest in `tests/wissenscheck.spec.mjs` prüft jedes Thema aus `themen.js` automatisch.
+
+- **Umfang:** mindestens 20 Aufgaben, gern mehr. Immer wieder neue Fragen ergänzen.
+- **Drei Stufen nach den Anforderungsbereichen:** I Grundlagen (nennen, beschreiben, zuordnen), II Anwenden (erklären, erläutern, berechnen, vergleichen), III Beurteilen (beurteilen, bewerten, Stellung nehmen). Operatoren stehen in `shared/js/feedback.js`.
+- **Mischung nach Klassenstufe** (Richtwert für die Punkte): Klasse 9 und 10 etwa 40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen; Klasse 11 und 12 etwa 25 %, 45 %, 30 %.
+- **Abwechslungsreich:** mindestens 5 der 7 Formate (Auswahl, Mehrfachauswahl, Richtig oder falsch, Zuordnen, Rechnen, Reihenfolge, offene Aufgabe). Aktuelle Anlässe, virale Inhalte und Thüringen-Bezug auch hier, mit „fiktiver Beitrag“, „Szenario“ oder „Schlagzeile (erfunden)“.
+- **Feedback zu jeder Antwort:**
+  - jede geschlossene Aufgabe mit Erklärung (`e`)
+  - Auswahlaufgaben mit einer eigenen Erklärung für jede falsche Antwort (`fehler`)
+  - Rechenaufgaben mit typischen Rechenfehlern (`fehler: [{wert, text}]`)
+  - offene Aufgaben mit Operator (`op`), Erwartungshorizont (`erwartung`: Text, Wortstämme `w`, Tipp `tipp`) und Musterlösung (`muster`). Die Musterlösung muss den eigenen Erwartungshorizont erfüllen.
+- **Wiederholen:** Jede Aufgabe nennt in `werkstatt` die Werkstatt, die bei Fehlern vorgeschlagen wird.
+- **KI:** Das Feedback ohne KI kommt aus `feedback.js`. Eine KI direkt in der Seite nur nach Freigabe durch die Schule (Datenschutz, Vertrag zur Auftragsverarbeitung) und dann nur in `feedback.js`. Kostenlose KI-Schnittstellen mit Schülertexten sind tabu (Nutzungsbedingungen, Training mit den Daten, Server außerhalb der EU).
 
 ## Muster für künftige Themen: Lernstrecke
 
@@ -84,7 +103,7 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
   3. **Sichern:** Merksatz und Hefteintrag als Lückentext
   4. **Anwenden:** neuer Fall, Antwort an die Wand, Gesprächsimpuls
 - Pro Station Sozialform (Einzelarbeit, mit der Klasse) und gestufte Hilfen (Satzanfänge, Tipp, Denk weiter).
-- Die Leitfrage wird in Lektion 1 gestellt und in der letzten Lektion beantwortet, mit Blick zurück auf die eigene Vermutung. Am Ende ein Test mit einem Versuch.
+- Die Leitfrage wird in Lektion 1 gestellt und in der letzten Lektion beantwortet, mit Blick zurück auf die eigene Vermutung. Am Ende der Wissenscheck.
 - Bausteine dafür gibt es schon (`aufgaben.js`, Lernraum). Neu zu bauen wären die Übersichtsseite und die Lektionsnavigation in `shared/`.
 
 ## Bilder
@@ -126,6 +145,7 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
    - Werkstätten mit `tool({id, ch, title, sub, hinweise, html(), init(root)})` anlegen.
    - Jede Werkstatt hat einen Auftrag (`<p class="task">`), eine Frage an die Wand (`schreibfeld` mit Satzanfängen und `erwartung`) mit Gesprächsimpuls (`impuls`) und eine Erkenntnis (`erkHTML` / `bindErk`).
    - Hinweise für die Lehrkraft stehen in `hinweise`, nie im HTML der Werkstatt. Beispiel: `sechseck/wand.js`.
+   - Letzte Werkstatt ist der **Wissenscheck** (`<id>/wissenscheck.js`, siehe Abschnitt „Wissenscheck“). Er hat statt einer Erkenntnis eine Auswertung.
 5. **Planspiel (optional):** Inhalte in eine eigene Datei nach dem Muster von `sechseck/leben.js`.
    - Die Schnittstelle steht oben in `shared/js/planspiel.js`.
    - `thema` ist die Ordner-`id`. Pro Runde gibt es die Optionen A, B und C.
@@ -146,5 +166,6 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
    - alle Werkstätten öffnen
    - Planspiel allein und live, falls vorhanden
    - Lernraum: eine Antwort an die Wand schicken, Lehrerpanel nur bei der Lehrkraft (Muster: `tests/lernraum.spec.mjs`)
+   - Wissenscheck: Der Inhaltstest in `tests/wissenscheck.spec.mjs` läuft für jedes Thema automatisch und muss grün sein.
 10. **README:** Thema mit Klassenstufe und Lehrplanbezug in der Übersicht ergänzen und Bildnachweise eintragen.
 11. **Abschluss:** `npm test` muss grün sein. Danach Screenshots prüfen (390 px und 1280 px, hell und dunkel) und erst dann committen.
