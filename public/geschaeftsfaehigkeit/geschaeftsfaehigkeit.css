@@ -66,3 +66,29 @@
 .gf-meilen li.erreicht{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}
 .gf-meilen li.neu{animation:gf-hopp .35s var(--ease)}
 @media (prefers-reduced-motion:reduce){.gf-figur.wechsel,.gf-meilen li.neu{animation:none}}
+
+/* §-110-Check */
+.gf-check{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:.875rem;line-height:1.25rem}
+
+/* Mission Zwergspitz: Labyrinth (Hecke grün, Gänge hell, erkundete Wege farbig) */
+.gf-lab-fig{max-width:none}
+.gf-lab{display:block;width:100%;height:auto}
+.lab-hecke{fill:var(--md-gf-gruen-container)}
+.lab-gang{fill:none;stroke:var(--md-surface-container-lowest);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
+.lab-gang.schmal{stroke-width:14}
+.lab-weg{fill:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.lab-tor{stroke-dasharray:3 10}
+.lab-wand{stroke:var(--md-error);stroke-width:8;stroke-linecap:round}
+.lab-frage{fill:var(--md-warn-container);stroke:var(--md-warn);stroke-width:3}
+.lab-frage-t{fill:var(--md-on-warn-container);font-size:16px;font-weight:700;text-anchor:middle}
+.lab-nr{cursor:pointer}
+.lab-nr circle{fill:var(--md-primary);stroke:var(--md-surface-container-lowest);stroke-width:3}
+.lab-nr text{fill:var(--md-on-primary);font-size:17px;font-weight:600;text-anchor:middle}
+.lab-nr.fertig circle{fill:var(--md-secondary-container)}
+.lab-nr.fertig text{fill:var(--md-on-secondary-container)}
+.lab-nr.aktiv circle{stroke:var(--md-on-surface);stroke-width:4}
+.lab-nr:hover circle{stroke:var(--md-on-surface)}
+.lab-start{fill:var(--md-primary)}
+.lab-start-t{fill:var(--md-on-primary);font-size:12px;font-weight:600;text-anchor:middle}
+.lab-ziel{fill:none;stroke:var(--md-outline);stroke-width:4}
+.lab-ziel.erreicht{stroke:var(--md-ok);stroke-width:6}

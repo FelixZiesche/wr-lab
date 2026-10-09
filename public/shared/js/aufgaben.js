@@ -10,7 +10,7 @@
 //   lueckentext({id, titel, saetze:['Text mit [Lösung|Alternative] …']})
 //   test({id, titel, fragen:[{f, o:[…], r, e}]})                       r = Index der richtigen Option, e = Erklärung
 //   wissenscheck({id, titel, thema, stufe, aufgaben:[…]})              ein Wissenscheck pro Thema, siehe unten
-//   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, siehe unten
+//   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, auch als Klassenrunde, siehe unten
 //   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
 //   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
 //   hilfen({tipp, denkWeiter}), impuls(text)
@@ -458,12 +458,20 @@ function bindWissenscheck(box){
    Eine Karte nach der anderen, Antwort per Knopf (bei zwei Antworten auch per Wischen).
    blitz({id, titel, werkstatt, optionen:[{id, t, icon}], karten:[{t, r, e}], verdeckt})
      verdeckt: keine Auflösung; die kommt später mit blitzAufloesung(def), z. B. in der Sichern-Werkstatt.
-     werkstatt: id der Werkstatt mit der Blitzrunde (für den Link aus der Auflösung). */
+     werkstatt: id der Werkstatt mit der Blitzrunde (für den Link aus der Auflösung).
+   Im Lernraum kann die Lehrkraft die Blitzrunde als Klassenrunde spielen: Jede Karte wird zur Live-Abstimmung
+   (Umfrage-id <id>-k<Nummer>), die Stimmen landen auch im Bauchgefühl der Schüler. Das Klassenergebnis
+   speichert nur das Gerät der Lehrkraft und zeigt es in blitzAufloesung(). */
 const BLITZ=new Map();
+const kartenId=(id,i)=>`${id}-k${i}`;
+const blitzKarte=u=>{const m=/^(.+)-k(\d+)$/.exec(u.id||''),def=m&&BLITZ.get(m[1]);return def?{def,i:+m[2]}:null};
+function blitzLaden(def){let x=store(key('blitz',def.id));if(!x||!Array.isArray(x.a)||x.a.length!==def.karten.length)x={a:def.karten.map(()=>null)};return x}
 export function blitz(def){
   const {id,titel,optionen,karten,verdeckt}=def;BLITZ.set(id,def);
   const opt=r=>optionen.find(o=>o.id===r);
-  registriere({id,frage:titel,loesung:karten.map(k=>`${k.t} – <b>${opt(k.r).t}</b>`)});
+  registriere({id,frage:titel,loesung:karten.map(k=>`${k.t} – <b>${opt(k.r).t}</b>`),runde:karten.length});
+  karten.forEach((k,i)=>registriere({id:kartenId(id,i),intern:true,frage:k.t,loesung:[],
+    umfrage:{kopf:`Blitzrunde · Karte ${i+1} von ${karten.length}`,icon:'bolt',frage:k.t,optionen:optionen.map(o=>o.t),r:optionen.findIndex(o=>o.id===k.r),e:verdeckt?'':k.e||''}}));
   return `<section class="aufgabe blitz" data-blitz="${id}">${kopf('bolt',verdeckt?'Blitzrunde · Bauchgefühl':'Blitzrunde')}
     <p class="aufgabe-frage">${titel}</p>
     <div class="stack" data-blitz-spiel>
@@ -472,14 +480,19 @@ export function blitz(def){
       <div class="blitz-wahl" role="group" aria-label="Deine Antwort">${optionen.map(o=>`<button class="btn blitz-btn" type="button" data-wahl="${esc(o.id)}">${o.icon?`<span class="ms">${o.icon}</span>`:''}${o.t}</button>`).join('')}</div>
       <div class="stack" data-blitz-fb hidden></div>
     </div>
-    <div class="stack" data-blitz-ende hidden></div></section>`;
+    <div class="stack" data-blitz-ende hidden></div>
+    <div class="stack" data-blitz-klasse hidden></div></section>`;
 }
+const balkenHTML=(optionen,st,richtig)=>{const n=st.reduce((a,b)=>a+b,0);
+  return `<div class="abst-balken">${optionen.map((o,i)=>{const p=n?Math.round(st[i]/n*100):0,ok=i===richtig;
+    return `<div class="wc-erg abst-zeile${ok?' richtig':''}"><div class="row" style="justify-content:space-between"><span class="title-s">${ok?'<span class="ms sm">check_circle</span> ':''}${o}</span><span class="num" data-abst-zahl="${i}">${st[i]} · ${p} %</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${p}%"></span></div></div>`}).join('')}</div>`};
+const abgestimmtHTML=n=>{const g=raum.zustand().spieler.length;return `<p class="small muted num" data-abst-n>${n} von ${g} ${g===1?'Person hat':'Personen haben'} abgestimmt.</p>`};
 function bindBlitz(box){
   const def=BLITZ.get(box.dataset.blitz);if(!def)return;
   const {id,optionen,karten,verdeckt}=def,opt=r=>optionen.find(o=>o.id===r);
-  let st=store(key('blitz',id));if(!st||!Array.isArray(st.a)||st.a.length!==karten.length)st={a:karten.map(()=>null)};
-  const spiel=$('[data-blitz-spiel]',box),ende=$('[data-blitz-ende]',box),karte=$('[data-blitz-karte]',box),fb=$('[data-blitz-fb]',box),wahl=$('.blitz-wahl',box);
-  let warte=false;
+  let st=blitzLaden(def);
+  const spiel=$('[data-blitz-spiel]',box),ende=$('[data-blitz-ende]',box),karte=$('[data-blitz-karte]',box),fb=$('[data-blitz-fb]',box),wahl=$('.blitz-wahl',box),klasse=$('[data-blitz-klasse]',box);
+  let warte=false,modus='';
   const naechste=()=>st.a.findIndex(x=>x==null);
   function zeige(fokus){
     const i=naechste();
@@ -492,7 +505,7 @@ function bindBlitz(box){
     if(fokus)$('[data-wahl]',wahl).focus();
   }
   function waehle(r){
-    if(warte)return;const i=naechste();if(i<0)return;
+    if(warte||modus)return;const i=naechste();if(i<0)return;
     st.a[i]=r;store(key('blitz',id),st);
     if(verdeckt)return zeige(true);
     const k=karten[i],ok=k.r===r;warte=true;wahl.hidden=true;fb.hidden=false;
@@ -511,13 +524,46 @@ function bindBlitz(box){
   // Wischen: links = erste Antwort, rechts = zweite Antwort
   if(optionen.length===2){
     let x0=null,dx=0;
-    karte.addEventListener('pointerdown',e=>{if(warte)return;x0=e.clientX;dx=0;karte.setPointerCapture(e.pointerId)});
+    karte.addEventListener('pointerdown',e=>{if(warte||modus)return;x0=e.clientX;dx=0;karte.setPointerCapture(e.pointerId)});
     karte.addEventListener('pointermove',e=>{if(x0==null)return;dx=e.clientX-x0;karte.style.transform=`translateX(${dx}px) rotate(${dx/24}deg)`;karte.classList.toggle('links',dx<-40);karte.classList.toggle('rechts',dx>40)});
     const los=()=>{if(x0==null)return;x0=null;if(Math.abs(dx)>90)waehle(dx<0?optionen[0].id:optionen[1].id);else{karte.style.transform='';karte.classList.remove('links','rechts')}};
     karte.addEventListener('pointerup',los);karte.addEventListener('pointercancel',los);
   }
-  zeige(false);
+  // Klassenrunde im Lernraum: Lehrkraft steuert, Schüler stimmen im Fenster ab
+  function zeichneKlasse(i,u){
+    const erg=store(key('blitzklasse',id))||{},gespielt=Object.keys(erg).length;
+    if(i<0){
+      klasse.innerHTML=`<p class="small">Spielt die Blitzrunde mit der ganzen Klasse: Jede Karte erscheint auf allen Handys im Lernraum, die Balken zeigen live, wie die Klasse tippt.${verdeckt?' Die Auflösung kommt erst am Ende im Bauchgefühl-Check.':''}</p>
+        ${u.id?'<p class="small muted">Gerade läuft eine andere Abstimmung. Starten beendet sie.</p>':''}
+        <div class="row"><button class="btn primary" type="button" data-bk-start="0"><span class="ms">play_arrow</span>Klassenrunde starten</button>${gespielt?`<span class="small muted num">Letzte Runde: ${gespielt} von ${karten.length} Karten gespielt</span>`:''}</div>`;
+    }else{
+      const k=karten[i],r=optionen.findIndex(o=>o.id===k.r),stim=raum.stimmen(),n=stim.reduce((a,b)=>a+b,0);
+      erg[i]=stim;store(key('blitzklasse',id),erg);
+      klasse.innerHTML=`<div class="row" style="justify-content:space-between"><span class="small muted num">Karte ${i+1} von ${karten.length}</span><span class="pill ok">Klassenrunde läuft</span></div>
+        <div class="blitz-karte"><p>${k.t}</p></div>
+        ${balkenHTML(optionen.map(o=>o.t),stim,u.auf?r:-1)}${abgestimmtHTML(n)}
+        ${u.auf?`<div class="fb ok"><b>Richtig: ${optionen[r].t}.</b> ${k.e||''}</div>`:''}
+        <div class="row">${!verdeckt&&!u.auf?'<button class="btn" type="button" data-bk-auf><span class="ms">visibility</span>Auflösen</button>':''}${i+1<karten.length?`<button class="btn primary" type="button" data-bk-start="${i+1}"><span class="ms">arrow_forward</span>Nächste Karte</button>`:''}<button class="btn" type="button" data-bk-ende><span class="ms">stop_circle</span>Runde beenden</button></div>`;
+    }
+    $('[data-bk-start]',klasse)?.addEventListener('click',e=>{const j=+e.currentTarget.dataset.bkStart;if(j===0)store(key('blitzklasse',id),{});raum.starteUmfrage(kartenId(id,j))});
+    $('[data-bk-auf]',klasse)?.addEventListener('click',()=>raum.deckeAuf());
+    $('[data-bk-ende]',klasse)?.addEventListener('click',()=>raum.beendeUmfrage());
+  }
+  function steuern(){
+    if(!document.body.contains(box))return;
+    const u=raum.umfrage(),b=blitzKarte(u),i=b&&b.def===def?b.i:-1;
+    if(raum.istLehrkraft()){modus='lk';spiel.hidden=true;ende.hidden=true;klasse.hidden=false;zeichneKlasse(i,u);return}
+    if(raum.istSchueler()&&i>=0){modus='klasse';spiel.hidden=true;ende.hidden=true;klasse.hidden=false;
+      klasse.innerHTML=`<p class="small"><span class="ms sm">groups</span> Die Klasse spielt die Blitzrunde gerade gemeinsam (Karte ${i+1} von ${karten.length}) – stimm im Fenster ab.</p>`;return}
+    klasse.hidden=true;if(modus){modus='';st=blitzLaden(def);zeige(false)}
+  }
+  box.blitzSteuern=steuern;steuern();if(!modus)zeige(false);
 }
+raum.on(art=>{
+  if(['raum','spieler','start','ende','verbunden'].includes(art))$$('[data-blitz]').forEach(b=>b.blitzSteuern&&b.blitzSteuern());
+  // Stimmen aus der Klassenrunde zählen auch als eigenes Bauchgefühl
+  if(art==='stimme'){const b=blitzKarte(raum.umfrage()),w=raum.meineStimme();if(b&&w!=null){const st=blitzLaden(b.def);st.a[b.i]=b.def.optionen[w].id;store(key('blitz',b.def.id),st)}}
+});
 export function blitzAufloesung(def){
   BLITZ.set(def.id,def);
   return `<section class="aufgabe" data-blitz-aufl="${def.id}">${kopf('psychology','Bauchgefühl-Check')}<p class="aufgabe-frage">Wie gut war dein Bauchgefühl am Anfang?</p><div class="stack" data-aufl></div></section>`;
@@ -525,9 +571,17 @@ export function blitzAufloesung(def){
 function bindAufloesung(box){
   const def=BLITZ.get(box.dataset.blitzAufl),el=$('[data-aufl]',box),opt=r=>def.optionen.find(o=>o.id===r);
   const a=(store(key('blitz',def.id))||{}).a||[],n=a.filter(x=>x!=null).length;
-  if(!n){el.innerHTML=`<p class="small">Du hast die Blitzrunde am Anfang noch nicht gemacht. Hol das nach – dann siehst du hier, wie gut dein Bauchgefühl war.</p>${def.werkstatt?`<div class="row"><button class="btn small" type="button" data-gehzu="${esc(def.werkstatt)}"><span class="ms">bolt</span>Zur Blitzrunde</button></div>`:''}`;return}
+  // Gerät der Lehrkraft: Ergebnis der letzten Klassenrunde
+  const erg=store(key('blitzklasse',def.id))||{},gespielt=Object.keys(erg).map(Number).sort((x,y)=>x-y);
+  let klasse='';
+  if(gespielt.length){
+    const zeilen=gespielt.map(i=>{const k=def.karten[i],s=erg[i]||[],summe=s.reduce((x,y)=>x+y,0),r=def.optionen.findIndex(o=>o.id===k.r),mehr=summe?s.indexOf(Math.max(...s)):-1;
+      return {ok:mehr===r,html:`<li class="${summe?mehr===r?'right':'wrong':''}"><p>${k.t}</p><p class="small num">${def.optionen.map((o,j)=>`${o.t}: ${summe?Math.round((s[j]||0)/summe*100):0} %`).join(' · ')} · Richtig: <b>${def.optionen[r].t}</b></p>${k.e?`<p class="small">${k.e}</p>`:''}</li>`}});
+    klasse=`<div class="stack"><p class="title-m num">Eure Klasse: ${zeilen.filter(z=>z.ok).length} von ${gespielt.length} Karten mehrheitlich richtig</p><ol class="blitz-liste">${zeilen.map(z=>z.html).join('')}</ol></div>`;
+  }
+  if(!n){el.innerHTML=klasse||`<p class="small">Du hast die Blitzrunde am Anfang noch nicht gemacht. Hol das nach – dann siehst du hier, wie gut dein Bauchgefühl war.</p>${def.werkstatt?`<div class="row"><button class="btn small" type="button" data-gehzu="${esc(def.werkstatt)}"><span class="ms">bolt</span>Zur Blitzrunde</button></div>`:''}`;return}
   const ok=def.karten.filter((k,i)=>a[i]===k.r).length;
-  el.innerHTML=`<p class="title-m num">Dein Bauchgefühl: ${ok} von ${n} richtig</p>
+  el.innerHTML=klasse+`<p class="title-m num">Dein Bauchgefühl: ${ok} von ${n} richtig</p>
     <p class="small">${ok===def.karten.length?'Wow – du hattest von Anfang an den richtigen Riecher!':'Jetzt weißt du es genauer. Hier lag dein Bauchgefühl daneben:'}</p>
     <ol class="blitz-liste">${def.karten.map((k,i)=>{const w=a[i];return `<li class="${w==null?'':w===k.r?'right':'wrong'}"><p>${k.t}</p><p class="small">Dein Bauchgefühl: <b>${w==null?'–':opt(w).t}</b> · Richtig: <b>${opt(k.r).t}</b></p>${k.e?`<p class="small">${k.e}</p>`:''}</li>`}).join('')}</ol>`;
 }
@@ -536,8 +590,13 @@ function bindAufloesung(box){
    schema: {start, schritte:{sid:{frage, hilfe, gesetz:{p, t}, antworten:[{t, weiter: sid} | {t, ergebnis:{art, t}}]}}}
      art: 'wirksam' | 'schwebend' | 'unwirksam' bestimmt Farbe und Symbol des Ergebnisses.
    pruefschema({id, titel, schema, beispiel})   Probefahrt: frei durchklicken, dazu die ganze Route auf einen Blick
-   fallakte({id, titel, schema, faelle:[{titel, icon, text, frage, weg:{sid: Index der richtigen Antwort}, tipps:{sid: '…'}, loesung, denkWeiter}]})
-     Fälle mit dem Navi lösen: Falsche Abzweigungen werden erklärt, die Lösung erscheint erst danach. Gelöste Fälle bleiben gespeichert. */
+   fallakte({id, titel, schema, faelle:[{titel, icon, bild, fakten, text, frage, weg, tipps, loesung, denkWeiter}]})
+     Fälle mit dem Navi lösen: Falsche Abzweigungen werden erklärt, die Lösung erscheint erst danach. Gelöste Fälle bleiben gespeichert.
+     weg: {sid: Index der richtigen Antwort}, tipps: {sid: '…'}
+     bild: {src, alt, nachweis (HTML)}   Foto für den Fall-Steckbrief und die Fallkarte
+     fakten: [['Wer', 'Franz, 30'], ['Was', …], …]   Steckbrief: die wichtigen Fakten auf einen Blick
+     loesung: Text oder Liste von Sätzen im Gutachtenstil. Bei einer Liste bauen die Schüler das Gutachten
+              erst selbst zusammen (Gutachten-Baukasten), dann erscheint die Lösung. */
 const SCHEMAS=new Map(), AKTEN=new Map();
 const ERG={wirksam:['ok','check_circle','Wirksam'],schwebend:['amb','hourglass_top','Schwebend unwirksam'],unwirksam:['bad','block','Unwirksam']};
 const ergebnisHTML=e=>{const [k,ic,t]=ERG[e.art]||ERG.unwirksam;return `<li class="navi-ergebnis fb ${k}"><span class="ms">${ic}</span><span><b>${e.titel||t}</b>${e.t?` – ${e.t}`:''}</span></li>`};
@@ -592,37 +651,63 @@ function bindNavi(box){
   const r=route($('[data-route]',box),schema);r.neu();
   $('[data-navi-neu]',box).addEventListener('click',()=>{r.neu();$('[data-route] [data-j]',box)?.focus()});
 }
+const loesungText=f=>[].concat(f.loesung).join(' ');
 export function fallakte(def){
   AKTEN.set(def.id,def);
-  registriere({id:def.id,frage:def.titel,loesung:def.faelle.map(f=>`<b>${f.titel}:</b> ${f.loesung}`)});
+  registriere({id:def.id,frage:def.titel,loesung:def.faelle.map(f=>`<b>${f.titel}:</b> ${loesungText(f)}`)});
   return `<section class="stack akte" data-akte="${def.id}">
     <div class="panel stack"><div class="row" style="justify-content:space-between"><h3 class="title-m">${def.titel}</h3><span class="small muted num" data-akte-stand></span></div>
-      <div class="akte-faelle" role="group" aria-label="Fall wählen">${def.faelle.map((f,i)=>`<button class="akte-fall" type="button" data-fall="${i}" aria-pressed="false"><span class="ms">${f.icon||'folder'}</span><span class="akte-titel">${f.titel}</span><span class="akte-status small" data-status></span></button>`).join('')}</div>
+      <div class="akte-faelle" role="group" aria-label="Fall wählen">${def.faelle.map((f,i)=>`<button class="akte-fall${f.bild?' mit-bild':''}" type="button" data-fall="${i}" aria-pressed="false">${f.bild?`<img class="akte-thumb" src="${f.bild.src}" alt="" loading="lazy">`:`<span class="ms">${f.icon||'folder'}</span>`}<span class="akte-fall-text"><span class="akte-titel">${f.titel}</span><span class="akte-status small" data-status></span></span></button>`).join('')}</div>
       <div data-akte-profi></div></div>
     <div data-akte-fall></div></section>`;
 }
+const steckbriefHTML=f=>!f.bild&&!f.fakten?'':`<div class="akte-steckbrief">${f.bild?`<figure class="akte-bild"><img src="${f.bild.src}" alt="${esc(f.bild.alt)}" loading="lazy">${f.bild.nachweis?`<figcaption>${f.bild.nachweis}</figcaption>`:''}</figure>`:''}
+  ${f.fakten?`<div class="akte-fakten"><p class="title-s"><span class="ms sm">badge</span>Steckbrief</p><dl>${f.fakten.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></div>`:''}</div>`;
 function bindAkte(box){
   const def=AKTEN.get(box.dataset.akte);if(!def)return;
   let st=store(key('akte',def.id))||{geloest:{},fall:0};
   const sichern=()=>store(key('akte',def.id),st);
   function stand(){
-    const n=Object.keys(st.geloest).length;
+    const n=Object.keys(st.geloest).length,gut=def.faelle.every((f,i)=>!Array.isArray(f.loesung)||(st.geloest[i]&&st.geloest[i].gut));
     $('[data-akte-stand]',box).textContent=`${n} von ${def.faelle.length} gelöst`;
     $$('[data-fall]',box).forEach(b=>{const i=+b.dataset.fall,g=st.geloest[i];b.classList.toggle('geloest',!!g);b.setAttribute('aria-pressed',String(i===st.fall));$('[data-status]',b).innerHTML=g?'<span class="ms sm">check_circle</span>gelöst':'offen'});
-    $('[data-akte-profi]',box).innerHTML=n===def.faelle.length?`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Alle Fälle gelöst – du bist jetzt Rechtsprofi!</b> ${Object.values(st.geloest).every(g=>!g.fehler)?'Und das ohne eine einzige falsche Abzweigung.':''}</div>`:'';
+    $('[data-akte-profi]',box).innerHTML=n===def.faelle.length?`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Alle Fälle gelöst – du bist jetzt Rechtsprofi!</b> ${Object.values(st.geloest).every(g=>!g.fehler)?'Und das ohne eine einzige falsche Abzweigung.':''} ${gut?'Alle Gutachten hast du selbst gebaut.':''}</div>`:'';
   }
   function oeffne(i,fokus){
     st.fall=i;sichern();stand();
-    const f=def.faelle[i],el=$('[data-akte-fall]',box);
+    const f=def.faelle[i],el=$('[data-akte-fall]',box),baukasten=Array.isArray(f.loesung);
     el.innerHTML=`<article class="aufgabe"><p class="aufgabe-kopf"><span class="ms sm">folder_open</span>Fall ${i+1}: ${f.titel}</p>
+      ${steckbriefHTML(f)}
       <div class="wc-material akte-text">${f.text}</div>${f.frage?`<p class="aufgabe-frage">${f.frage}</p>`:''}
       <p class="small muted">Löse den Fall mit dem Rechts-Navi: Tippe bei jeder Frage die Antwort, die zum Fall passt.</p>
       <ol class="navi-route" data-route></ol><div data-akte-loesung></div>
       <div class="row"><button class="btn small" type="button" data-akte-neu><span class="ms">restart_alt</span>Noch einmal prüfen</button>${i+1<def.faelle.length?'<button class="btn small primary" type="button" data-akte-weiter><span class="ms">arrow_forward</span>Nächster Fall</button>':''}</div></article>`;
-    const loesung=()=>{$('[data-akte-loesung]',el).innerHTML=`<div class="wc-eh stack"><p class="title-s"><span class="ms sm">gavel</span>So schreibst du die Lösung auf</p><p class="small">${f.loesung}</p>${f.denkWeiter?`<details class="hilfe pro"><summary><span class="ms sm">psychology</span>Denk weiter</summary><p class="small">${f.denkWeiter}</p></details>`:''}</div>`};
-    const r=route($('[data-route]',el),def.schema,{fall:f,fertig:(erg,fehler)=>{st.geloest[i]={fehler};sichern();stand();loesung()}});
-    if(st.geloest[i]){r.loese();loesung()}else r.neu();
-    $('[data-akte-neu]',el).addEventListener('click',()=>{delete st.geloest[i];sichern();stand();$('[data-akte-loesung]',el).innerHTML='';r.neu();$('[data-route] [data-j]',el)?.focus()});
+    const ziel=$('[data-akte-loesung]',el);
+    const loesung=gebaut=>{ziel.innerHTML=`<div class="wc-eh stack"><p class="title-s"><span class="ms sm">gavel</span>So schreibst du die Lösung auf</p>${gebaut?'<div class="fb ok"><b>Gutachten gebaut!</b> Genau so schreibst du die Lösung ins Heft.</div>':''}<p class="small">${loesungText(f)}</p>${f.denkWeiter?`<details class="hilfe pro"><summary><span class="ms sm">psychology</span>Denk weiter</summary><p class="small">${f.denkWeiter}</p></details>`:''}</div>`};
+    // Gutachten-Baukasten: Sätze der Lösung in die richtige Reihenfolge bringen
+    function gutachten(){
+      const saetze=f.loesung,ord=mischen(saetze.length,streuwert(f.titel));let n=0,fehler=0;
+      ziel.innerHTML=`<div class="aufgabe gutachten stack"><p class="aufgabe-kopf"><span class="ms sm">edit_note</span>Gutachten-Baukasten</p>
+        <p class="aufgabe-frage">Bau die Lösung im Gutachtenstil: Tippe die Sätze in der richtigen Reihenfolge an.</p>
+        <p class="small muted">Erst die Frage (Obersatz), dann die Prüfung Schritt für Schritt, am Ende das Ergebnis.</p>
+        <ol class="gutachten-text" data-gut-text></ol>
+        <div class="gutachten-saetze" role="group" aria-label="Sätze zur Auswahl">${ord.map(j=>`<button class="btn gutachten-satz" type="button" data-satz="${j}">${saetze[j]}</button>`).join('')}</div>
+        <div data-gut-fb role="status"></div>
+        <div class="row"><button class="btn text small" type="button" data-gut-zeigen><span class="ms">visibility</span>Lösung zeigen</button></div></div>`;
+      const fertig=gebaut=>{st.geloest[i]={...(st.geloest[i]||{}),gut:gebaut};sichern();stand();loesung(gebaut)};
+      $('[data-gut-zeigen]',ziel).addEventListener('click',()=>fertig(false));
+      $('.gutachten-saetze',ziel).addEventListener('click',e=>{
+        const b=e.target.closest('[data-satz]');if(!b)return;const j=+b.dataset.satz,hinweis=$('[data-gut-fb]',ziel);
+        if(j!==n){fehler++;b.classList.add('falsch');setTimeout(()=>b.classList.remove('falsch'),900);
+          hinweis.innerHTML=`<div class="fb amb"><b>Noch nicht.</b> ${n===0?'Ein Gutachten beginnt mit der Frage, die du prüfst (Obersatz).':n===saetze.length-1?'Jetzt fehlt nur noch das Ergebnis.':'Geh vor wie der Rechts-Navi: erst das Alter, dann die Ausnahmen, zuletzt die Genehmigung. Und die Regel kommt vor dem Fall.'}</div>`;return}
+        hinweis.innerHTML='';$('[data-gut-text]',ziel).insertAdjacentHTML('beforeend',`<li>${saetze[j]}</li>`);b.remove();n++;
+        if(n===saetze.length)fertig(true);else $('[data-satz]',ziel)?.focus();
+      });
+    }
+    const r=route($('[data-route]',el),def.schema,{fall:f,fertig:(erg,fehler)=>{st.geloest[i]={fehler};sichern();stand();if(baukasten)gutachten();else loesung(false)}});
+    const g=st.geloest[i];
+    if(g){r.loese();if(baukasten&&g.gut===undefined)gutachten();else loesung(!!g.gut)}else r.neu();
+    $('[data-akte-neu]',el).addEventListener('click',()=>{delete st.geloest[i];sichern();stand();ziel.innerHTML='';r.neu();$('[data-route] [data-j]',el)?.focus()});
     $('[data-akte-weiter]',el)?.addEventListener('click',()=>{oeffne(i+1,true)});
     if(fokus){el.scrollIntoView({block:'start'});$('[data-route] [data-j]',el)?.focus({preventScroll:true})}
   }
@@ -649,10 +734,8 @@ function zeichneAbst(box){
       el.innerHTML=`${u.id?'<p class="small muted">Gerade läuft eine andere Abstimmung. Starten beendet sie.</p>':''}<div class="row"><button class="btn primary" type="button" data-abst-start><span class="ms">how_to_vote</span>Abstimmung starten</button><span class="small muted">Alle Handys im Lernraum zeigen den Fall und die Antworten.</span></div>`;
       $('[data-abst-start]',el).addEventListener('click',()=>raum.starteUmfrage(def.id));return;
     }
-    const st=raum.stimmen(),n=st.reduce((a,b)=>a+b,0),gesamt=raum.zustand().spieler.length;
-    el.innerHTML=`<div class="abst-balken">${def.optionen.map((o,i)=>{const p=n?Math.round(st[i]/n*100):0,richtig=u.auf&&i===def.r;
-        return `<div class="wc-erg abst-zeile${richtig?' richtig':''}"><div class="row" style="justify-content:space-between"><span class="title-s">${richtig?'<span class="ms sm">check_circle</span> ':''}${o}</span><span class="num" data-abst-zahl="${i}">${st[i]} · ${p} %</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${p}%"></span></div></div>`}).join('')}</div>
-      <p class="small muted num" data-abst-n>${n} von ${gesamt} ${gesamt===1?'Person hat':'Personen haben'} abgestimmt.</p>
+    const st=raum.stimmen(),n=st.reduce((a,b)=>a+b,0);
+    el.innerHTML=`${balkenHTML(def.optionen,st,u.auf?def.r:-1)}${abgestimmtHTML(n)}
       ${u.auf?`<div class="fb ok"><b>Urteil: ${def.optionen[def.r]}.</b> ${def.e||''}</div>`:''}
       <div class="row">${u.auf?'':'<button class="btn primary" type="button" data-abst-auf><span class="ms">visibility</span>Auflösen</button>'}<button class="btn" type="button" data-abst-ende><span class="ms">stop_circle</span>Abstimmung beenden</button></div>`;
     $('[data-abst-auf]',el)?.addEventListener('click',()=>raum.deckeAuf());

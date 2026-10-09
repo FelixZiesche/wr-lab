@@ -473,6 +473,30 @@ input.lt-luecke.wrong{border-bottom-color:var(--md-error);background:var(--md-er
 .akte-fall.geloest .akte-status{color:var(--md-ok)}
 .akte-fall[aria-pressed="true"]{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}
 .akte-fall[aria-pressed="true"] .akte-status{color:inherit}
+.akte-fall-text{display:flex;flex-direction:column;gap:4px;flex:1;width:100%}
+.akte-fall.mit-bild{padding:0;gap:0}
+.akte-fall.mit-bild .akte-fall-text{padding:8px 12px 10px}
+.akte-thumb{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--md-surface-container-high)}
+.akte-steckbrief{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+@media (min-width:700px){.akte-steckbrief{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.akte-bild{margin:0;display:flex;flex-direction:column;gap:4px}
+.akte-bild img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.akte-bild figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+.akte-fakten{background:var(--md-surface-container);border-radius:var(--r-l);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.akte-fakten .title-s{display:flex;align-items:center;gap:6px}
+.akte-fakten dl{margin:0;display:flex;flex-direction:column;gap:6px}
+.akte-fakten dl>div{display:grid;grid-template-columns:7.5em 1fr;gap:8px;font-size:.875rem;line-height:1.25rem}
+.akte-fakten dt{color:var(--md-on-surface-variant)}
+.akte-fakten dd{margin:0;font-weight:500}
+/* Gutachten-Baukasten */
+.gutachten-text{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:.875rem;line-height:1.25rem}
+.gutachten-text:empty{display:none}
+.gutachten-text li{background:var(--md-ok-container);color:var(--md-on-ok-container);border-radius:var(--r-s);padding:6px 10px}
+.gutachten-saetze{display:flex;flex-direction:column;gap:8px}
+.gutachten-satz{justify-content:flex-start;text-align:left;min-height:44px;height:auto;padding:8px 16px;border-radius:var(--r-m);line-height:1.25rem;font-weight:400}
+.gutachten-satz.falsch{background:var(--md-error-container);color:var(--md-on-error-container);animation:wackeln .3s var(--ease)}
+@keyframes wackeln{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.gutachten-satz.falsch{animation:none}}
 
 /* Ihr seid das Gericht (aufgaben.js, lernraum.js) */
 .abst-balken{display:flex;flex-direction:column;gap:12px}

@@ -133,7 +133,9 @@ export const raum={
   stimmen(){const u=raum.umfrage(),a=AUFGABEN.get(u.id),k=a&&a.umfrage?a.umfrage.optionen.length:0,st=Array(k).fill(0);
     z.spieler.forEach(p=>{const v=p.stimme;if(v&&v.n===u.n&&v.w>=0&&v.w<k)st[v.w]++});return st},
   /** Schüler: abstimmen (bis zur Auflösung änderbar) */
-  async stimme(w){const u=raum.umfrage();if(!s||s.rolle!=='schueler'||!L||!u.id||u.auf)return;s.stimme={n:u.n,w};speichern();umfrageFenster();await L.updatePlayer(s.code,{stimme:{n:u.n,w}})},
+  async stimme(w){const u=raum.umfrage();if(!s||s.rolle!=='schueler'||!L||!u.id||u.auf)return;s.stimme={n:u.n,w};speichern();umfrageFenster();melde('stimme');await L.updatePlayer(s.code,{stimme:{n:u.n,w}})},
+  /** Schüler: eigene Stimme in der laufenden Umfrage oder null */
+  meineStimme(){const u=raum.umfrage();return s&&s.stimme&&u.id&&s.stimme.n===u.n?s.stimme.w:null},
   /** Schüler: eigenes Urteil zu einer aufgelösten Abstimmung {w} */
   urteil:id=>s&&s.urteile?s.urteile[id]:undefined,
   /** Titel einer Werkstatt oder eines Bereichs. */
@@ -278,10 +280,12 @@ function wissenscheck(el,beamer){
     :'<p class="small muted">Sobald die Schüler im Wissenscheck Aufgaben prüfen, siehst du hier die Ergebnisse pro Stufe. Texte werden nicht übertragen.</p>'}`;
 }
 function abstimmungen(el){
-  const liste=[...AUFGABEN.values()].filter(a=>a.umfrage),u=raum.umfrage();
+  // Abstimmungen und Blitzrunden (deren Karten sind interne Abstimmungen <id>-k<Nummer>)
+  const liste=[...AUFGABEN.values()].filter(a=>(a.umfrage&&!a.intern)||a.runde),u=raum.umfrage();
+  const laeuft=a=>u.id===a.id||(a.runde&&String(u.id||'').startsWith(a.id+'-k'));
   el.hidden=!liste.length;if(!liste.length)return;
-  el.innerHTML=`<h3 class="title-l">Ihr seid das Gericht</h3><p class="small muted">Live-Abstimmungen: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
-    <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${u.id===a.id?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  el.innerHTML=`<h3 class="title-l">Live-Abstimmungen</h3><p class="small muted">Ihr seid das Gericht und Blitzrunden als Klassenrunde: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
+    <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${a.runde?'Blitzrunde: ':''}${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${laeuft(a)?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
   $$('[data-lr-abst]',el).forEach(b=>b.addEventListener('click',()=>cfg.gehZu&&cfg.gehZu(b.dataset.lrAbst)));
 }
 
@@ -299,7 +303,7 @@ function umfrageFenster(){
   if(umfrageZu===zustand){if(el)el.hidden=true;return}
   const neu=!el||el.hidden;
   if(!el){el=document.createElement('div');el.id='lr-umfrage';el.className='lr-umfrage';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','lr-umfrage-t');document.body.append(el)}
-  el.innerHTML=`<div class="lr-umfrage-karte stack"><div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm">gavel</span> Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms">close</span></button></div>
+  el.innerHTML=`<div class="lr-umfrage-karte stack"><div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm">${q.icon||'gavel'}</span> ${q.kopf||`Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}`}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms">close</span></button></div>
     ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>
     <div class="lr-umfrage-wahl" role="group" aria-label="Dein Urteil">${q.optionen.map((o,i)=>`<button class="btn${w===i?' primary':''}" type="button" data-u-w="${i}" aria-pressed="${w===i}"${u.auf?' disabled':''}>${o}</button>`).join('')}</div>
     <p class="small" role="status">${u.auf?'':w==null?'Wie urteilst du? Tippe deine Antwort.':'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.'}</p>

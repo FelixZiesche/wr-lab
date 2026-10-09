@@ -5,7 +5,7 @@ import { test, expect, device, readDoc } from './helpers.mjs';
 const GF = '/geschaeftsfaehigkeit/';
 const WERKSTAETTEN = {
   bauchgefuehl: 'Darfst du das?', alter: 'Vom Baby zum Vertragsprofi', haus: 'Das Haus der Geschäftsfähigkeit', navi: 'Der Rechts-Navi',
-  fallakte: 'Fall-Akte', gericht: 'Ihr seid das Gericht', online: 'Gaming, Abos und Klarna', job: 'Der erste Job',
+  fallakte: 'Fall-Akte', gericht: 'Ihr seid das Gericht', taschengeld: 'Taschengeld-Detektiv', online: 'Gaming, Abos und Klarna', job: 'Der erste Job',
   sichern: 'Hefteintrag und Kurztest', wissenscheck: 'Wissenscheck'
 };
 const nav = page => page.locator(page.viewportSize().width < 600 ? '#nav-bar' : '#rail-items');
@@ -22,7 +22,7 @@ test.describe('ohne Lernraum', () => {
     await expect(nav(page).locator('[data-dest]')).toHaveText([/Start$/, /Regeln$/, /Fälle$/, /Mission$/, /Wissen$/]);
 
     // Jede Werkstatt lässt sich über ihre Karte öffnen
-    const bereiche = { start: ['bauchgefuehl'], regeln: ['alter', 'haus', 'navi'], faelle: ['fallakte', 'gericht', 'online', 'job'], wissen: ['sichern', 'wissenscheck'] };
+    const bereiche = { start: ['bauchgefuehl'], regeln: ['alter', 'haus', 'navi'], faelle: ['fallakte', 'gericht', 'taschengeld', 'online', 'job'], wissen: ['sichern', 'wissenscheck'] };
     for (const [bereich, ids] of Object.entries(bereiche)) {
       await nav(page).locator(`[data-dest="${bereich}"]`).click();
       await expect(page.locator('#view [data-tool]')).toHaveCount(ids.length);
@@ -166,21 +166,31 @@ test.describe('ohne Lernraum', () => {
     await expect(navi.locator('.navi-karte > li')).toHaveCount(6);
   });
 
-  test('Fall-Akte: falsche Abzweigung mit Tipp, Lösung, gelöste Fälle bleiben gespeichert', async ({ page }) => {
+  test('Fall-Akte: Steckbrief, falsche Abzweigung mit Tipp, Gutachten-Baukasten, gelöste Fälle bleiben gespeichert', async ({ page }) => {
     await oeffne(page, 'fallakte');
     const akte = page.locator('[data-akte="akte"]');
     await expect(akte.locator('[data-akte-stand]')).toHaveText('0 von 8 gelöst');
+    await expect(akte.locator('.akte-thumb')).toHaveCount(8);
+    // Steckbrief mit Foto und Bildnachweis
+    await expect(akte.locator('.akte-fakten')).toContainText('Gaming-PC');
+    await expect(akte.locator('.akte-bild figcaption')).toContainText('Wikimedia Commons');
     // Fall 1: Franz ist 30 – aber dauerhaft geisteskrank
     await akte.locator('[data-sid="person"][data-j="2"]').click();
     await expect(akte.locator('.navi-schritt .fb.amb')).toContainText('§ 104 Nr. 2 BGB');
     await expect(akte.locator('[data-akte-loesung]')).toBeEmpty();
     await akte.locator('[data-sid="person"][data-j="1"]').click();
     await expect(akte.locator('.navi-ergebnis')).toContainText('Nichtig');
-    await expect(akte.locator('[data-akte-loesung]')).toContainText('So schreibst du die Lösung auf');
-    await expect(akte.locator('[data-akte-loesung]')).toContainText('Betreuerin');
     await expect(akte.locator('[data-akte-stand]')).toHaveText('1 von 8 gelöst');
+    // Gutachten-Baukasten: falscher Satz gibt einen Hinweis, dann alle Sätze in der richtigen Reihenfolge
+    const bau = akte.locator('.gutachten');
+    await expect(bau.locator('[data-satz]')).toHaveCount(6);
+    await bau.locator('[data-satz="5"]').click();
+    await expect(bau.locator('[data-gut-fb]')).toContainText('Obersatz');
+    for (let j = 0; j < 6; j++) await bau.locator(`[data-satz="${j}"]`).click();
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('Gutachten gebaut!');
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('Betreuerin');
 
-    // Fall 8: Boombox II endet über § 108 Abs. 3 BGB bei „Wirksam“
+    // Fall 8: Partybox II endet über § 108 Abs. 3 BGB bei „Wirksam“, Lösung direkt zeigen
     await akte.locator('[data-fall="7"]').click();
     for (const [sid, j] of [['person', 3], ['vorteil', 1], ['einwilligung', 1], ['taschengeld', 1], ['job', 1]]) await akte.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
     await akte.locator('[data-sid="genehmigung"][data-j="1"]').click();
@@ -188,32 +198,64 @@ test.describe('ohne Lernraum', () => {
     await akte.locator('[data-sid="genehmigung"][data-j="2"]').click();
     await expect(akte.locator('.navi-ergebnis')).toContainText('§ 108 Abs. 3 BGB');
     await expect(akte.locator('.navi-ergebnis')).toHaveClass(/ok/);
+    await akte.locator('[data-gut-zeigen]').click();
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('So schreibst du die Lösung auf');
+    await expect(akte.locator('[data-akte-loesung]')).not.toContainText('Gutachten gebaut!');
     await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 8 gelöst');
 
-    // Nach dem Neuladen bleiben beide Fälle gelöst, Fall 8 ist wieder offen
+    // Nach dem Neuladen bleiben beide Fälle gelöst
     await oeffne(page, 'fallakte');
     await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 8 gelöst');
     await expect(akte.locator('[data-fall="7"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(akte.locator('[data-akte-loesung]')).toContainText('§ 108 Abs. 3 BGB');
     await expect(akte.locator('[data-fall="0"]')).toHaveClass(/geloest/);
+    await akte.locator('[data-fall="0"]').click();
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('Gutachten gebaut!');
+  });
+
+  test('Taschengeld-Detektiv: Glurak-Jackpot und Raten-PS5', async ({ page }) => {
+    await oeffne(page, 'taschengeld');
+    const akte = page.locator('[data-akte="akte-taschengeld"]');
+    await expect(akte.locator('[data-fall]')).toHaveCount(6);
+    await expect(page.locator('.gf-check li')).toHaveCount(3);
+    // Glurak-Jackpot: Der Gewinn ist kein überlassenes Geld
+    await akte.locator('[data-fall="1"]').click();
+    for (const [sid, j] of [['person', 3], ['vorteil', 1], ['einwilligung', 1]]) await akte.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
+    await akte.locator('[data-sid="taschengeld"][data-j="0"]').click();
+    await expect(akte.locator('.navi-schritt .fb.amb')).toContainText('600 €');
+    for (const [sid, j] of [['taschengeld', 1], ['job', 1], ['genehmigung', 1]]) await akte.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
+    await expect(akte.locator('.navi-ergebnis')).toContainText('Endgültig unwirksam');
+    // Raten-PS5: mit der letzten Rate wirksam
+    await akte.locator('[data-fall="5"]').click();
+    for (const [sid, j] of [['person', 3], ['vorteil', 1], ['einwilligung', 1], ['taschengeld', 0]]) await akte.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
+    await expect(akte.locator('.navi-ergebnis')).toContainText('Wirksam');
+    await akte.locator('[data-gut-zeigen]').click();
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('Mit der letzten Rate ist der Kauf');
   });
 
   test('Mission Zwergspitz: schätzen, auflösen, alle Wege erkunden', async ({ page }) => {
     await page.goto(`${GF}#mission`);
     await expect(page.locator('#zs-stand')).toHaveText('0 von 7 Wegen erkundet');
-    await expect(page.locator('.gf-fig figcaption')).toContainText('CC0');
+    await expect(page.locator('.gf-lab-fig figcaption')).toContainText('CC0');
+    await expect(page.locator('#zs-lab .lab-nr')).toHaveCount(7);
+    // Im Labyrinth auf die Nummer tippen öffnet den Weg
+    await page.locator('#zs-lab [data-lab="3"]').click();
+    await expect(page.locator('#zs-weg')).toContainText('Ratenkauf beim Züchter');
     await page.locator('[data-weg="2"]').click();
     await expect(page.locator('#zs-weg')).toContainText('Angespartes Taschengeld');
     await page.locator('[data-tipp="ziel"]').click();
     await expect(page.locator('#zs-fb .fb.bad')).toContainText('Sackgasse');
     await expect(page.locator('#zs-fb')).toContainText('Du hattest „Führt zum Hund“ getippt.');
     await expect(page.locator('#zs-stand')).toHaveText('1 von 7 Wegen erkundet');
+    await expect(page.locator('#zs-lab .lab-weg')).toHaveCount(1);
+    await expect(page.locator('#zs-lab .lab-wand')).toHaveCount(1);
     for (const i of [0, 1, 3, 4, 5, 6]) {
       await page.locator(`[data-weg="${i}"]`).click();
       await page.locator('[data-tipp="sackgasse"]').click();
     }
     await expect(page.locator('#zs-profi')).toContainText('Mission erfüllt!');
     await expect(page.locator('#zs-profi')).toContainText('2 von 7 Wegen richtig');
+    await expect(page.locator('#zs-lab .lab-ziel')).toHaveClass(/erreicht/);
   });
 
   test('Ihr seid das Gericht: ohne Lernraum allein urteilen', async ({ page }) => {
@@ -300,6 +342,34 @@ test('Lernraum: Live-Abstimmung mit zwei Schülern, Wand und Lehrerpanel', async
   await ben.locator('#view [data-tool="gericht"]').click();
   await expect(ben.locator('[data-abst="gericht-wohnung"] .fb.bad')).toContainText('Richtig ist: Schwebend unwirksam');
   await expect(ben.locator('[data-abst="gericht-konzert"]')).toContainText('sobald eure Lehrkraft die Abstimmung startet');
+
+  // Blitzrunde als Klassenrunde: Karten auf allen Handys, Stimmen zählen als eigenes Bauchgefühl
+  await lk.locator('#modal-close').click();
+  await lk.locator('#rail-items [data-dest="start"]').click();
+  await lk.locator('#view [data-tool="bauchgefuehl"]').click();
+  const runde = lk.locator('[data-blitz="bauch"] [data-blitz-klasse]');
+  await expect(runde).toContainText('Spielt die Blitzrunde mit der ganzen Klasse');
+  await runde.locator('[data-bk-start="0"]').click();
+  await expect(runde).toContainText('Karte 1 von 8');
+  for (const s of [mia, ben]) await expect(s.locator('#lr-umfrage')).toContainText('Blitzrunde · Karte 1 von 8');
+  await expect(mia.locator('#lr-umfrage h2')).toContainText('Döner');
+  await mia.locator('[data-u-w="1"]').click();
+  await ben.locator('[data-u-w="1"]').click();
+  await expect(runde.locator('[data-abst-zahl="1"]')).toHaveText('2 · 100 %');
+  // verdeckt: keine Auflösung, weiter zur nächsten Karte
+  await expect(runde.locator('[data-bk-auf]')).toHaveCount(0);
+  await runde.locator('[data-bk-start="1"]').click();
+  await expect(mia.locator('#lr-umfrage')).toContainText('Karte 2 von 8');
+  await mia.locator('[data-u-w="0"]').click();
+  await expect(runde.locator('[data-abst-zahl="0"]')).toHaveText('1 · 100 %');
+  await runde.locator('[data-bk-ende]').click();
+  await expect(mia.locator('#lr-umfrage')).toBeHidden();
+  // Bauchgefühl-Check: Mia sieht ihr eigenes Ergebnis, die Lehrkraft das der Klasse
+  await mia.goto('about:blank'); await mia.goto(`${GF}#sichern`);
+  await expect(mia.locator('[data-blitz-aufl="bauch"]')).toContainText('Dein Bauchgefühl: 2 von 2 richtig');
+  await lk.goto('about:blank'); await lk.goto(`${GF}#sichern`);
+  await expect(lk.locator('[data-blitz-aufl="bauch"]')).toContainText('Eure Klasse: 2 von 2 Karten mehrheitlich richtig');
+  await lk.goto('about:blank'); await lk.goto(`${GF}#gericht`);
 
   // Antwort an die Wand
   const feld = ben.locator('[data-schreib="gericht-wand"]');
