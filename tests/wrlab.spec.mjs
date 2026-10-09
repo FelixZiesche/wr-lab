@@ -18,6 +18,22 @@ test('Startseite zeigt die Themen als Karten mit Foto und Bildnachweis', async (
   await expect(page).toHaveTitle('WR-Lab');
 });
 
+test('Startseite sortiert die Themen nach Klassenstufe 9 bis 12', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#themen .wr-stufe-h')).toHaveText(['Klasse 9', 'Klasse 10', 'Klasse 11', 'Klasse 12']);
+  const themen = await page.evaluate(async () => (await import('/themen.js')).THEMEN);
+  for (const t of themen) {
+    expect([9, 10, 11, 12], `Klassenstufe von ${t.id}`).toContain(t.stufe);
+    await expect(page.locator(`#klasse-${t.stufe} a.topic[href="${t.id}/"]`)).toBeVisible();
+  }
+  await expect(page.locator('#klasse-11 a.topic[href="sechseck/"]')).toContainText('Magisches Sechseck');
+  // Stufen ohne Thema zeigen einen Hinweis statt einer leeren Fläche
+  for (const k of [9, 10, 11, 12]) {
+    const n = themen.filter(t => t.stufe === k).length;
+    await expect(page.locator(`#klasse-${k} .wr-leer`)).toHaveCount(n ? 0 : 1);
+  }
+});
+
 test('Auf dem Handy führt das Symbol in der Kopfleiste zur Startseite', async ({ browser }) => {
   const handy = await device(browser, { viewport: { width: 390, height: 844 } });
   await handy.goto('/sechseck/');
