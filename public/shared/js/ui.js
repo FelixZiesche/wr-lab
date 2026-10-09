@@ -23,3 +23,11 @@ export function bindPhoto(root){$$('.photo',root).forEach(fig=>{
     info.hidden=false;info.innerHTML=`<span class="ms">info</span><div><p class="title-s">${esc(h.t)}</p><p class="small" style="margin-top:4px">${esc(h.d)}</p></div><button class="icon-btn" type="button" aria-label="Infopunkt schließen"><span class="ms">close</span></button>`;
     $('button',info).addEventListener('click',()=>{info.hidden=true;b.setAttribute('aria-expanded','false');b.focus()});upd()}));
   upd()})}
+
+/** Kurzer Hinweis am unteren Rand (M3-Snackbar), verschwindet nach einigen Sekunden. */
+let snackT=null;
+export function zeigeHinweis(text){
+  let el=document.getElementById('snackbar');
+  if(!el){el=document.createElement('div');el.id='snackbar';el.className='snackbar';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.append(el)}
+  el.textContent=text;el.classList.add('zeigen');clearTimeout(snackT);snackT=setTimeout(()=>el.classList.remove('zeigen'),4500);
+}

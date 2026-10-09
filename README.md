@@ -1,6 +1,6 @@
 # WR-Lab
 
-Interaktive Lernwerkstätten für **Wirtschaft und Recht in der Oberstufe** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Planspiele lassen sich allein spielen oder als ganze Klasse im **Live-Klassenraum**.
+Interaktive Lernwerkstätten für **Wirtschaft und Recht in der Oberstufe** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Alles lässt sich allein bearbeiten oder als ganze Klasse im **Lernraum**: Die Lehrkraft öffnet einen Raum, die Schüler treten mit Code oder QR-Code bei, schicken Antworten an die Wand und spielen das Planspiel gemeinsam.
 
 Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
@@ -8,7 +8,7 @@ Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
 | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- |
-| [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Dazu Glossar, Wissensspeicher und Abi-Check. | *noch ergänzen* |
+| [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und Abi-Check. | *noch ergänzen* |
 
 ## Aufbau
 
@@ -19,14 +19,17 @@ public/                 wird veröffentlicht
   shared/               gemeinsam für alle Themen
     css/m3.css          Material Design 3 (Farbrollen, Google Sans, Komponenten, App-Shell)
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
-    js/werkstatt.js     App-Navigation und Gerüst einer Lernwerkstatt
+    js/werkstatt.js     App-Navigation und Gerüst einer Lernwerkstatt, Lehrerpanel
+    js/lernraum.js      Lernraum: ein Live-Raum für Werkstätten und Planspiel, Dashboard der Lehrkraft
+    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Hilfen, Impuls
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
-    js/live.js          Live-Klassenraum (einzige Datei mit Firebase)
+    js/live.js          Verbindung zum Server (einzige Datei mit Firebase)
     vendor/qrcode.js    QR-Code-Bibliothek (MIT-Lizenz)
   sechseck/             Lernwerkstatt Magisches Sechseck
     sechseck.js         Werkstätten, Wissen, Navigation
     leben.js            Planspiel Sechseck-Leben (Figuren, Runden, Rechenmodell)
     daten.js            Grunddaten und Sechseck-Grafiken
+    wand.js             Fragen an die Wand, Gesprächsimpulse, Hinweise für das Lehrerpanel
     img/                Fotos
 firestore.rules         Sicherheitsregeln der Datenbank
 firebase.json           Hosting, Firestore-Regeln, Emulatoren
@@ -95,11 +98,10 @@ Unter **Actions → Veröffentlichen → Run workflow** (Branch `main`) die erst
 
 ### 5. Optional: Daten automatisch löschen lassen
 
-Jeder Raum und jeder Schülereintrag hat das Feld `expireAt` (24 Stunden nach dem Anlegen). Firestore kann solche Einträge automatisch löschen:
+Jeder Raum, jeder Schülereintrag und jede Antwort hat das Feld `expireAt` (24 Stunden nach dem Anlegen). Firestore kann solche Einträge automatisch löschen:
 
 1. **Firestore Database → Time-to-live (TTL)** öffnen.
-2. Eine Richtlinie für die Sammlungsgruppe `rooms` mit dem Feld `expireAt` anlegen.
-3. Eine zweite Richtlinie für die Sammlungsgruppe `players` mit dem Feld `expireAt` anlegen.
+2. Je eine Richtlinie mit dem Feld `expireAt` für die Sammlungsgruppen `rooms`, `players` und `antworten` anlegen.
 
 Falls die Konsole dafür den Blaze-Tarif verlangt, kann der Schritt entfallen. Mit **„Raum beenden“** löscht die Lehrkraft alle Daten eines Raums ohnehin sofort.
 
@@ -119,7 +121,7 @@ Falls die Konsole dafür den Blaze-Tarif verlangt, kann der Schritt entfallen. M
 1. In der Firebase-Konsole **Hosting → Benutzerdefinierte Domain hinzufügen** wählen und die Domain eingeben, z. B. `wr-lab.de` oder `lernen.meine-schule.de`.
 2. Firebase zeigt DNS-Einträge an: erst einen TXT-Eintrag zur Bestätigung, dann A-Einträge (oder einen CNAME bei Subdomains). Diese beim Anbieter der Domain eintragen, z. B. bei IONOS, Strato oder All-Inkl.
 3. Warten, bis der Status **Verbunden** zeigt. Das dauert wenige Minuten bis 24 Stunden, das SSL-Zertifikat kommt automatisch.
-4. **Authentication → Einstellungen → Autorisierte Domains → Domain hinzufügen**, damit der Live-Klassenraum auch unter der neuen Domain funktioniert. `wr-lab.web.app` und `wr-lab.firebaseapp.com` sind schon eingetragen.
+4. **Authentication → Einstellungen → Autorisierte Domains → Domain hinzufügen**, damit der Lernraum auch unter der neuen Domain funktioniert. `wr-lab.web.app` und `wr-lab.firebaseapp.com` sind schon eingetragen.
 
 QR-Codes und Beitrittslinks nutzen automatisch die Adresse, unter der die Seite gerade geöffnet ist.
 
@@ -128,12 +130,12 @@ QR-Codes und Beitrittslinks nutzen automatisch die Adresse, unter der die Seite 
 Kurzfassung (die vollständige Checkliste steht in [CLAUDE.md](CLAUDE.md)):
 
 1. Ordner `public/<id>/` anlegen, z. B. `public/kaufvertrag/`, mit `index.html`, `<id>.css`, `<id>.js` und `img/`. Als Vorlage dient `public/sechseck/`.
-2. Navigation, Werkstätten, Erkenntnisse und Glossar baut `shared/js/werkstatt.js` auf. Das Thema liefert nur die Inhalte.
-3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Live-Klassenraum, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`.
+2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen, Lückentext, Test) kommen aus `shared/js/aufgaben.js`. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel.
+3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`, live läuft es im Lernraum des Themas.
 4. Das Thema in `public/themen.js` eintragen. Es erscheint dann als Karte auf der Startseite.
 5. Tests in `tests/<id>.spec.mjs` ergänzen, `npm test` ausführen, Pull Request öffnen und die Vorschau prüfen.
 
-Der Live-Klassenraum und die Sicherheitsregeln funktionieren für jedes Thema ohne weitere Einrichtung: Jeder Raum speichert sein Thema. Wer einen Code auf der falschen Themenseite eingibt, bekommt einen Hinweis mit Link zum richtigen Thema.
+Der Lernraum und die Sicherheitsregeln funktionieren für jedes Thema ohne weitere Einrichtung: Jeder Raum speichert sein Thema. Wer einen Code auf der falschen Themenseite eingibt, bekommt einen Hinweis mit Link zum richtigen Thema.
 
 In einer Sitzung mit Claude Code reicht ein Auftrag wie „Leg das Thema Kaufvertrag an“. Die Standards aus `CLAUDE.md` gelten dann automatisch.
 
@@ -144,42 +146,58 @@ Voraussetzungen: [Node.js 22](https://nodejs.org) und Java 21 (für die Firebase
 ```bash
 npm ci          # einmalig
 npm run dev     # Seite mit Emulator: http://127.0.0.1:5000, Emulator-Oberfläche: http://127.0.0.1:4000
-npm test        # alle Tests: Einzelspiel, Live-Klassenraum (Playwright) und Sicherheitsregeln
+npm test        # alle Tests: Werkstätten, Aufgaben, Planspiel, Lernraum (Playwright) und Sicherheitsregeln
 ```
 
-`npm run dev` startet die Seite mit einer lokalen Datenbank (Demo-Projekt `demo-wr-lab`), es fließen keine echten Daten. Den Live-Klassenraum testest du mit zwei Browserfenstern, z. B. einem normalen und einem privaten Fenster.
+`npm run dev` startet die Seite mit einer lokalen Datenbank (Demo-Projekt `demo-wr-lab`), es fließen keine echten Daten. Den Lernraum testest du mit zwei Browserfenstern, z. B. einem normalen und einem privaten Fenster.
 
-Ohne Java geht es auch, dann aber ohne Live-Klassenraum:
+Ohne Java geht es auch, dann aber ohne Lernraum:
 
 ```bash
 python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
 ```
 
-## Im Unterricht (Planspiel Sechseck-Leben)
+## Im Unterricht
 
-1. **Lehrkraft (Beamer):**
-   1. https://wr-lab.web.app öffnen, **Magisches Sechseck → Planspiel** wählen, dann **Lehrkraft (Beamer)**.
-   2. **Live-Klassenraum erstellen** klicken. Code und QR-Code erscheinen groß.
-2. **Schüler (Handy):** den QR-Code scannen. Alternativ die Seite öffnen und **Planspiel → Schüler** wählen. Danach Code und Spitznamen eingeben und die zugeteilte Figur wählen.
+### Lernraum
+
+1. **Lehrkraft (Beamer):** https://wr-lab.web.app öffnen, **Magisches Sechseck** wählen und oben auf das Symbol **Lernraum** tippen. Dann **Lernraum öffnen** klicken. Code und QR-Code erscheinen groß.
+2. **Schüler (Handy):** QR-Code scannen oder die Seite öffnen, oben **Lernraum** tippen, Code und Spitznamen eingeben.
+3. **Im Dashboard der Lehrkraft** (Symbol Lernraum, auch aus jeder Werkstatt heraus):
+   - **Teilnehmer:** wer im Raum ist, in welcher Werkstatt gerade gearbeitet wird und wie viele Antworten schon an der Wand sind
+   - **Alle anhalten:** Auf allen Handys erscheint „Schau nach vorn“, bis du weitermachst
+   - **Alle holen nach …:** Alle Handys springen in dieselbe Werkstatt
+   - **Werkstätten freigeben:** Gesperrte Werkstätten können die Schüler nicht öffnen
+   - **Beamer-Modus:** blendet Spitznamen und das Lehrerpanel aus, sobald das Dashboard für alle sichtbar ist
+   - **Alle Antworten drucken:** Druckansicht mit allen Antworten, auch „Als PDF speichern“
+   - **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht
+4. **An der Wand:** Jede Werkstatt hat eine Frage mit Schreibfeld. Die Schüler tippen **Abschicken**, die Lehrkraft öffnet dieselbe Werkstatt am Beamer und deckt mit **Antworten zeigen** auf, wann es passt.
+5. **Lehrerpanel:** Oben in jeder Werkstatt stehen auf dem Gerät der Lehrkraft Hinweise und der Erwartungshorizont. Schüler sehen davon nichts, im Beamer-Modus ist es ausgeblendet.
+
+Ohne Lernraum funktioniert alles genauso, die Antworten kommen dann ins Heft.
+
+### Planspiel Sechseck-Leben
+
+1. **Lehrkraft:** **Planspiel → Lehrkraft (Beamer)** wählen. Ist schon ein Lernraum offen, nutzt das Planspiel denselben Code. Sonst **Live-Klassenraum erstellen** klicken.
+2. **Schüler:** QR-Code scannen oder **Planspiel → Schüler** wählen. Wer schon im Lernraum ist, wählt direkt die zugeteilte Figur.
 3. **Runde für Runde:**
    1. Ereignis am Beamer zeigen.
    2. Debatte aus Sicht der Figuren.
    3. Abstimmung auf den Handys, die Balken füllen sich live.
    4. **Beschluss verkünden**: Die Handys springen automatisch zum Ergebnis.
-4. **Beamer-Modus:** blendet die Spitznamen aus und zeigt nur Figuren (z. B. „Mia 2“). Das ist sinnvoll, sobald das Dashboard für alle sichtbar ist.
+4. **Beamer-Modus:** blendet die Spitznamen aus und zeigt nur Figuren (z. B. „Mia 2“). Er gilt für Planspiel und Lernraum gemeinsam.
 5. **Entfernen:** Ein unpassender Spitzname lässt sich in der Teilnehmerliste mit dem Kreuz entfernen.
-6. **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht.
 
 Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem sie ihn erstellt hat. Neu laden ist kein Problem, der Raum bleibt erhalten. Ohne Live-Verbindung läuft das Klassenspiel mit Stimmkarten: Die Schüler halten ihre Wahl hoch, die Lehrkraft zählt am Beamer.
 
 ## Datenschutz
 
-- **Ohne Klassenspiel:**
-  - Einzelspiel, Werkstätten, Wissensspeicher und Spielstände bleiben nur im Browser des jeweiligen Geräts (localStorage).
+- **Ohne Lernraum:**
+  - Einzelspiel, Werkstätten, Antworten, Wissensspeicher und Spielstände bleiben nur im Browser des jeweiligen Geräts (localStorage).
   - Es gibt keine Anmeldung, keine Statistikdienste und keine Werbung.
-- **Live-Klassenraum:**
-  - Die Verbindung zu Firebase entsteht erst, wenn jemand im Planspiel „Lehrkraft“ oder „Schüler“ wählt.
-  - Gespeichert werden nur ein frei gewählter Spitzname, die gewählte Figur und Spieldaten (Stimmen, Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
+- **Lernraum:**
+  - Die Verbindung zu Firebase entsteht erst, wenn jemand einen Lernraum öffnet oder ihm beitritt.
+  - Gespeichert werden nur ein frei gewählter Spitzname, die gerade geöffnete Werkstatt, abgeschickte Antworten (höchstens 1000 Zeichen, nur für die Lehrkraft lesbar) und im Planspiel die Figur und Spieldaten (Stimmen, Check-Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
   - Die Schüler sollen keinen vollen echten Namen verwenden. Die Seite weist darauf hin.
 - **Speicherort und Dauer:**
   - Die Daten liegen in Firestore am Standort eur3 (Europa).
@@ -189,7 +207,7 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Dabei verarbeitet Google technisch notwendige Verbindungsdaten wie die IP-Adresse.
 - **Externe Dienste:**
   - Schriften und Symbole kommen von Google Fonts.
-  - Die Firebase-Bibliothek kommt im Klassenspiel von gstatic.com (Google).
+  - Die Firebase-Bibliothek kommt im Lernraum von gstatic.com (Google).
   - Die QR-Code-Bibliothek liefert die Seite selbst aus.
 - **Vertrag mit Google:** In der Firebase-Konsole unter **Projekteinstellungen → Datenschutz** die Kontaktdaten eintragen und den Bedingungen zur Datenverarbeitung (Data Processing and Security Terms) zustimmen.
 - **Abstimmung mit der Schule:**

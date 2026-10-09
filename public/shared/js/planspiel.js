@@ -2,6 +2,7 @@
 // Das Modul kümmert sich um Modi, Beitritt mit Code und QR-Code, Figurenwahl, den Ablauf jeder Runde
 // (Ereignis → Abstimmung → Beschluss → Check → private Entscheidung), das Lehrkraft-Dashboard und den Beamer-Modus.
 // Das Thema liefert nur die Inhalte. Beispiel: sechseck/leben.js
+// Live läuft das Planspiel im Lernraum des Themas (lernraum.js): ein Code für Werkstätten und Planspiel.
 //
 // spiel = {
 //   thema: 'sechseck',                 Ordnername des Themas, wird im Live-Raum gespeichert
@@ -26,14 +27,11 @@
 // g = Spielstand eines Spielers {r, ph, decs, votes, ck, ch, chx, …}, t = Spielstand der Lehrkraft {r, ph, decs, …}
 import { $, $$, esc, store, bindPhoto } from './ui.js';
 import { connect } from './live.js';
-import { THEMEN } from '../../themen.js';
+import { raum, normCode, qrSVG, linkZu } from './lernraum.js';
 
 export const OPTC={A:'var(--md-o-A);--on-oc:var(--md-on-o-A)',B:'var(--md-o-B);--on-oc:var(--md-on-o-B)',C:'var(--md-o-C);--on-oc:var(--md-on-o-C)'};
 const KEYS=['A','B','C'];
-const CODE_ALPHA=/[^A-HJ-NP-Z2-9]/g;
-const normCode=s=>String(s||'').toUpperCase().replace(CODE_ALPHA,'').slice(0,6);
-function qrSVG(text){try{if(!window.qrcode)return '';const q=window.qrcode(0,'M');q.addData(text);q.make();return q.createSvgTag({cellSize:6,margin:2,scalable:true,alt:'QR-Code zum Beitreten'})}catch(e){return ''}}
-const joinURL=code=>location.href.split('#')[0]+'#join='+code;
+const joinURL=code=>linkZu(code,'join');
 
 let pendingJoin=null;
 /** Liest einen Beitrittscode aus der Adresse (#join=CODE). */
@@ -95,8 +93,11 @@ export function mountPlanspiel(app,spiel){
     };
     const persist=()=>{save(mode,g);pushMe()};
     if(live){
-      if(pendingJoin&&g.code!==pendingJoin){g={code:pendingJoin};save(mode,g)}
+      const rs=raum.sitzung(),imRaum=rs&&rs.rolle==='schueler';
+      if(pendingJoin&&!(imRaum&&rs.code===pendingJoin)){g={code:pendingJoin};save(mode,g);pendingJoin=null;return joinScreen()}
       pendingJoin=null;
+      if(imRaum){if(g.code!==rs.code)g={code:rs.code};g.nick=rs.nick;g.joined=true;save(mode,g)}
+      else if(g.joined){g={code:g.code,nick:g.nick};save(mode,g)}
       if(!g.joined)return joinScreen();
     }else if(mode==='schueler'&&pendingJoin){pendingJoin=null}
     if(!g.fig)return pickFig();
@@ -112,7 +113,7 @@ export function mountPlanspiel(app,spiel){
       unsub.push(live.watchMe(g.code,exists=>{if(!exists&&g.joined)ended('Deine Lehrkraft hat dich aus dem Raum entfernt. Du kannst mit einem anderen Spitznamen neu beitreten.')}));
     }
     function ended(msg){
-      cleanup();g={};save(mode,g);
+      cleanup();g={};save(mode,g);raum.vergessen();
       app.innerHTML=`<div class="panel stack" style="max-width:560px"><h3 class="title-l">Live-Spiel beendet</h3><p>${esc(msg)}</p><div class="cta"><button class="btn primary" type="button" id="rj"><span class="ms">login</span>Neu beitreten</button><button class="btn text" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button></div></div>`;
       $('#rj',app).addEventListener('click',()=>player(mode,L));$('#bk',app).addEventListener('click',menu);
     }
@@ -126,23 +127,11 @@ export function mountPlanspiel(app,spiel){
       <div class="cta"><button class="btn primary" type="submit" id="jgo"><span class="ms">login</span>Weiter zur Figurenwahl</button></div></form>`;
       $('#bk',app).addEventListener('click',menu);
       $('#jf',app).addEventListener('submit',async e=>{e.preventDefault();
-        const code=normCode($('#jc',app).value),nick=$('#jn',app).value.trim().replace(/\s+/g,' ').slice(0,20);
-        const fail=t=>{const el=$('#jerr',app);el.textContent=t;el.hidden=false};
-        if(code.length!==6)return fail('Der Code hat sechs Zeichen, zum Beispiel K7Q2XM.');
-        if(!nick)return fail('Bitte gib einen Spitznamen ein.');
-        $('#jgo',app).disabled=true;
-        const room=await live.getRoom(code);
-        $('#jgo',app).disabled=false;
-        if(!room)return fail('Diesen Raum gibt es nicht (mehr). Prüfe den Code.');
-        if(room.topic&&room.topic!==spiel.thema){
-          const th=THEMEN.find(x=>x.id===room.topic);
-          if(!th)return fail('Dieser Code gehört zu einem anderen Thema.');
-          const el=$('#jerr',app);el.hidden=false;
-          el.innerHTML=`Dieser Code gehört zum Thema „${esc(th.titel)}“. <a href="../${th.id}/#join=${code}">Dort beitreten</a>`;
-          return;
-        }
-        if(!room.open)return fail('Dieser Raum nimmt gerade niemanden auf.');
-        g={code,nick,gameId:room.gameId};save(mode,g);pickFig();
+        const b=$('#jgo',app);b.disabled=true;let room;
+        try{room=await raum.beitreten($('#jc',app).value,$('#jn',app).value)}
+        catch(err){b.disabled=false;const el=$('#jerr',app);if(err.html)el.innerHTML=err.message;else el.textContent=err.message;el.hidden=false;return}
+        const rs=raum.sitzung();
+        g={code:rs.code,nick:rs.nick,joined:true,gameId:room.gameId};save(mode,g);pickFig();
       });
     }
     function pickFig(err){
@@ -224,7 +213,7 @@ export function mountPlanspiel(app,spiel){
       if($('#leave',app)){
         $('#leave',app).addEventListener('click',()=>{$('#leave-q',app).hidden=false});
         $('#leave-n',app).addEventListener('click',()=>{$('#leave-q',app).hidden=true});
-        $('#leave-y',app).addEventListener('click',async()=>{const c=g.code;cleanup();g={};save(mode,g);try{await live.kick(c,live.uid)}catch(e){}menu()});
+        $('#leave-y',app).addEventListener('click',async()=>{const c=g.code;cleanup();g={};save(mode,g);if(raum.sitzung())await raum.verlassen();else try{await live.kick(c,live.uid)}catch(e){}menu()});
       }
       const go=$('#go',app);
       if(g.ph==='event')go.addEventListener('click',()=>{g.ph='vote';persist();render();top()});
@@ -258,10 +247,12 @@ export function mountPlanspiel(app,spiel){
   function teacherStart(L){
     cleanup();
     const live=L||null;
-    const newT=()=>({gameId:Math.random().toString(36).slice(2,8),r:0,ph:'lobby',decs:[],tally:{A:0,B:0,C:0},show:false,anon:false,code:(t&&t.code)||null});
+    const newT=()=>({gameId:Math.random().toString(36).slice(2,8),r:0,ph:'lobby',decs:[],tally:{A:0,B:0,C:0},show:false,code:(t&&t.code)||null});
     let t=null;t=load('lk');
     if(!t||!t.gameId)t=newT();
+    const rs0=raum.sitzung();t.code=rs0&&rs0.rolle==='lk'?rs0.code:null;
     const persist=()=>save('lk',t);persist();
+    const anon=()=>raum.beamer();
     let players=[],roomOk=false,roomErr='',busy=false,playersUnsub=null,confirmClose=false;
     const pushState=()=>{if(live&&t.code&&roomOk)live.updateRoom(t.code,{round:t.r,phase:t.ph,decisions:t.decs.slice(),gameId:t.gameId}).catch(e=>console.warn('Raum-Update',e))};
     async function attach(){
@@ -271,20 +262,20 @@ export function mountPlanspiel(app,spiel){
       if(!r||r.owner!==live.uid||r.phase==='closed'){t.code=null;roomOk=false;persist();render();return}
       roomOk=true;
       if(playersUnsub)playersUnsub();
-      playersUnsub=live.watchPlayers(t.code,ps=>{players=ps.sort((a,b)=>((a.joinedAt&&a.joinedAt.seconds)||0)-((b.joinedAt&&b.joinedAt.seconds)||0));render()});
+      playersUnsub=live.watchPlayers(t.code,ps=>{players=ps.filter(p=>p.fig).sort((a,b)=>((a.joinedAt&&a.joinedAt.seconds)||0)-((b.joinedAt&&b.joinedAt.seconds)||0));render()});
       unsub.push(()=>playersUnsub&&playersUnsub());
       pushState();render();
     }
     async function createRoom(){busy=true;roomErr='';render();
-      try{t.code=await live.createRoom(spiel.thema,t.gameId);persist();await attach()}
+      try{t.code=await raum.oeffnen();persist();await attach()}
       catch(e){console.warn(e);roomErr='Der Klassenraum konnte nicht erstellt werden. Prüfe die Firebase-Einrichtung (README, Abschnitt „Firebase einrichten“).'}
       busy=false;render()}
     async function closeRoom(){busy=true;render();
       if(playersUnsub){playersUnsub();playersUnsub=null}
-      try{await live.closeRoom(t.code)}catch(e){console.warn(e)}
+      try{await raum.beenden()}catch(e){console.warn(e)}
       t.code=null;roomOk=false;players=[];busy=false;confirmClose=false;persist();render()}
     const liveVotes=()=>{const c={A:0,B:0,C:0};players.forEach(p=>{const v=p.votes&&p.votes[t.r];if(c[v]!=null)c[v]++});return c};
-    const label=p=>{if(!t.anon)return esc(p.nick||'?');const same=players.filter(q=>q.fig===p.fig);return `${esc(FIG.find(f=>f.id===p.fig)?.n||'?')} ${same.indexOf(p)+1}`};
+    const label=p=>{if(!anon())return esc(p.nick||'?');const same=players.filter(q=>q.fig===p.fig);return `${esc(FIG.find(f=>f.id===p.fig)?.n||'?')} ${same.indexOf(p)+1}`};
     const figOf=p=>FIG.find(f=>f.id===p.fig)||FIG[0];
     const stepOf=p=>{const order=['event','vote','card','wait','result','check','choice'];return (p.r||0)*10+Math.max(0,order.indexOf(p.ph))+(p.ph==='end'?100:0)};
     function lobbyLiveHTML(){
@@ -298,7 +289,7 @@ export function mountPlanspiel(app,spiel){
     }
     function playersHTML(){
       if(!players.length)return '<p class="small muted">Noch niemand im Raum.</p>';
-      return `<div class="row" style="gap:8px">${players.map(p=>`<span class="pill neu" style="padding:4px 6px 4px 4px;gap:6px"><span class="avatar" style="width:24px;height:24px;border-radius:8px">${spiel.portrait(figOf(p))}</span>${label(p)}${!t.anon?`<button class="icon-btn" type="button" data-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen" style="width:24px;height:24px"><span class="ms sm">close</span></button>`:''}</span>`).join('')}</div>`;
+      return `<div class="row" style="gap:8px">${players.map(p=>`<span class="pill neu" style="padding:4px 6px 4px 4px;gap:6px"><span class="avatar" style="width:24px;height:24px;border-radius:8px">${spiel.portrait(figOf(p))}</span>${label(p)}${!anon()?`<button class="icon-btn" type="button" data-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen" style="width:24px;height:24px"><span class="ms sm">close</span></button>`:''}</span>`).join('')}</div>`;
     }
     function dashHTML(){
       if(!live||!t.code||!roomOk)return '';
@@ -309,14 +300,14 @@ export function mountPlanspiel(app,spiel){
         body=`<p>Ereignis gelesen und weiter zur Abstimmung: <b>${done} von ${n}</b></p><div class="bar"><i style="width:${n?done/n*100:0}%"></i></div>${playersHTML()}`}
       else if(t.ph==='vote'){const c=liveVotes(),voted=players.filter(p=>p.votes&&p.votes[t.r]),missing=players.filter(p=>!(p.votes&&p.votes[t.r]));
         body=`<p>Abgestimmt: <b>${voted.length} von ${n}</b></p>${KEYS.map(k=>`<div class="row" style="gap:10px;margin:6px 0"><span class="letter" style="--oc:${OPTC[k]};width:28px;height:28px">${k}</span><div class="bar" style="flex:1;height:14px"><i style="width:${voted.length?c[k]/voted.length*100:0}%;background:var(--md-o-${k})"></i></div><b class="num" style="width:3ch;text-align:right">${c[k]}</b></div>`).join('')}
-        ${missing.length?`<p class="small muted" style="margin-top:8px">Noch nicht abgestimmt: ${t.anon?missing.length+' Personen':missing.map(label).join(', ')}</p>`:''}
+        ${missing.length?`<p class="small muted" style="margin-top:8px">Noch nicht abgestimmt: ${anon()?missing.length+' Personen':missing.map(label).join(', ')}</p>`:''}
         <details style="margin-top:8px"><summary class="small">Wer hat wie abgestimmt?</summary><div class="tbl-wrap"><table><tbody>${FIG.map(f=>{const ps=players.filter(p=>p.fig===f.id);if(!ps.length)return '';const cc={A:0,B:0,C:0};ps.forEach(p=>{const v=p.votes&&p.votes[t.r];if(cc[v]!=null)cc[v]++});return `<tr><td>${esc(f.n)}</td>${KEYS.map(k=>`<td class="r num">${k}: ${cc[k]}</td>`).join('')}</tr>`}).join('')}</tbody></table></div></details>`}
       else if(t.ph==='result'){const ans=players.filter(p=>p.checks&&p.checks[t.r]!=null),ok=ans.filter(p=>p.checks[t.r]).length;
         const C=ROUNDS[t.r].choice,ch=C.opts.map(()=>0);players.forEach(p=>{const v=p.choices&&p.choices[t.r];if(v!=null&&ch[v]!=null)ch[v]++});const chn=ch.reduce((a,b)=>a+b,0);
         body=`<div class="grid2"><div class="stack"><p class="title-s">Fachbegriff-Check</p><p>${ans.length?`<b>${Math.round(ok/ans.length*100)} %</b> richtig (${ok} von ${ans.length} Antworten)`:'Noch keine Antworten.'}</p><div class="bar"><i style="width:${ans.length?ok/ans.length*100:0}%;background:var(--ok)"></i></div></div>
           <div class="stack"><p class="title-s">Private Entscheidung</p><p class="small muted">${esc(C.q)}</p>${C.opts.map((o,i)=>`<div><div class="small">${esc(o.t)}</div><div class="row" style="gap:8px"><div class="bar" style="flex:1"><i style="width:${chn?ch[i]/chn*100:0}%"></i></div><b class="num">${ch[i]}</b></div></div>`).join('')}</div></div>`}
       else if(t.ph==='end'){
-        body=`<div class="tbl-wrap"><table><thead><tr><th>${t.anon?'Figur':'Spitzname'}</th><th>Figur</th>${LK.dashKopf}<th class="r">Check richtig</th></tr></thead><tbody>${players.map(p=>{const f=figOf(p);const cks=Object.values(p.checks||{});return `<tr><td>${label(p)}</td><td>${esc(f.n)}</td>${LK.dashZeile(p,f)}<td class="r num">${cks.filter(Boolean).length}/${cks.length}</td></tr>`}).join('')}</tbody></table></div>
+        body=`<div class="tbl-wrap"><table><thead><tr><th>${anon()?'Figur':'Spitzname'}</th><th>Figur</th>${LK.dashKopf}<th class="r">Check richtig</th></tr></thead><tbody>${players.map(p=>{const f=figOf(p);const cks=Object.values(p.checks||{});return `<tr><td>${label(p)}</td><td>${esc(f.n)}</td>${LK.dashZeile(p,f)}<td class="r num">${cks.filter(Boolean).length}/${cks.length}</td></tr>`}).join('')}</tbody></table></div>
         ${LK.dashHinweis||''}`}
       return `<section class="panel stack" style="background:var(--md-surface-container)">${head}${body}</section>`;
     }
@@ -326,7 +317,7 @@ export function mountPlanspiel(app,spiel){
       const liveOk=!!(live&&t.code&&roomOk);
       let h=`<div class="hud"><b>Klassenspiel · Lehrkraft</b><div><div class="k">Runde</div><div class="v">${Math.min(N,t.r+1)}/${N}</div></div>
         ${liveOk?`<div><div class="k">Raumcode</div><div class="v mono">${esc(t.code)}</div></div><div class="small"><span class="live-dot"></span>${players.length} live verbunden</div>`:`<div><div class="k">Klassencode</div><div class="v mono">${t.decs.join('')||'–'}</div></div><div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`}
-        <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${!!t.anon}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms">restart_alt</span>Neues Spiel</button></div>
+        <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${anon()}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms">restart_alt</span>Neues Spiel</button></div>
         <div id="reset-q" class="fb amb" hidden>Spiel neu starten? Der Raum bleibt offen, alle Spielstände beginnen von vorn. <button class="btn small primary" type="button" id="reset-y">Ja, neu starten</button> <button class="btn small text" type="button" id="reset-n">Abbrechen</button></div>
         ${confirmClose?`<div class="fb bad">Raum ${esc(t.code)} beenden? Alle Daten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="close-y" ${busy?'disabled':''}>Raum löschen</button> <button class="btn small text" type="button" id="close-n">Abbrechen</button></div>`:''}`;
       if(t.ph==='lobby'){
@@ -365,7 +356,7 @@ export function mountPlanspiel(app,spiel){
       $('#reset-n',app).addEventListener('click',()=>{$('#reset-q',app).hidden=true});
       $('#reset-y',app).addEventListener('click',()=>{t=newT();persist();pushState();render()});
       $('#mkroom',app)?.addEventListener('click',createRoom);
-      $('#anon',app)?.addEventListener('click',()=>{t.anon=!t.anon;persist();render()});
+      $('#anon',app)?.addEventListener('click',()=>raum.setBeamer(!anon()));
       $('#close',app)?.addEventListener('click',()=>{confirmClose=true;render()});
       $('#close-n',app)?.addEventListener('click',()=>{confirmClose=false;render()});
       $('#close-y',app)?.addEventListener('click',closeRoom);
@@ -386,6 +377,14 @@ export function mountPlanspiel(app,spiel){
       }
       if(t.ph==='result')go.addEventListener('click',()=>{t.r++;t.ph=t.r>=N?'end':'event';persist();pushState();render();top()});
     }
+    // Lernraum im Dashboard geöffnet oder beendet, Beamer-Modus umgeschaltet
+    unsub.push(raum.on(art=>{
+      if(!document.body.contains(app))return;
+      const rs=raum.sitzung();
+      if(art==='beamer')return render();
+      if((!rs||rs.rolle!=='lk')&&t.code){if(playersUnsub){playersUnsub();playersUnsub=null}t.code=null;roomOk=false;players=[];persist();render()}
+      else if(rs&&rs.rolle==='lk'&&rs.code!==t.code){t.code=rs.code;persist();attach()}
+    }));
     attach();
   }
 

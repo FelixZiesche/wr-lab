@@ -5,7 +5,7 @@ const BEREICHE = {
   start: ['grundlagen'],
   ziele: ['preis', 'beschaeftigung', 'wachstum', 'aussen', 'verteilung', 'umwelt'],
   abwaegen: ['beziehungen', 'phillips', 'politik', 'check'],
-  wissen: ['quiz']
+  wissen: ['quiz', 'sichern']
 };
 
 test('Startansicht mit Sechseck, Kennzahlen und Navigation', async ({ page }) => {
@@ -14,7 +14,7 @@ test('Startansicht mit Sechseck, Kennzahlen und Navigation', async ({ page }) =>
   await expect(page.locator('#view-title')).toHaveText('Lernwerkstatt Magisches Sechseck');
   await expect(page.locator('#hero-hex .hexcorner')).toHaveCount(6);
   await expect(page.locator('.lage .chip')).toHaveCount(6);
-  await expect(page.locator('#ms-count')).toHaveText('0/15');
+  await expect(page.locator('#ms-count')).toHaveText('0/16');
 
   // Steckbrief über eine Ecke des Sechsecks
   await page.locator('#hero-hex .hexcorner[data-k="P"]').click();
@@ -55,7 +55,7 @@ test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async (
   await expect(page.locator('#modal-title')).toHaveText('Warenkorb-Werkstatt');
   await page.locator('[data-erk-btn]').click();
   await expect(page.locator('[data-erk-body]')).toBeVisible();
-  await expect(page.locator('#ms-count')).toHaveText('2/15');
+  await expect(page.locator('#ms-count')).toHaveText('2/16');
   await page.locator('#modal-close').click();
 
   await page.locator('#btn-wissen').click();
@@ -72,5 +72,5 @@ test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async (
   await expect(page.locator('html')).toHaveClass(/big/);
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/big/);
-  await expect(page.locator('#ms-count')).toHaveText('2/15');
+  await expect(page.locator('#ms-count')).toHaveText('2/16');
 });

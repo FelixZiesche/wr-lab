@@ -2,9 +2,11 @@
 // Gerüst, Navigation und Planspiel-Mechanik kommen aus /shared/, hier stehen nur die Inhalte.
 import { $, $$, fmt, sgn, clamp, esc, store } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
+import { schreibfeld, zuordnen, lueckentext, test as kurztest, impuls } from '../shared/js/aufgaben.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
 import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, START, GOAL_IMG } from './daten.js';
 import { SPIEL, PHOTOS } from './leben.js';
+import { HINWEISE, WAND, IMPULS } from './wand.js';
 
 /* ---------- Merksätze ---------- */
 const MS={
@@ -22,7 +24,8 @@ const MS={
   phillips:['Die Phillips-Kurve beschreibt einen Zielkonflikt zwischen Preisniveaustabilität und Beschäftigung. Bei Angebotsschocks (Ölkrise 1973, Energiekrise 2022) steigen Inflation und Arbeitslosigkeit gleichzeitig: Stagflation.'],
   politik:['Jede wirtschaftspolitische Maßnahme hat Haupt- und Nebenwirkungen. Wirtschaftspolitik bedeutet daher, Ziele zu gewichten und Prioritäten zu setzen – das ist eine politische Wertentscheidung.'],
   leben:['Wirtschaftspolitische Entscheidungen treffen Menschen sehr unterschiedlich: Was dem Sechseck insgesamt hilft, kann für einzelne Gruppen teuer sein. Zielkonflikte sind deshalb immer auch Interessenkonflikte zwischen Menschen.'],
-  check:['Ob ein Ziel „erreicht“ ist, hängt von der Messlatte ab. Zielmarken wie 2 % Inflation oder −65 % Treibhausgase sind politische Setzungen, die man begründen und kritisieren kann.']
+  check:['Ob ein Ziel „erreicht“ ist, hängt von der Messlatte ab. Zielmarken wie 2 % Inflation oder −65 % Treibhausgase sind politische Setzungen, die man begründen und kritisieren kann.'],
+  sichern:['Das magische Sechseck ist ein Zielsystem: Weil sich nicht alle Ziele gleichzeitig erreichen lassen, muss Wirtschaftspolitik die Ziele gewichten und begründet Prioritäten setzen.']
 };
 
 /* ---------- Glossar ---------- */
@@ -67,7 +70,7 @@ const GLOSS=[
 /* ---------- Kapitel und Bereiche ---------- */
 const CH={1:['Kapitel 1 – Grundlagen','Einstieg für alle'],2:['Kapitel 2 – Die sechs Ziele messen','Ideal als Gruppenpuzzle: eine Werkstatt pro Expertengruppe'],3:['Kapitel 3 – Zielbeziehungen','Harmonie, Konflikt, Neutralität'],4:['Kapitel 4 – Wirtschaftspolitik','Entscheiden und bewerten'],5:['Kapitel 5 – Planspiel','Allein oder als ganze Klasse'],6:['Kapitel 6 – Sichern','Wiederholung und Abiturvorbereitung']};
 const DEST=[
-  {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Magisches Sechseck',render:startHTML},
+  {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Magisches Sechseck',kurz:'Magisches Sechseck',render:startHTML},
   {id:'ziele',icon:'hexagon',label:'Ziele',title:'Die sechs Ziele messen',ch:[2],desc:'Sechs Werkstätten: Warenkorb, Arbeitsmarkt, Konjunktur, Leistungsbilanz, Lorenzkurve, Klima'},
   {id:'abwaegen',icon:'balance',label:'Abwägen',title:'Zielbeziehungen und Politik',ch:[3,4],desc:'Zielkonflikte aufdecken, Phillips-Kurve prüfen, Politik simulieren, Deutschland bewerten'},
   {id:'spiel',icon:'sports_esports',label:'Planspiel',title:'Planspiel Sechseck-Leben',ch:[5],tool:'leben',desc:'Acht Figuren aus Thüringen, vier Jahre Wirtschaftspolitik – allein oder als Klasse'},
@@ -75,6 +78,7 @@ const DEST=[
 ];
 
 const W=createWerkstatt({
+  thema:'sechseck',
   speicher:'ms6',
   logo:'<svg aria-hidden="true" width="40" height="40" viewBox="0 0 42 42"><polygon points="21,2 37.5,11.5 37.5,30.5 21,40 4.5,30.5 4.5,11.5" fill="none" stroke="var(--md-primary)" stroke-width="3"/><circle cx="21" cy="2.8" r="3.4" fill="var(--g-P)"/><circle cx="37.2" cy="11.7" r="3.4" fill="var(--g-B)"/><circle cx="37.2" cy="30.3" r="3.4" fill="var(--g-W)"/><circle cx="21" cy="39.2" r="3.4" fill="var(--g-A)"/><circle cx="4.8" cy="30.3" r="3.4" fill="var(--g-U)"/><circle cx="4.8" cy="11.7" r="3.4" fill="var(--g-V)"/></svg>',
   bereiche:DEST,
@@ -144,7 +148,7 @@ function openSteckbrief(k){
 }
 
 /* 1 Grundlagen */
-tool({id:'grundlagen',ch:1,goals:ORDER,title:'Sechseck-Baukasten',sub:'Vom magischen Viereck (1967) zum Sechseck: Ziele, Gesetze, Indikatoren, Akteure',
+tool({id:'grundlagen',hinweise:HINWEISE.grundlagen,ch:1,goals:ORDER,title:'Sechseck-Baukasten',sub:'Vom magischen Viereck (1967) zum Sechseck: Ziele, Gesetze, Indikatoren, Akteure',
 html(){return `
 <p class="task"><b>Auftrag:</b> Startet beim Viereck von 1967 und erweitert es zum Sechseck. Klickt jede Ecke an und lest den Steckbrief. Ordnet anschließend die Indikatoren den Zielen zu.</p>
 <div class="grid2">
@@ -168,6 +172,8 @@ html(){return `
 </div>
 <div class="panel"><h3>Zuordnung: Welcher Indikator misst welches Ziel?</h3><div id="gl-match"></div>
 <div class="row" style="margin-top:10px"><button class="btn primary" id="gl-check" type="button">Prüfen</button><span id="gl-res" class="small"></span></div></div>
+${schreibfeld(WAND.grundlagen)}
+${impuls(IMPULS.grundlagen)}
 ${erkHTML('grundlagen')}`},
 init(root){
   let six=false, sel='P';
@@ -213,7 +219,7 @@ const BASKET=[
   {n:'Handyvertrag',q:1,p0:14.99,p1:14.99},
   {n:'Brötchen beim Bäcker',q:10,p0:0.55,p1:0.58}
 ];
-tool({id:'preis',ch:2,goals:['P'],title:'Warenkorb-Werkstatt',sub:'Euren eigenen Preisindex berechnen, Reallohn und Kaufkraftverlust bestimmen',
+tool({id:'preis',hinweise:HINWEISE.preis,ch:2,goals:['P'],title:'Warenkorb-Werkstatt',sub:'Euren eigenen Preisindex berechnen, Reallohn und Kaufkraftverlust bestimmen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Passt den Warenkorb an euer Leben an: Mengen pro Monat und Preise (letztes Jahr / heute). Die Werkstatt berechnet euren persönlichen Preisindex nach dem Verfahren des Statistischen Bundesamts (Laspeyres). Vergleicht mit der offiziellen Inflationsrate.</p>
 <div class="grid2 wide-left">
@@ -242,6 +248,8 @@ html(){return `
 </div>
 <div class="panel"><h3>Hintergrund: So misst das Statistische Bundesamt</h3><p>Rund 300.000 Preise für etwa 650 Güterarten gehen monatlich in den Verbraucherpreisindex ein. Jedes Gut hat ein Gewicht nach seinem Anteil an den Ausgaben aller Haushalte (Wägungsschema, Basisjahr 2020) – Wohnen und Energie zählen am meisten. Weil jeder anders konsumiert, weicht die persönliche Inflation von der amtlichen ab: Wer viel tankt und heizt, spürt 2026 die Energiepreise stärker. Das Bundesamt bietet dafür einen <a href="https://www.destatis.de/DE/Service/InflationsRechner/inflationsrechner.html" target="_blank" rel="noopener">persönlichen Inflationsrechner</a>.</p>
 <p style="margin-top:8px"><b>Begriffe:</b> Inflation (Preisniveau steigt) · Deflation (Preisniveau sinkt) · Disinflation (Preise steigen langsamer) · Kerninflation (ohne Energie und Nahrungsmittel) · Stagflation (Inflation bei Stagnation).</p></div>
+${schreibfeld(WAND.preis)}
+${impuls(IMPULS.preis)}
 ${erkHTML('preis')}`},
 init(root){
   let items=store('ms6-basket')||BASKET.map(o=>({...o}));
@@ -309,7 +317,7 @@ const CASES=[
   ['Die Energiepreise steigen stark, die Nachfrage nach Konsumgütern sinkt im ganzen Land, Händler bauen Personal ab.','konjunkturell']
 ];
 const CAUSE={friktionell:'Sucharbeitslosigkeit beim Stellenwechsel; kurz und kaum vermeidbar.',saisonal:'Abhängig von der Jahreszeit (Wetter, Tourismus).',konjunkturell:'Folge einer allgemein schwachen Nachfrage im Abschwung.',strukturell:'Dauerhafter Wandel von Branchen, Regionen oder Qualifikationsanforderungen (Mismatch).'};
-tool({id:'beschaeftigung',ch:2,goals:['B'],title:'Arbeitsmarkt-Werkstatt',sub:'Arbeitslosenquote berechnen, Arten der Arbeitslosigkeit erkennen, Thüringen vergleichen',
+tool({id:'beschaeftigung',hinweise:HINWEISE.beschaeftigung,ch:2,goals:['B'],title:'Arbeitsmarkt-Werkstatt',sub:'Arbeitslosenquote berechnen, Arten der Arbeitslosigkeit erkennen, Thüringen vergleichen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Berechnet die Arbeitslosenquote für Deutschland und Thüringen. Ordnet danach acht Fälle den Arten der Arbeitslosigkeit zu und überlegt, welche Politik jeweils helfen würde.</p>
 <div class="grid2">
@@ -331,6 +339,8 @@ html(){return `
 <div class="panel"><h3>Fall-Sortierung: Welche Art von Arbeitslosigkeit?</h3><div id="al-cases"></div>
 <div class="row" style="margin-top:10px"><button class="btn primary" id="al-check" type="button">Prüfen</button><span class="small" id="al-res"></span></div>
 <div class="grid3" style="margin-top:10px">${Object.entries(CAUSE).map(([k,v])=>`<div class="fb neu"><b>${k[0].toUpperCase()+k.slice(1)}</b><br><span class="small">${v}</span></div>`).join('')}</div></div>
+${schreibfeld(WAND.beschaeftigung)}
+${impuls(IMPULS.beschaeftigung)}
 ${erkHTML('beschaeftigung')}`},
 init(root){
   const PR={de:[2994,43790],th:[71,1024],vb:[1300,44500]};
@@ -359,7 +369,7 @@ const PHASES={
   ab:{n:'Abschwung (Rezession)',d:'Nachfrage und Aufträge gehen zurück, Lager füllen sich, Investitionen werden verschoben. Kurzarbeit, später Entlassungen. Bei zwei Quartalen mit sinkendem BIP spricht man von technischer Rezession.',t:['sinkend','steigend','Anstieg lässt nach','sinkend','pessimistisch']},
   tief:{n:'Tiefstand (Depression)',d:'Geringe Auslastung, hohe Arbeitslosigkeit, wenig Investitionen, niedrige Zinsen. Staatliche Konjunkturprogramme sollen die Nachfrage stützen.',t:['niedrig','hoch','niedrig, evtl. sinkend','niedrig','gedrückt']}
 };
-tool({id:'wachstum',ch:2,goals:['W'],title:'Konjunktur-Werkstatt',sub:'Konjunkturzyklus durchfahren, reales vs. nominales BIP berechnen, Deutschland einordnen',
+tool({id:'wachstum',hinweise:HINWEISE.wachstum,ch:2,goals:['W'],title:'Konjunktur-Werkstatt',sub:'Konjunkturzyklus durchfahren, reales vs. nominales BIP berechnen, Deutschland einordnen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Fahrt mit dem Regler durch einen Konjunkturzyklus und beobachtet, wie sich die Indikatoren verändern. Ordnet Deutschland im Herbst 2026 ein und rechnet nominales in reales Wachstum um.</p>
 <div class="grid2 wide-left">
@@ -380,6 +390,8 @@ html(){return `
    <p class="small muted">Das nominale BIP misst in aktuellen Preisen. Steigen nur die Preise, wächst es, ohne dass mehr produziert wird. Deshalb zählt für das Wachstumsziel das reale (preisbereinigte) BIP.</p></div>
 </div>
 <div class="panel"><h3>Kritik am BIP als Wohlstandsmaß</h3><p>Das BIP erfasst keine unbezahlte Arbeit (Pflege, Ehrenamt), keine Umweltschäden und keine Verteilung. Ein Unfall mit Reparatur und Krankenhausaufenthalt erhöht das BIP sogar. Alternativen wie der Nationale Wohlfahrtsindex oder die Wohlfahrtsmessung der OECD ergänzen es. Deshalb steht neben dem Wachstum auch Umweltschutz im Sechseck.</p></div>
+${schreibfeld(WAND.wachstum)}
+${impuls(IMPULS.wachstum)}
 ${erkHTML('wachstum')}`},
 init(root){
   const draw=t=>{
@@ -418,7 +430,7 @@ init(root){
 }});
 
 /* 5 Außenwirtschaft */
-tool({id:'aussen',ch:2,goals:['A'],title:'Leistungsbilanz-Waage',sub:'Teilbilanzen einstellen, Saldo in % des BIP bewerten, Wechselkurseffekte testen',
+tool({id:'aussen',hinweise:HINWEISE.aussen,ch:2,goals:['A'],title:'Leistungsbilanz-Waage',sub:'Teilbilanzen einstellen, Saldo in % des BIP bewerten, Wechselkurseffekte testen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Stellt die vier Teilbilanzen ein und beobachtet, wohin die Waage kippt. Prüft, ob die EU-Frühwarnschwelle überschritten wird. Testet dann, wie ein stärkerer oder schwächerer Euro auf Export und Import wirkt.</p>
 <div class="grid2 wide-left">
@@ -441,6 +453,8 @@ html(){return `
    <p><b>Pro:</b> Exportstärke sichert Arbeitsplätze in Industrie und Mittelstand (in Thüringen z. B. Optik, Automobilzulieferer, Maschinenbau). Überschüsse bilden Auslandsvermögen, etwa für eine alternde Gesellschaft.</p>
    <p style="margin-top:6px"><b>Contra:</b> Einem Überschuss steht immer ein Defizit anderer Länder gegenüber – sie verschulden sich. Abhängigkeit von der Weltkonjunktur, Konflikte um Zölle (USA). Überschuss heißt auch: Ersparnisse fließen ins Ausland statt in Investitionen im Inland.</p></div>
 </div>
+${schreibfeld(WAND.aussen)}
+${impuls(IMPULS.aussen)}
 ${erkHTML('aussen')}`},
 init(root){
   const PRE={de:[196,-56,122,-62],null:[40,-20,20,-40],def:[-120,-10,-15,-35]};
@@ -484,7 +498,7 @@ const LZ={
   verm:{b:'Vermögen',n:'Deutschland: Nettovermögen (Näherung; das ärmste Fünftel hat oft null oder Schulden)',v:[0,1.5,6.5,18,74]},
   gleich:{b:'Gleichverteilung',n:'Gleichverteilung: Jedes Fünftel hat 20 %',v:[20,20,20,20,20]}
 };
-tool({id:'verteilung',ch:2,goals:['V'],title:'Lorenz-Werkstatt',sub:'Lorenzkurve zeichnen, Gini-Koeffizient berechnen, Umverteilung durch den Staat sichtbar machen',
+tool({id:'verteilung',hinweise:HINWEISE.verteilung,ch:2,goals:['V'],title:'Lorenz-Werkstatt',sub:'Lorenzkurve zeichnen, Gini-Koeffizient berechnen, Umverteilung durch den Staat sichtbar machen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Verteilt 100 % des Einkommens auf fünf gleich große Bevölkerungsgruppen (ärmstes bis reichstes Fünftel). Vergleicht Markteinkommen und verfügbare Einkommen: Wie stark verteilt der Staat um? Und warum ist Vermögen viel ungleicher verteilt?</p>
 <div class="grid2 wide-left">
@@ -507,6 +521,8 @@ html(){return `
    <dt>Primärverteilung</dt><dd>Verteilung über den Markt (Löhne, Gewinne, Zinsen, Mieten)</dd>
    <dt>Sekundärverteilung</dt><dd>Korrektur durch den Staat: progressive Einkommensteuer, Sozialabgaben, Transfers wie Kindergeld, Wohngeld, Grundsicherung</dd></dl></div>
 </div>
+${schreibfeld(WAND.verteilung)}
+${impuls(IMPULS.verteilung)}
 ${erkHTML('verteilung')}`},
 init(root){
   let cur=LZ.verf.v.slice();
@@ -542,7 +558,7 @@ init(root){
 
 /* 7 Umwelt */
 const THG=[[1990,1251],[2000,1045],[2010,942],[2015,904],[2019,800],[2020,730],[2021,760],[2022,750],[2023,674],[2024,649],[2025,649]];
-tool({id:'umwelt',ch:2,goals:['U'],title:'Klima-Werkstatt',sub:'Treibhausgas-Pfad bis 2045 planen, CO₂-Preis an der Zapfsäule berechnen',
+tool({id:'umwelt',hinweise:HINWEISE.umwelt,ch:2,goals:['U'],title:'Klima-Werkstatt',sub:'Treibhausgas-Pfad bis 2045 planen, CO₂-Preis an der Zapfsäule berechnen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Legt fest, um wie viele Millionen Tonnen Deutschland ab 2026 jedes Jahr Emissionen senkt. Wird das Ziel 2030 erreicht? Berechnet anschließend, was ein CO₂-Preis an der Tankstelle und beim Heizen kostet.</p>
 <div class="panel chart"><h3>Treibhausgasemissionen Deutschland (Mio. t CO₂-Äquivalente)</h3><div id="th-svg"></div>
@@ -559,6 +575,8 @@ html(){return `
    <p style="margin-top:6px"><b>Entkopplung:</b> Seit 1990 ist die deutsche Wirtschaftsleistung real um rund die Hälfte gewachsen, die Emissionen sind um 48 % gesunken. Wachstum und Umweltschutz schließen sich also nicht zwingend aus – reicht das Tempo aber?</p>
    <p style="margin-top:6px"><b>Klimageld:</b> Wird das Geld aus dem CO₂-Preis pro Kopf zurückgezahlt, profitieren Haushalte mit geringem Verbrauch – oft die mit geringerem Einkommen.</p></div>
 </div>
+${schreibfeld(WAND.umwelt)}
+${impuls(IMPULS.umwelt)}
 ${erkHTML('umwelt')}`},
 init(root){
   const draw=()=>{
@@ -610,7 +628,7 @@ const REL={
 };
 const RELC={h:['ok','var(--ok)','Harmonie'],k:['bad','var(--bad)','Konflikt'],a:['amb','var(--amb)','ambivalent'],n:['neu','var(--neu)','neutral']};
 const relKey=(a,b)=>{const ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);const pairOrder=['P','B','W','A','V','U'];return [a,b].sort((x,y)=>pairOrder.indexOf(x)-pairOrder.indexOf(y)).join('-')};
-tool({id:'beziehungen',ch:3,goals:ORDER,title:'Zielbeziehungs-Detektiv',sub:'15 Paare untersuchen: Harmonie, Konflikt, neutral oder ambivalent?',
+tool({id:'beziehungen',hinweise:HINWEISE.beziehungen,ch:3,goals:ORDER,title:'Zielbeziehungs-Detektiv',sub:'15 Paare untersuchen: Harmonie, Konflikt, neutral oder ambivalent?',
 html(){return `
 <p class="task"><b>Auftrag:</b> Wählt zwei Ziele aus. Entscheidet zuerst selbst, wie sie zusammenhängen, und deckt dann die Lösung auf. Ziel: alle 15 Beziehungen im Sechseck aufklären.</p>
 <div class="grid2 wide-left">
@@ -624,6 +642,8 @@ html(){return `
  <dt>Zielkonflikt</dt><dd>Die Förderung des einen Ziels beeinträchtigt das andere (konkurrierend).</dd>
  <dt>Zielneutralität</dt><dd>Die Ziele beeinflussen sich nicht (indifferent).</dd>
  <dt>ambivalent</dt><dd>Je nach Ursache, Zeitraum und Ausgangslage Harmonie oder Konflikt.</dd></dl></div>
+${schreibfeld(WAND.beziehungen)}
+${impuls(IMPULS.beziehungen)}
 ${erkHTML('beziehungen')}`},
 init(root){
   let pick=[], seen=new Set(store('ms6-rel')||[]), guess=null;
@@ -666,7 +686,7 @@ init(root){
 
 /* 9 Phillips */
 const PH=[[2015,6.4,0.7],[2016,6.1,0.4],[2017,5.7,1.7],[2018,5.2,1.9],[2019,5.0,1.4],[2020,5.9,0.5],[2021,5.7,3.1],[2022,5.3,6.9],[2023,5.7,5.9],[2024,6.0,2.2],[2025,6.3,2.2]];
-tool({id:'phillips',ch:3,goals:['P','B'],title:'Phillips-Kurven-Labor',sub:'Den Klassiker unter den Zielkonflikten an echten deutschen Daten prüfen',
+tool({id:'phillips',hinweise:HINWEISE.phillips,ch:3,goals:['P','B'],title:'Phillips-Kurven-Labor',sub:'Den Klassiker unter den Zielkonflikten an echten deutschen Daten prüfen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Die Phillips-Kurve behauptet: Weniger Arbeitslosigkeit gibt es nur um den Preis höherer Inflation. Prüft die These mit den deutschen Jahreswerten 2015 bis 2025. Wo passt sie, wo nicht – und warum?</p>
 <div class="grid2 wide-left">
@@ -678,6 +698,8 @@ html(){return `
    <p><b>Erklärung:</b> Die Kurve gilt am ehesten bei Nachfrageschwankungen. Bei Angebotsschocks (teure Energie) steigen Kosten und Preise, während die Produktion sinkt: <b>Stagflation</b>. Außerdem passen Menschen ihre Inflationserwartungen an – dauerhaft lässt sich Arbeitslosigkeit nicht mit Inflation „kaufen“ (Friedman, Phelps).</p>
    <div id="ph-info" class="fb neu small">Tippt auf einen Punkt für Details.</div></div>
 </div>
+${schreibfeld(WAND.phillips)}
+${impuls(IMPULS.phillips)}
 ${erkHTML('phillips')}`},
 init(root){
   let theo=false,stag=false;
@@ -715,7 +737,7 @@ const MEAS=[
   {id:'fach',a:'Bund und Länder',n:'Fachkräfteeinwanderung und Weiterbildungsoffensive',e:{P:0,B:1,W:1,A:0,V:1,U:0},d:1,c:'Engpässe am Arbeitsmarkt sinken, strukturelle Arbeitslosigkeit geht zurück. Wirkt erst nach Jahren.'},
   {id:'lohn',a:'Tarifpartner',n:'Gewerkschaften setzen hohe Lohnabschlüsse durch',e:{P:-1,B:-1,W:1,A:1,V:1,U:0},d:0,c:'Kaufkraft ↑ → Konsum, mehr Importe. Höhere Kosten → Preise ↑, Gefahr Lohn-Preis-Spirale; manche Betriebe stellen weniger ein.'}
 ];
-tool({id:'politik',ch:4,goals:ORDER,title:'Wirtschaftspolitik-Simulator',sub:'Maßnahmen wählen und sehen, wie sich das Sechseck verformt',
+tool({id:'politik',hinweise:HINWEISE.politik,ch:4,goals:ORDER,title:'Wirtschaftspolitik-Simulator',sub:'Maßnahmen wählen und sehen, wie sich das Sechseck verformt',
 html(){return `
 <p class="task"><b>Auftrag:</b> Ihr seid der Wirtschaftsausschuss. Wählt eine Ausgangslage und kombiniert bis zu vier Maßnahmen. Schafft ihr es, alle sechs Ziele über 70 Punkte zu bringen? Begründet eure Auswahl mit den Wirkungsketten.</p>
 <div class="row"><span class="small muted">Ausgangslage:</span>${Object.entries(START).map(([k,o])=>`<button class="btn small" data-st="${k}" type="button" aria-pressed="${k==='de'}">${o.n}</button>`).join('')}</div>
@@ -729,6 +751,8 @@ html(){return `
 </div>
 <div class="panel"><h3>Maßnahmen <span class="small muted" id="ps-n"></span></h3><div class="measures" id="ps-m"></div></div>
 <p class="small muted">Modell: Jede Maßnahme verschiebt die Ziele qualitativ um bis zu ±2 Stufen (je 9 Punkte). Echte Wirkungen hängen von Ausmaß, Zeitpunkt und Lage ab und sind teils umstritten. Genau darüber lohnt sich die Diskussion.</p>
+${schreibfeld(WAND.politik)}
+${impuls(IMPULS.politik)}
 ${erkHTML('politik')}`},
 init(root){
   let st='de',on=new Set();
@@ -772,7 +796,7 @@ const SCORE={
   V:{f:v=>(0.5-v)/0.3*100,rule:'(0,5 − Gini) ÷ 0,3 × 100',show:()=>'Gini ≈ 0,29–0,30'},
   U:{f:v=>v/65*100,rule:'erreichte Minderung ÷ 65 % (Ziel 2030) × 100',show:(v,y)=>`${y.thg} Mio. t (−${fmt(v,0)} %)`}
 };
-tool({id:'check',ch:4,goals:ORDER,title:'Deutschland-Check',sub:'Wie gut erreicht Deutschland die Ziele? Jahre vergleichen – und die Messlatte hinterfragen',
+tool({id:'check',hinweise:HINWEISE.check,ch:4,goals:ORDER,title:'Deutschland-Check',sub:'Wie gut erreicht Deutschland die Ziele? Jahre vergleichen – und die Messlatte hinterfragen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Vergleicht zwei Jahre. In welchem Jahr war das Sechseck am „rundesten“? Prüft dann die Bewertungsregeln: Sind sie fair? Ändert eine Regel und begründet, warum eure besser ist.</p>
 <div class="row"><span class="small muted">Jahr A:</span><span id="ck-a" class="row"></span></div>
@@ -785,6 +809,8 @@ html(){return `
 <div class="panel"><h3>Die Messlatte (normative Setzung!)</h3><div class="tbl-wrap"><table><tbody>${ORDER.map(k=>`<tr><td>${hexDot(k)} ${G[k].short}</td><td class="mono small">${SCORE[k].rule}</td></tr>`).join('')}</tbody></table></div>
 <p class="small" style="margin-top:8px">Diskussionsfragen: Ist ein Leistungsbilanzüberschuss genauso schlecht wie ein Defizit? Warum 1,75 % Wachstum – und nicht 0 %? Wie misst man „gerechte“ Verteilung mit einer Zahl?</p>
 <p class="small" style="margin-top:6px"><b>Regional:</b> Thüringen hatte im Juli 2026 eine Arbeitslosenquote von 6,5 % – etwas mehr als der Bundesdurchschnitt.</p></div>
+${schreibfeld(WAND.check)}
+${impuls(IMPULS.check)}
 ${erkHTML('check')}`},
 init(root){
   let a='2026*',b='2019';
@@ -820,7 +846,7 @@ const QUIZ=[
   ['Wer ist in Deutschland für die Geldpolitik zuständig?',['Die Europäische Zentralbank','Das Bundesfinanzministerium','Der Sachverständigenrat','Der Bundestag'],0,'Seit 1999 bestimmt die unabhängige EZB die Geldpolitik im Euroraum; die Bundesbank ist Teil des Eurosystems.'],
   ['Welche Rechtsgrundlage stützt das Ziel „Schutz der natürlichen Lebensgrundlagen“?',['Art. 20a GG','§ 1 StabG','Art. 127 AEUV','Art. 9 GG'],0,'Seit 1994 Staatsziel im Grundgesetz; konkretisiert durch das Klimaschutzgesetz.']
 ];
-tool({id:'quiz',ch:6,goals:ORDER,title:'Abi-Check',sub:'14 Fragen zum magischen Sechseck mit Erklärungen',
+tool({id:'quiz',hinweise:HINWEISE.quiz,ch:6,goals:ORDER,title:'Abi-Check',sub:'14 Fragen zum magischen Sechseck mit Erklärungen',
 html(){return `<p class="task"><b>Auftrag:</b> Beantwortet die Fragen allein oder als Team. Nach jeder Antwort gibt es eine Erklärung.</p><div class="panel" id="qz"></div>`},
 init(root){
   let i=0,pts=0,order=[];
@@ -839,10 +865,35 @@ init(root){
   start();
 }});
 
+/* 12b Hefteintrag und Kurztest */
+tool({id:'sichern',ch:6,goals:ORDER,hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, Schlagzeilen den Zielen zuordnen und ein Test mit einem Versuch',
+html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Pro Frage habt ihr nur einen Versuch.</p>
+${lueckentext({id:'sichern-heft',titel:'Hefteintrag: Das magische Sechseck',saetze:[
+  'Das [Stabilitäts- und Wachstumsgesetz|Stabilitätsgesetz|StabG] von [1967] nennt vier Ziele: ein stabiles [Preisniveau], einen hohen [Beschäftigungsstand|Beschäftigung], ein außenwirtschaftliches [Gleichgewicht] und ein stetiges und angemessenes [Wirtschaftswachstum|Wachstum].',
+  'Später kamen eine gerechte [Einkommens- und Vermögensverteilung|Verteilung|Einkommensverteilung] und der Schutz der natürlichen [Lebensgrundlagen|Umwelt] hinzu.',
+  '„Magisch“ heißt das Sechseck, weil sich nicht alle Ziele [gleichzeitig] erreichen lassen. Fördert ein Ziel ein anderes, spricht man von [Zielharmonie], behindert es ein anderes, von einem [Zielkonflikt].',
+  'Die Stabilität des Preisniveaus misst man mit dem [Verbraucherpreisindex|VPI], die Verteilung zum Beispiel mit dem [Gini-Koeffizienten|Gini-Koeffizient|Gini].']})}
+${zuordnen({id:'sichern-schlagzeilen',frage:'Welches Ziel steht in der Schlagzeile auf dem Spiel? (Die Schlagzeilen sind erfunden.)',
+  faecher:ORDER.map(k=>({id:k,t:G[k].short})),
+  karten:[{t:'Döner in Jena kostet jetzt 8 Euro',f:'P'},{t:'Autozulieferer in Eisenach meldet Kurzarbeit an',f:'B'},{t:'Thüringer Landkreise bauen Solarparks aus',f:'U'},
+    {t:'Deutsche Wirtschaft wächst nur um 0,2 Prozent',f:'W'},{t:'Jeder Sechste in Deutschland gilt als armutsgefährdet',f:'V'},{t:'US-Zölle: Deutsche Exporte brechen ein',f:'A'},
+    {t:'EZB erhöht den Leitzins wegen hoher Inflation',f:'P'},{t:'Pflegeheime in Erfurt finden keine Fachkräfte',f:'B'},{t:'Exportüberschuss erreicht neuen Rekord',f:'A'},
+    {t:'Dürresommer: Thüringer Wälder leiden',f:'U'},{t:'Gemeinschaftsdiagnose: Die Wirtschaft schrumpft das zweite Jahr in Folge',f:'W'},{t:'Das reichste Zehntel besitzt mehr als die Hälfte des Vermögens',f:'V'}]})}
+${kurztest({id:'sichern-test',titel:'Kurztest: vier Fragen',fragen:[
+  {f:'Seit wann ist der Schutz der natürlichen Lebensgrundlagen ein Staatsziel im Grundgesetz?',o:['1967','1994','2021'],r:1,e:'Art. 20a GG gilt seit 1994. 2021 hat das Bundesverfassungsgericht ihn mit dem Klimabeschluss gestärkt.'},
+  {f:'Die EZB erhöht den Leitzins, um die Inflation zu bremsen. Welches Ziel gerät dadurch eher unter Druck?',o:['Wachstum','Umwelt','Außenwirtschaft'],r:0,e:'Höhere Zinsen machen Kredite teurer. Konsum und Investitionen sinken – die Wirtschaft wächst langsamer.'},
+  {f:'Welche Zielbeziehung beschreibt die Phillips-Kurve?',o:['Harmonie zwischen Wachstum und Umwelt','Konflikt zwischen Preisniveau und Beschäftigung','Neutralität zwischen Verteilung und Außenwirtschaft'],r:1,e:'Nach der Phillips-Kurve geht weniger Arbeitslosigkeit mit höherer Inflation einher – und umgekehrt.'},
+  {f:'Was misst der Gini-Koeffizient?',o:['Wie stark die Preise steigen','Wie ungleich Einkommen oder Vermögen verteilt sind','Wie viel Deutschland exportiert'],r:1,e:'0 heißt: Alle haben gleich viel. 1 heißt: Eine Person hat alles.'}]})}
+${schreibfeld(WAND.sichern)}
+${impuls(IMPULS.sichern)}
+${erkHTML('sichern')}`},
+init(root){bindErk(root)}});
+
 /* 13 Planspiel (Inhalte in leben.js, Ablauf in shared/js/planspiel.js) */
-tool({id:'leben',ch:5,goals:ORDER,title:'Planspiel Sechseck-Leben',sub:'In die Rolle einer Person aus Thüringen schlüpfen, vier Jahre Wirtschaftspolitik erleben – allein oder als ganze Klasse',
+tool({id:'leben',hinweise:HINWEISE.leben,ch:5,goals:ORDER,title:'Planspiel Sechseck-Leben',sub:'In die Rolle einer Person aus Thüringen schlüpfen, vier Jahre Wirtschaftspolitik erleben – allein oder als ganze Klasse',
 html(){return `
 <div id="lb-app" class="stack"></div>
+${schreibfeld(WAND.leben)}
 ${erkHTML('leben')}`},
 init(root){
   mountPlanspiel($('#lb-app',root),SPIEL);

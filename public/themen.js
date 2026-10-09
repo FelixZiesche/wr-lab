@@ -8,7 +8,7 @@ export const THEMEN = [
     titel: 'Magisches Sechseck',
     bereich: 'Wirtschaft',
     text: 'Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken und im Planspiel „Sechseck-Leben“ vier Jahre Politik für Menschen aus Thüringen entscheiden.',
-    stichworte: ['StabG 1967', 'Zielkonflikte', 'Planspiel', 'Live-Klassenraum'],
+    stichworte: ['StabG 1967', 'Zielkonflikte', 'Planspiel', 'Lernraum'],
     bild: 'sechseck/img/szene-3-jena.jpg',
     alt: 'Blick über das Saaletal auf Jena mit dem JenTower',
     foto: 'Lukas D. / Unsplash'
