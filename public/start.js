@@ -24,4 +24,4 @@ document.getElementById('themen').innerHTML = STUFEN.map(k => {
 </section>`;
 }).join('');
 
-document.getElementById('fotos').textContent = 'Fotos: ' + THEMEN.map(t => t.foto).join(', ') + ' (Unsplash-Lizenz)';
+document.getElementById('fotos').textContent = 'Fotos: ' + THEMEN.map(t => t.foto).join(' · ');

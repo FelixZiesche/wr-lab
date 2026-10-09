@@ -3,6 +3,8 @@
 // Die Lehrkraft sieht, wer gerade wo arbeitet, sammelt Antworten „an der Wand“, hält alle Geräte an,
 // holt alle in eine Werkstatt, gibt Werkstätten frei und sieht in jeder Werkstatt das Lehrerpanel.
 // Aus dem Wissenscheck kommen nur Punkte (keine Texte); ein AIS.chat-Link der Lehrkraft schaltet den KI-Coach frei.
+// „Ihr seid das Gericht“: Die Lehrkraft startet eine Abstimmung (Raumfeld umfrage), die Handys zeigen sie in einem Fenster,
+// jede Stimme landet im eigenen Eintrag (Feld stimme), die Lehrkraft zählt und deckt auf.
 // Die Verbindung läuft ausschließlich über live.js. Eingebunden wird der Lernraum von werkstatt.js.
 import { $, $$, esc, store } from './ui.js';
 import { connect } from './live.js';
@@ -16,7 +18,8 @@ export const linkZu=(code,art='raum')=>location.href.split('#')[0]+'#'+art+'='+c
 
 /* ---------- Verzeichnis der Aufgaben ----------
    Aufgaben mit Lösung oder Antwort melden sich hier an: {id, frage, loesung:[…], wand:true|false, tool}.
-   Der Wissenscheck meldet zusätzlich check:{stufen, aufgaben:[{afb, p, kurz}]} und ki (Anweisung für AIS.chat).
+   Der Wissenscheck meldet zusätzlich check:{stufen, aufgaben:[{afb, p, kurz}]} und ki (Anweisung für AIS.chat),
+   eine Abstimmung umfrage:{fall, frage, optionen, r, e}.
    Das Lehrerpanel, das Dashboard und die Druckansicht lesen daraus. */
 export const AUFGABEN=new Map();
 let aktuellesTool=null;
@@ -102,7 +105,7 @@ export const raum={
     const gleich=s&&s.rolle==='schueler'&&s.code===code;
     if(gleich)await L.updatePlayer(code,{nick});
     else await L.joinRoom(code,{nick,ort:String(cfg.ort?cfg.ort():'').slice(0,40)});
-    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{}};speichern();gemeldet='';ergGemeldet='';
+    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{},urteile:gleich?(s.urteile||{}):{}};speichern();gemeldet='';ergGemeldet='';
     await anbinden();melde('start');return r;
   },
   async verlassen(){if(!s)return;const c=s.code;ende(null);try{await L.kick(c,L.uid)}catch(e){}},
@@ -121,6 +124,18 @@ export const raum={
   /** Link zum geteilten Lernszenario in AIS.chat, den die Lehrkraft im Dashboard einträgt. */
   kiLink:()=>(s&&z.raum&&z.raum.ki)||'',
   setzeKi:url=>steuern({ki:url}),
+  /** Live-Abstimmung: laufende Umfrage {id, n, auf} oder {} */
+  umfrage:()=>(z.raum&&z.raum.umfrage&&z.raum.umfrage.id)?z.raum.umfrage:{},
+  starteUmfrage(id){const u=(z.raum&&z.raum.umfrage)||{};return steuern({umfrage:{id,n:(u.n||0)+1,auf:false}})},
+  deckeAuf(){const u=raum.umfrage();if(u.id)return steuern({umfrage:{...u,auf:true}})},
+  beendeUmfrage(){const u=(z.raum&&z.raum.umfrage)||{};return steuern({umfrage:{id:'',n:u.n||0,auf:false}})},
+  /** Lehrkraft: Stimmen pro Antwort für die laufende Umfrage */
+  stimmen(){const u=raum.umfrage(),a=AUFGABEN.get(u.id),k=a&&a.umfrage?a.umfrage.optionen.length:0,st=Array(k).fill(0);
+    z.spieler.forEach(p=>{const v=p.stimme;if(v&&v.n===u.n&&v.w>=0&&v.w<k)st[v.w]++});return st},
+  /** Schüler: abstimmen (bis zur Auflösung änderbar) */
+  async stimme(w){const u=raum.umfrage();if(!s||s.rolle!=='schueler'||!L||!u.id||u.auf)return;s.stimme={n:u.n,w};speichern();umfrageFenster();await L.updatePlayer(s.code,{stimme:{n:u.n,w}})},
+  /** Schüler: eigenes Urteil zu einer aufgelösten Abstimmung {w} */
+  urteil:id=>s&&s.urteile?s.urteile[id]:undefined,
   /** Titel einer Werkstatt oder eines Bereichs. */
   titel:id=>ortName(id),
   pause:b=>steuern({pause:!!b}),
@@ -198,6 +213,7 @@ function dashboard(box){
   </section>
   <section class="panel stack" id="lr-teil"></section>
   <section class="panel stack" id="lr-wc" hidden></section>
+  <section class="panel stack" id="lr-abst" hidden></section>
   <section class="panel stack" id="lr-antw"></section>
   ${kiHTML()}</div>`;
   $('#lr-beamer',box).addEventListener('click',()=>raum.setBeamer(!raum.beamer()));
@@ -233,6 +249,7 @@ function aktualisiere(box){
     ${n?`<div class="tbl-wrap"><table><thead><tr><th>${beamer?'Gerät':'Spitzname'}</th><th>Gerade in</th><th class="r">Antworten</th>${beamer?'':'<th></th>'}</tr></thead><tbody>${z.spieler.map(p=>`<tr><td>${esc(raum.name(p.uid))}</td><td>${esc(ortName(p.ort))}</td><td class="r num">${anzahl(p.uid)}</td>${beamer?'':`<td class="r"><button class="icon-btn" type="button" data-lr-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen"><span class="ms">person_remove</span></button></td>`}</tr>`).join('')}</tbody></table></div>`:'<p class="small muted">Noch niemand im Raum.</p>'}`;
   $$('[data-lr-kick]',box).forEach(b=>b.addEventListener('click',()=>raum.kick(b.dataset.lrKick).catch(e=>console.warn(e))));
   wissenscheck($('#lr-wc',box),beamer);
+  abstimmungen($('#lr-abst',box));
   if($('#lr-ki-weg',box))$('#lr-ki-weg',box).hidden=!r.ki;
   const wand=[...AUFGABEN.values()].filter(a=>a.wand);
   $('#lr-antw',box).innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Antworten an der Wand</h3><button class="btn small" type="button" id="lr-druck"><span class="ms">print</span>Alle Antworten drucken</button></div>
@@ -260,6 +277,40 @@ function wissenscheck(el,beamer){
     ${beamer?'':`<div class="tbl-wrap"><table><thead><tr><th>Spitzname</th>${N.map(n=>`<th class="r">${esc(n)}</th>`).join('')}</tr></thead><tbody>${mit.map(sp=>`<tr><td>${esc(sp.nick)}</td>${[1,2,3].map(k=>`<td class="r num">${zelle(sp,k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}`
     :'<p class="small muted">Sobald die Schüler im Wissenscheck Aufgaben prüfen, siehst du hier die Ergebnisse pro Stufe. Texte werden nicht übertragen.</p>'}`;
 }
+function abstimmungen(el){
+  const liste=[...AUFGABEN.values()].filter(a=>a.umfrage),u=raum.umfrage();
+  el.hidden=!liste.length;if(!liste.length)return;
+  el.innerHTML=`<h3 class="title-l">Ihr seid das Gericht</h3><p class="small muted">Live-Abstimmungen: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
+    <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${u.id===a.id?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  $$('[data-lr-abst]',el).forEach(b=>b.addEventListener('click',()=>cfg.gehZu&&cfg.gehZu(b.dataset.lrAbst)));
+}
+
+/* ---------- Live-Abstimmung: Fenster auf den Handys ---------- */
+let umfrageZu='';
+function umfrageFenster(){
+  let el=$('#lr-umfrage');
+  if(!raum.istSchueler()){if(el)el.remove();return}
+  const u=raum.umfrage();
+  if(!u.id){if(el)el.hidden=true;return}
+  let a=AUFGABEN.get(u.id);if((!a||!a.umfrage)&&cfg.vorbereiten){cfg.vorbereiten();a=AUFGABEN.get(u.id)}
+  if(!a||!a.umfrage)return;
+  const q=a.umfrage,w=s.stimme&&s.stimme.n===u.n?s.stimme.w:null,zustand=u.n+(u.auf?'a':'');
+  if(u.auf&&w!=null&&!(s.urteile&&s.urteile[u.id]&&s.urteile[u.id].n===u.n)){s.urteile={...(s.urteile||{}),[u.id]:{w,n:u.n}};speichern();melde('urteil')}
+  if(umfrageZu===zustand){if(el)el.hidden=true;return}
+  const neu=!el||el.hidden;
+  if(!el){el=document.createElement('div');el.id='lr-umfrage';el.className='lr-umfrage';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','lr-umfrage-t');document.body.append(el)}
+  el.innerHTML=`<div class="lr-umfrage-karte stack"><div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm">gavel</span> Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms">close</span></button></div>
+    ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>
+    <div class="lr-umfrage-wahl" role="group" aria-label="Dein Urteil">${q.optionen.map((o,i)=>`<button class="btn${w===i?' primary':''}" type="button" data-u-w="${i}" aria-pressed="${w===i}"${u.auf?' disabled':''}>${o}</button>`).join('')}</div>
+    <p class="small" role="status">${u.auf?'':w==null?'Wie urteilst du? Tippe deine Antwort.':'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.'}</p>
+    ${u.auf?`<div class="fb ${w===q.r?'ok':'bad'}"><b>${w==null?'Du hast nicht abgestimmt.':w===q.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${q.optionen[q.r]}</b>. ${q.e||''}</div>`:''}</div>`;
+  el.hidden=false;
+  $$('[data-u-w]',el).forEach(b=>b.addEventListener('click',()=>raum.stimme(+b.dataset.uW).catch(e=>console.warn('Abstimmung',e))));
+  $('[data-u-zu]',el).addEventListener('click',()=>{umfrageZu=zustand;el.hidden=true});
+  if(neu)($('[data-u-w]:not(:disabled)',el)||$('[data-u-zu]',el)).focus();
+}
+raum.on(art=>{if(['raum','start','verbunden','ende'].includes(art))umfrageFenster()});
+
 function kiHTML(){
   const chk=[...AUFGABEN.values()].find(a=>a.ki);if(!chk)return '';
   return `<section class="panel stack" id="lr-ki"><h3 class="title-l">KI-Coach mit AIS.chat</h3>

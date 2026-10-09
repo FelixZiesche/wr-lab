@@ -6,10 +6,10 @@
 //   live.uid                       → Kennung dieses Geräts
 //   live.createRoom(topic, gameId) → neuer Raumcode (6 Zeichen aus ABCDEFGHJKLMNPQRSTUVWXYZ23456789)
 //   live.getRoom(code)             → Raumdaten oder null: {owner, open, topic, gameId, round, phase, decisions}
-//                                    und für den Lernraum {pause, ziel, zielN, gesperrt, ki}
+//                                    und für den Lernraum {pause, ziel, zielN, gesperrt, ki, umfrage:{id, n, auf}}
 //   live.updateRoom(code, patch)   → nur das Gerät, das den Raum erstellt hat
 //   live.watchRoom(code, cb)       → cb(raum oder null), gibt eine Abmeldefunktion zurück
-//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, fig, r, ph, votes, checks, choices, stats, joinedAt}])
+//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, stimme:{n, w}, fig, r, ph, votes, checks, choices, stats, joinedAt}])
 //   live.watchMe(code, cb)         → cb(eigener Eintrag existiert: true/false)
 //   live.joinRoom(code, data)      → eigenen Eintrag anlegen
 //   live.updatePlayer(code, data)  → eigenen Eintrag ändern

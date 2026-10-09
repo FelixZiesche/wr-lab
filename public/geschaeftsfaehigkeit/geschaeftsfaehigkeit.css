@@ -1,0 +1,68 @@
+/* Lernwerkstatt Geschäftsfähigkeit: Stufenfarben (M3 Custom Colors, harmonisiert), Haus der Geschäftsfähigkeit,
+   Altersschieber und Mission Zwergspitz. Allgemeines Design: /shared/css/m3.css
+   rot = geschäftsunfähig, gelb = beschränkt geschäftsfähig, gruen = voll geschäftsfähig, blau = Ausnahmen */
+:root{--md-gf-rot:#b6222c;--md-on-gf-rot:#ffffff;--md-gf-rot-container:#ffdad7;--md-on-gf-rot-container:#410005;
+  --md-gf-gelb:#6d5e00;--md-on-gf-gelb:#ffffff;--md-gf-gelb-container:#f8e287;--md-on-gf-gelb-container:#221b00;
+  --md-gf-gruen:#3b6939;--md-on-gf-gruen:#ffffff;--md-gf-gruen-container:#bcf0b4;--md-on-gf-gruen-container:#002204;
+  --md-gf-blau:#0061a6;--md-on-gf-blau:#ffffff;--md-gf-blau-container:#d2e4ff;--md-on-gf-blau-container:#001c37;
+  --gf-rot:var(--md-gf-rot);--gf-gelb:var(--md-gf-gelb);--gf-gruen:var(--md-gf-gruen);--gf-blau:var(--md-gf-blau);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-gf-rot:#ffb3af;--md-on-gf-rot:#68000e;--md-gf-rot-container:#930018;--md-on-gf-rot-container:#ffdad7;--md-gf-gelb:#dbc66e;--md-on-gf-gelb:#3a3000;--md-gf-gelb-container:#534600;--md-on-gf-gelb-container:#f8e287;--md-gf-gruen:#a1d39a;--md-on-gf-gruen:#0a390f;--md-gf-gruen-container:#235024;--md-on-gf-gruen-container:#bcf0b4;--md-gf-blau:#a0c9ff;--md-on-gf-blau:#00325a;--md-gf-blau-container:#00497f;--md-on-gf-blau-container:#d2e4ff;}}
+:root[data-theme="dark"]{--md-gf-rot:#ffb3af;--md-on-gf-rot:#68000e;--md-gf-rot-container:#930018;--md-on-gf-rot-container:#ffdad7;--md-gf-gelb:#dbc66e;--md-on-gf-gelb:#3a3000;--md-gf-gelb-container:#534600;--md-on-gf-gelb-container:#f8e287;--md-gf-gruen:#a1d39a;--md-on-gf-gruen:#0a390f;--md-gf-gruen-container:#235024;--md-on-gf-gruen-container:#bcf0b4;--md-gf-blau:#a0c9ff;--md-on-gf-blau:#00325a;--md-gf-blau-container:#00497f;--md-on-gf-blau-container:#d2e4ff;}
+
+/* Farbpunkte auf den Werkstatt-Karten */
+.gf-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.gf-dot.rot{background:var(--gf-rot)}.gf-dot.gelb{background:var(--gf-gelb)}.gf-dot.gruen{background:var(--gf-gruen)}.gf-dot.blau{background:var(--gf-blau)}
+
+/* Startseite */
+.gf-start{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.gf-start{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.gf-ziele{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.gf-ziele li{display:flex;gap:10px;align-items:flex-start;font-size:.875rem;line-height:1.25rem}
+.gf-ziele .ms{color:var(--md-primary);flex:none}
+.banner .credit a{color:inherit}
+
+/* Fotos mit Bildnachweis darunter */
+.gf-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.gf-fig img{display:block;width:100%;height:auto;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.gf-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+
+/* Haus der Geschäftsfähigkeit (zuordnen mit klasse 'haus'): Dach, drei Räume, Ausnahmen, Fundament */
+.haus .zu-faecher{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.haus .zu-faecher::before{content:"Geschäftsfähigkeit";grid-column:1/-1;height:56px;margin:0 -4px -8px;padding-bottom:6px;display:flex;align-items:flex-end;justify-content:center;font-size:.875rem;line-height:1.25rem;font-weight:500;color:var(--md-on-surface);background:var(--md-surface-container-highest);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.haus .zu-fach[data-fach="ausnahme"],.haus .zu-fach[data-fach="basis"]{grid-column:1/-1;min-height:72px}
+.haus .zu-fach{border-style:solid}
+.haus .zu-fach[data-fach="unfaehig"]{border-color:var(--gf-rot)}
+.haus .zu-fach[data-fach="beschraenkt"]{border-color:var(--gf-gelb)}
+.haus .zu-fach[data-fach="voll"]{border-color:var(--gf-gruen)}
+.haus .zu-fach[data-fach="ausnahme"]{border-color:var(--gf-blau)}
+.haus .zu-fach[data-fach="basis"]{border-color:var(--md-outline);background:var(--md-surface-container)}
+.haus [data-fach="unfaehig"] .zu-ziel{background:var(--md-gf-rot-container);color:var(--md-on-gf-rot-container)}
+.haus [data-fach="beschraenkt"] .zu-ziel{background:var(--md-gf-gelb-container);color:var(--md-on-gf-gelb-container)}
+.haus [data-fach="voll"] .zu-ziel{background:var(--md-gf-gruen-container);color:var(--md-on-gf-gruen-container)}
+.haus [data-fach="ausnahme"] .zu-ziel{background:var(--md-gf-blau-container);color:var(--md-on-gf-blau-container)}
+.haus [data-fach="basis"] .zu-ziel{background:var(--md-surface-container-highest);color:var(--md-on-surface)}
+.haus .zu-fach.ueber{background:var(--md-primary-container)}
+@media (max-width:599px){.haus .zu-faecher{grid-template-columns:1fr}}
+
+/* Altersschieber */
+.gf-alter{display:flex;flex-direction:column;gap:12px}
+.gf-alter-kopf{display:flex;gap:16px;align-items:center}
+.gf-figur{width:72px;height:72px;border-radius:var(--r-full);display:grid;place-items:center;flex:none;background:var(--gf-bg,var(--md-surface-container-highest));color:var(--gf-fg,var(--md-on-surface));transition:background .3s var(--ease)}
+.gf-figur .ms{font-size:40px}
+.gf-figur.wechsel{animation:gf-hopp .35s var(--ease)}
+@keyframes gf-hopp{40%{transform:scale(1.12)}}
+.gf-stufe-rot{--gf-bg:var(--md-gf-rot-container);--gf-fg:var(--md-on-gf-rot-container)}
+.gf-stufe-gelb{--gf-bg:var(--md-gf-gelb-container);--gf-fg:var(--md-on-gf-gelb-container)}
+.gf-stufe-gruen{--gf-bg:var(--md-gf-gruen-container);--gf-fg:var(--md-on-gf-gruen-container)}
+.gf-alter .gf-darf{border-radius:var(--r-m);padding:12px 16px;font-size:.875rem;line-height:1.25rem;background:var(--gf-bg);color:var(--gf-fg)}
+.gf-skala{position:relative;height:20px;font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant);margin:-6px 10px 0}
+.gf-skala span{position:absolute;transform:translateX(-50%)}
+.gf-band{display:flex;height:8px;border-radius:var(--r-full);overflow:hidden;margin:0 10px}
+.gf-band span:nth-child(1){flex:7;background:var(--gf-rot)}.gf-band span:nth-child(2){flex:11;background:var(--gf-gelb)}.gf-band span:nth-child(3){flex:3;background:var(--gf-gruen)}
+.gf-meilen{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.gf-meilen li{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--md-outline-variant);border-radius:var(--r-m);padding:10px 12px;color:var(--md-on-surface-variant)}
+.gf-meilen li .ms{flex:none}
+.gf-meilen li.erreicht{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}
+.gf-meilen li.neu{animation:gf-hopp .35s var(--ease)}
+@media (prefers-reduced-motion:reduce){.gf-figur.wechsel,.gf-meilen li.neu{animation:none}}
