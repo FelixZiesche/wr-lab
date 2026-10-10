@@ -10,7 +10,7 @@ Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und
 
 | Klasse | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- | --- |
-| 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber, Haus der Geschäftsfähigkeit mit Hefteintrag und Zitiertechnik, Rechts-Navi, Fall-Akte mit acht Fällen und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“, Gaming, Abos und Klarna, der erste Job (§ 113 BGB), Mission Zwergspitz als Labyrinth und ein Wissenscheck mit 38 Aufgaben in drei Stufen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
+| 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber, Haus der Geschäftsfähigkeit mit Hilfeknopf an jedem Raum, Hefteintrag und Zitiertechnik, Rechts-Navi, Fall-Akte mit acht Fällen und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“, Gaming, Abos und Klarna, der erste Job (§ 113 BGB), Mission Zwergspitz als Labyrinth-Spiel (Figur steuern, schätzen, Sackgassen, Würfel an den Toren) und ein Wissenscheck mit 38 Aufgaben in drei Stufen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
 | 11 | [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und ein Wissenscheck mit 31 Aufgaben in drei Stufen. | *noch ergänzen* |
 
 ## Aufbau
@@ -26,6 +26,7 @@ public/                 wird veröffentlicht
     js/lernraum.js      Lernraum: ein Live-Raum für Werkstätten und Planspiel, Dashboard der Lehrkraft
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Wissenscheck,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“, Hilfen, Impuls
+    js/labyrinth.js     Labyrinth-Spiel: Figur mit Tastatur, Wischen, Steuerkreuz oder Antippen, Nebel, Würfel-Tore
     js/feedback.js      Feedback ohne KI für den Wissenscheck
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
     js/live.js          Verbindung zum Server (einzige Datei mit Firebase)
@@ -142,7 +143,7 @@ QR-Codes und Beitrittslinks nutzen automatisch die Adresse, unter der die Seite 
 Kurzfassung (die vollständige Checkliste steht in [CLAUDE.md](CLAUDE.md)):
 
 1. Ordner `public/<id>/` anlegen, z. B. `public/kaufvertrag/`, mit `index.html`, `<id>.css`, `<id>.js` und `img/`. Als Vorlage dient `public/sechseck/`.
-2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Blitzrunde, Rechts-Navi, Fall-Akte, Live-Abstimmung) kommen aus `shared/js/aufgaben.js`. Für Rechtsthemen ist `public/geschaeftsfaehigkeit/` ein gutes Muster. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel. Zum Abschluss kommt ein Wissenscheck mit mindestens 20 Aufgaben in `<id>/wissenscheck.js`, Muster: `public/sechseck/wissenscheck.js`.
+2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen mit Hilfeknopf, Lückentext, Test, Blitzrunde, Rechts-Navi, Fall-Akte, Live-Abstimmung) kommen aus `shared/js/aufgaben.js`, das Labyrinth-Spiel aus `shared/js/labyrinth.js`. Für Rechtsthemen ist `public/geschaeftsfaehigkeit/` ein gutes Muster. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel. Zum Abschluss kommt ein Wissenscheck mit mindestens 20 Aufgaben in `<id>/wissenscheck.js`, Muster: `public/sechseck/wissenscheck.js`.
 3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`, live läuft es im Lernraum des Themas.
 4. Das Thema mit seiner Klassenstufe (`stufe`: 9, 10, 11 oder 12) in `public/themen.js` eintragen. Es erscheint dann auf der Startseite als Karte unter dieser Klassenstufe.
 5. Tests in `tests/<id>.spec.mjs` ergänzen, `npm test` ausführen, Pull Request öffnen und die Vorschau prüfen.
@@ -288,7 +289,7 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Neumarkt Gotha: Roeland P., [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg)
   - Computermäuse: Gpkp, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Computer_mice_%282026%29.jpg)
   - Nintendo Switch: KK IN HK, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Nintendo_Switch.jpg)
-  - Eigene Illustrationen: Labyrinth der Mission Zwergspitz, TikTok-LIVE (Fall „Rosen für den Streamer“) und Energydrink (Fall „Der verbotene Energydrink“)
+  - Eigene Illustrationen: Labyrinth und Spielfigur der Mission Zwergspitz, TikTok-LIVE (Fall „Rosen für den Streamer“) und Energydrink (Fall „Der verbotene Energydrink“)
 
 Die Fotos zum Magischen Sechseck stammen von [Unsplash](https://unsplash.com) und stehen unter der [Unsplash-Lizenz](https://unsplash.com/license).
 

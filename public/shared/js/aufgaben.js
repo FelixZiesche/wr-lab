@@ -5,20 +5,23 @@
 // aber erst nach der eigenen Antwort.
 //
 //   schreibfeld({id, frage, anfaenge:[…], tipp, denkWeiter, erwartung:[…]})
-//   zuordnen({id, frage, faecher:[{id, t}], karten:[{t, f, e}], klasse})  f = id des richtigen Fachs, e = Erklärung nach dem Prüfen,
-//                                                                        klasse = eigenes Layout aus der CSS des Themas (z. B. ein Haus)
+//   zuordnen({id, frage, faecher:[{id, t, kurz, info}], karten:[{t, f, e}], klasse})  f = id des richtigen Fachs, e = Erklärung nach dem Prüfen,
+//                                                                        klasse = eigenes Layout aus der CSS des Themas (z. B. ein Haus),
+//                                                                        kurz = Name des Fachs in Lösungen (wenn t HTML enthält), info = Erklärung hinter dem Hilfeknopf
 //   lueckentext({id, titel, saetze:['Text mit [Lösung|Alternative] …']})
 //   test({id, titel, fragen:[{f, o:[…], r, e}]})                       r = Index der richtigen Option, e = Erklärung
 //   wissenscheck({id, titel, thema, stufe, aufgaben:[…]})              ein Wissenscheck pro Thema, siehe unten
 //   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, auch als Klassenrunde, siehe unten
 //   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
 //   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
+//   labyrinth(…) aus labyrinth.js                                     Labyrinth-Spiel mit Figur, wird hier mitgebunden
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
 // id: Kleinbuchstaben, Ziffern, Bindestrich (max. 40 Zeichen), eindeutig im Thema. Texte in frage, tipp usw. dürfen HTML enthalten.
 import { $, $$, esc, store, kopieren } from './ui.js';
 import { raum, registriere } from './lernraum.js';
 import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
+import { bindLabyrinth } from './labyrinth.js';
 
 const key=(art,id)=>`${raum.speicher()}-${art}-${id}`;
 const kopf=(icon,text)=>`<p class="aufgabe-kopf"><span class="ms sm">${icon}</span>${text}</p>`;
@@ -78,14 +81,17 @@ function bindSchreibfeld(box){
 raum.on(art=>{if(art!=='raum')$$('[data-schreib]').forEach(aktualisiereSchreibfeld)});
 
 /* ---------- Zuordnen (Antippen oder Ziehen) ---------- */
+const ZU_INFO=new Map();
 export function zuordnen({id,frage,faecher,karten,klasse}){
-  registriere({id,frage,loesung:faecher.map(f=>`<b>${f.t}:</b> ${karten.filter(k=>k.f===f.id).map(k=>k.t).join(' · ')}`)});
-  const erkl=karten.some(k=>k.e)?`<details class="hilfe" data-zu-warum hidden><summary><span class="ms sm">help</span>Warum? Die Lösung mit Erklärung</summary><ul class="small">${karten.map(k=>`<li><b>${k.t}</b> → ${faecher.find(f=>f.id===k.f).t}${k.e?`: ${k.e}`:''}</li>`).join('')}</ul></details>`:'';
+  const name=f=>f.kurz||f.t;ZU_INFO.set(id,faecher);
+  registriere({id,frage,loesung:faecher.map(f=>`<b>${name(f)}:</b> ${karten.filter(k=>k.f===f.id).map(k=>k.t).join(' · ')}`)});
+  const erkl=karten.some(k=>k.e)?`<details class="hilfe" data-zu-warum hidden><summary><span class="ms sm">help</span>Warum? Die Lösung mit Erklärung</summary><ul class="small">${karten.map(k=>`<li><b>${k.t}</b> → ${name(faecher.find(f=>f.id===k.f))}${k.e?`: ${k.e}`:''}</li>`).join('')}</ul></details>`:'';
   return `<section class="aufgabe${klasse?' '+klasse:''}" data-zuordnen="${id}" data-karten="${esc(JSON.stringify(karten.map(k=>k.f)))}">${kopf('category','Zuordnen')}
   <p class="aufgabe-frage">${frage}</p>
   <p class="small muted">Tippe eine Karte an und dann das passende Fach – oder zieh die Karte hinein.</p>
   <div class="zu-fach zu-pool" data-fach=""><button class="zu-ziel" type="button" data-ziel="">Noch nicht zugeordnet</button><div class="zu-inhalt">${karten.map((k,i)=>`<button class="zu-karte" type="button" draggable="true" data-k="${i}" aria-pressed="false">${k.t}</button>`).join('')}</div></div>
-  <div class="zu-faecher">${faecher.map(f=>`<div class="zu-fach" data-fach="${esc(f.id)}"><button class="zu-ziel" type="button" data-ziel="${esc(f.id)}">${f.t}</button><div class="zu-inhalt"></div></div>`).join('')}</div>
+  <div class="zu-faecher">${faecher.map(f=>`<div class="zu-fach" data-fach="${esc(f.id)}"><div class="zu-kopf"><button class="zu-ziel" type="button" data-ziel="${esc(f.id)}">${f.t}</button>${f.info?`<button class="zu-info" type="button" data-zu-info="${esc(f.id)}" aria-expanded="false" aria-label="Was heißt „${esc(name(f).replace(/<[^>]+>/g,''))}“?" title="Was heißt das?"><span class="ms sm">help</span></button>`:''}</div><div class="zu-inhalt"></div></div>`).join('')}</div>
+  ${faecher.some(f=>f.info)?'<div class="zu-infobox" data-zu-infobox role="region" aria-live="polite" hidden></div>':''}
   <div class="row"><button class="btn primary small" type="button" data-pruefen><span class="ms">task_alt</span>Prüfen</button><button class="btn small" type="button" data-neu><span class="ms">restart_alt</span>Neu</button><span class="small" data-ergebnis role="status"></span></div>${erkl}</section>`;
 }
 function bindZuordnen(box){
@@ -115,6 +121,17 @@ function bindZuordnen(box){
     $('[data-ergebnis]',box).textContent=`${ok} von ${karten.length} richtig${offen?` – ${offen} noch nicht zugeordnet`:ok===karten.length?' – stark!':' – rot markierte Karten noch einmal verschieben.'}`;
   });
   $('[data-neu]',box).addEventListener('click',()=>{lage={};gewaehlt=null;$('[data-ergebnis]',box).textContent='';zeichne(false)});
+  // Hilfeknopf: Erklärung des Fachs in der Infobox unter den Fächern
+  const infobox=$('[data-zu-infobox]',box),infos=ZU_INFO.get(id)||[];
+  $$('[data-zu-info]',box).forEach(b=>b.addEventListener('click',()=>{
+    const offen=b.getAttribute('aria-expanded')==='true',f=infos.find(x=>x.id===b.dataset.zuInfo);
+    $$('[data-zu-info]',box).forEach(x=>x.setAttribute('aria-expanded','false'));
+    if(offen||!f){infobox.hidden=true;return}
+    b.setAttribute('aria-expanded','true');infobox.dataset.fach=f.id;
+    infobox.innerHTML=`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><p class="title-s">${f.kurz||f.t}</p><button class="icon-btn" type="button" data-zu-info-zu aria-label="Erklärung schließen"><span class="ms">close</span></button></div><div class="small zu-infotext">${f.info}</div>`;
+    infobox.hidden=false;infobox.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    $('[data-zu-info-zu]',infobox).addEventListener('click',()=>{infobox.hidden=true;b.setAttribute('aria-expanded','false');b.focus()});
+  }));
   zeichne(false);
 }
 
@@ -775,4 +792,5 @@ export function bindAufgaben(root){
   einmal('[data-navi]',bindNavi);
   einmal('[data-akte]',bindAkte);
   einmal('[data-abst]',zeichneAbst);
+  einmal('[data-labyrinth]',bindLabyrinth);
 }

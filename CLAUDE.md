@@ -15,6 +15,7 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/lernraum.js      Lernraum: ein Live-Raum pro Thema für Werkstätten und Planspiel, Lehrkraft-Dashboard
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“
+    js/labyrinth.js     Labyrinth-Spiel: Figur steuern (Tastatur, Wischen, Steuerkreuz, Antippen), Nebel, Würfel-Tore
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
@@ -75,6 +76,8 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Dashboard der Lehrkraft:** Teilnehmer und ihr aktueller Ort, „Alle anhalten“, „Alle holen nach …“, Werkstätten freigeben oder sperren, Beamer-Modus (keine Spitznamen, kein Lehrerpanel), Antworten drucken, Raum beenden.
 - **Antworten „an die Wand“** kommen nur aus `schreibfeld()`. Sie liegen in `rooms/{code}/antworten`, sind höchstens 1000 Zeichen lang und nur für die Lehrkraft lesbar. „Raum beenden“ löscht sie.
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
+  - Zuordnen: Fächer mit Fachbegriffen bekommen eine Erklärung hinter dem Hilfeknopf (`info`) und einen kurzen Namen für Lösungen (`kurz`). Karten nennen Person, Alter und Handlung, damit sie eindeutig sind.
+  - Spiele mit Entscheidungen auf Wegen: `labyrinth()` aus `shared/js/labyrinth.js` (Muster: Mission Zwergspitz in `geschaeftsfaehigkeit/`). Die Schüler schätzen erst und laufen dann. Es muss auf PC (Tastatur) und Handy (Wischen, Steuerkreuz) spielbar sein.
 - **Wissenscheck im Lernraum:** Es gehen nur Punkte an die Lehrkraft (Feld `wc` der Teilnehmer, ein Zeichen pro Aufgabe), nie Texte. Das Dashboard zeigt die Punkte pro Stufe, die schwierigsten Aufgaben und (nicht im Beamer-Modus) eine Tabelle mit Spitznamen.
 - **Live-Abstimmung „Ihr seid das Gericht“** (`abstimmung()`): Die Lehrkraft startet einen Fall in der Werkstatt (Feld `umfrage` im Raum: `id`, `n`, `auf`), alle Handys zeigen ihn in einem Fenster, jede Stimme ist nur eine kleine Zahl (Feld `stimme` der Teilnehmer: `n`, `w`). Die Balken sieht nur die Lehrkraft, „Auflösen“ zeigt allen das Urteil. Ohne Lernraum urteilen die Schüler allein.
 - **Rechtsthemen:** Prüfungsschemata als Rechts-Navi (`pruefschema()`) und Fälle als Fall-Akte (`fallakte()`) mit demselben Schema, Einstieg mit einer verdeckten Blitzrunde (`blitz()`), deren Auflösung am Ende kommt (`blitzAufloesung()`). Muster: `geschaeftsfaehigkeit/`.
