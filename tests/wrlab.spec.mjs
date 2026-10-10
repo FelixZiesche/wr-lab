@@ -72,3 +72,14 @@ test('Live-Raum speichert das Thema, Codes aus anderen Themen werden erkannt', a
   expect(s.errors).toEqual([]);
   await s.context().close();
 });
+
+test('Code eines anderen Themas im Lernraum: Hinweis mit Link zum richtigen Thema', async ({ page }) => {
+  await writeDoc('rooms/GFRAUM', { owner: 'x', open: true, topic: 'geschaeftsfaehigkeit', phase: 'lobby' });
+  await page.goto('/sechseck/#raum=GFRAUM');
+  await page.locator('#lr-nick').fill('Testi');
+  await page.locator('#lr-jgo').click();
+  await expect(page.locator('#lr-jerr')).toContainText('Dieser Code gehört zum Thema „Geschäftsfähigkeit“.');
+  await page.locator('#lr-jerr a').click();
+  await expect(page).toHaveURL(/\/geschaeftsfaehigkeit\/#raum=GFRAUM$/);
+  await expect(page.locator('#lr-code')).toHaveValue('GFRAUM');
+});

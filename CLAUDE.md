@@ -13,7 +13,8 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
     js/werkstatt.js     Gerüst einer Lernwerkstatt (Navigation, Werkstätten, Erkenntnisse, Glossar, Lehrerpanel)
     js/lernraum.js      Lernraum: ein Live-Raum pro Thema für Werkstätten und Planspiel, Lehrkraft-Dashboard
-    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls
+    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls,
+                        Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
@@ -45,9 +46,10 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
   - Mit etwas Überraschendem einsteigen: eine verblüffende Zahl, ein Rätsel, ein Fall mit offenem Ende, „Was würdest du tun?“.
   - Lieber ausprobieren lassen als erklären: Die Schüler treffen Entscheidungen und sehen die Folgen.
 - **Aktuelle virale Inhalte:** Trends, Memes, Jugendwörter, Social-Media-Formate und Ereignisse, über die gerade alle reden. Sie müssen sachlich richtig eingesetzt werden. Erfundene Posts tragen den Hinweis „fiktiver Beitrag“, erfundene Szenarien den Hinweis „Szenario“.
+- **Keine echten Personen als Figuren in erfundenen Fällen:** Influencer, Streamer, Rapper und andere Figuren sind erfunden und tragen den Hinweis „fiktiv“ (z. B. „@mila.unboxt, fiktiv“). Echte Marken, Produkte und Trends sind erlaubt (Labubu, Pokémon-Karten, TikTok-LIVE). Echte Personen nur mit belegten Fakten und nie als Ziel von Spott, also z. B. kein Drachenlord (Opfer einer jahrelangen Mobbing-Kampagne).
 - **Regionalbezug:** Beispiele, Figuren, Orte und Fotos möglichst aus Apolda, Jena, Weimar, Erfurt oder anderswo in Thüringen.
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
-- **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt. Einzige Ausnahme ist der Wissenscheck: Dort sehen die Schüler den Erwartungshorizont, aber erst nach ihrer eigenen Antwort.
+- **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt. Ausnahme sind Übungen zur Selbstkontrolle (Wissenscheck, Zuordnen, Test, Blitzrunde, Fall-Akte, Abstimmung): Dort sehen die Schüler Lösung, Erklärung oder Erwartungshorizont, aber erst nach ihrer eigenen Antwort.
 - **Klassenstufen:** Jedes Thema gehört zu einer Klassenstufe: 9, 10, 11 oder 12 (Feld `stufe` in `themen.js`). Die Startseite sortiert die Themen danach. Sprache, Tempo und Anspruch passen zur Stufe: in Klasse 9 kürzere Texte und mehr Hilfen, in Klasse 11 und 12 mit Blick auf das Abitur.
 - **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht stehen in der README in der Themenübersicht.
 
@@ -74,6 +76,10 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Antworten „an die Wand“** kommen nur aus `schreibfeld()`. Sie liegen in `rooms/{code}/antworten`, sind höchstens 1000 Zeichen lang und nur für die Lehrkraft lesbar. „Raum beenden“ löscht sie.
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
 - **Wissenscheck im Lernraum:** Es gehen nur Punkte an die Lehrkraft (Feld `wc` der Teilnehmer, ein Zeichen pro Aufgabe), nie Texte. Das Dashboard zeigt die Punkte pro Stufe, die schwierigsten Aufgaben und (nicht im Beamer-Modus) eine Tabelle mit Spitznamen.
+- **Live-Abstimmung „Ihr seid das Gericht“** (`abstimmung()`): Die Lehrkraft startet einen Fall in der Werkstatt (Feld `umfrage` im Raum: `id`, `n`, `auf`), alle Handys zeigen ihn in einem Fenster, jede Stimme ist nur eine kleine Zahl (Feld `stimme` der Teilnehmer: `n`, `w`). Die Balken sieht nur die Lehrkraft, „Auflösen“ zeigt allen das Urteil. Ohne Lernraum urteilen die Schüler allein.
+- **Rechtsthemen:** Prüfungsschemata als Rechts-Navi (`pruefschema()`) und Fälle als Fall-Akte (`fallakte()`) mit demselben Schema, Einstieg mit einer verdeckten Blitzrunde (`blitz()`), deren Auflösung am Ende kommt (`blitzAufloesung()`). Muster: `geschaeftsfaehigkeit/`.
+  - Jeder Fall bekommt einen Steckbrief (`fakten`) und ein Foto (`bild`). Die Lösung steht als Liste von Sätzen im Gutachtenstil in `loesung`, dann bauen die Schüler das Gutachten selbst (Gutachten-Baukasten).
+  - Jede Blitzrunde lässt sich im Lernraum als Klassenrunde spielen. Ihre Karten sind interne Abstimmungen (`<id>-k<Nummer>`), es braucht keine neuen Firestore-Felder.
 - **KI-Coach mit AIS.chat:** AIS.chat ist das KI-Angebot des Landes Thüringen im Schulportal, Datenschutz vom Land geklärt. Die Lehrkraft trägt im Dashboard den Link zu einem geteilten Lernszenario ein (Feld `ki` im Raum). Dann kopiert der Knopf „KI-Coach“ bei offenen Aufgaben die Antwort und öffnet AIS.chat. Die Anweisung für das Lernszenario erzeugt der Wissenscheck selbst (Lehrerpanel, Dashboard).
 
 ## Wissenscheck: Pflicht für jedes Thema
@@ -139,9 +145,10 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
    - Titel, Beschreibung, Favicon
    - `icon_names` (alle verwendeten Icons, alphabetisch)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
-   - `../shared/vendor/qrcode.js` nur einbinden, wenn das Thema ein Planspiel hat
+   - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
-4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`.
+4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
+   - IDs von Bereichen und Werkstätten dürfen nicht gleich sein, sonst führen Adressen wie `#faelle` und Knöpfe zum Wiederholen an die falsche Stelle.
    - Werkstätten mit `tool({id, ch, title, sub, hinweise, html(), init(root)})` anlegen.
    - Jede Werkstatt hat einen Auftrag (`<p class="task">`), eine Frage an die Wand (`schreibfeld` mit Satzanfängen und `erwartung`) mit Gesprächsimpuls (`impuls`) und eine Erkenntnis (`erkHTML` / `bindErk`).
    - Hinweise für die Lehrkraft stehen in `hinweise`, nie im HTML der Werkstatt. Beispiel: `sechseck/wand.js`.

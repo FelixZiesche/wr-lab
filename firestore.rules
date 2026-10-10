@@ -5,6 +5,7 @@ rules_version = '2';
 // - Schüler schreiben nur ihren eigenen Eintrag und sehen nur den Raum, nicht die anderen.
 // - Antworten „an die Wand“ sieht nur die Lehrkraft; jeder schreibt nur seine eigenen, solange er im Raum ist.
 // - Aus dem Wissenscheck kommen nur Punkte als kurze Zeichenkette (wc), nie Texte.
+// - Live-Abstimmung: Die Lehrkraft steuert die Umfrage im Raum, jede Stimme ist eine Zahl im eigenen Eintrag.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 service cloud.firestore {
@@ -18,7 +19,7 @@ service cloud.firestore {
     function isTime(t) { return t is timestamp; }
 
     function validRoom(d) {
-      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','createdAt','expireAt'])
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','createdAt','expireAt'])
         && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
         && d.owner is string
         && d.open is bool
@@ -33,16 +34,23 @@ service cloud.firestore {
         && (!('gesperrt' in d) || (d.gesperrt is list && d.gesperrt.size() <= 60))
         // Link zum geteilten Lernszenario in AIS.chat (KI-Coach), leer = aus
         && (!('ki' in d) || (d.ki is string && d.ki.size() <= 300 && (d.ki == '' || d.ki.matches('^https://[^ ]+$'))))
+        // Live-Abstimmung: id der Aufgabe (leer = keine), Zähler n, auf = aufgedeckt
+        && (!('umfrage' in d) || (d.umfrage is map && d.umfrage.keys().hasOnly(['id','n','auf']) && d.umfrage.keys().hasAll(['id','n','auf'])
+            && d.umfrage.id is string && (d.umfrage.id == '' || isSlug(d.umfrage.id, 40))
+            && d.umfrage.n is int && d.umfrage.n >= 0 && d.umfrage.n <= 100000 && d.umfrage.auf is bool))
         && (!('createdAt' in d) || isTime(d.createdAt))
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
     function validPlayer(d) {
-      return d.keys().hasOnly(['nick','ort','wc','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+      return d.keys().hasOnly(['nick','ort','wc','stimme','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
         && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
         && (!('ort' in d) || (d.ort is string && d.ort.size() <= 40))
         // Wissenscheck: ein Zeichen pro Aufgabe („-“ offen, „0“–„9“ Zehntel der Punkte, „a“ volle Punkte)
         && (!('wc' in d) || (d.wc is string && d.wc.size() <= 60 && d.wc.matches('^[-0-9a]*$')))
+        // Stimme in der Live-Abstimmung: n = Durchgang, w = Index der Antwort
+        && (!('stimme' in d) || (d.stimme is map && d.stimme.keys().hasOnly(['n','w']) && d.stimme.keys().hasAll(['n','w'])
+            && d.stimme.n is int && d.stimme.n >= 0 && d.stimme.n <= 100000 && d.stimme.w is int && d.stimme.w >= 0 && d.stimme.w <= 9))
         && (!('fig' in d) || isSlug(d.fig, 24))
         && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
         && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))

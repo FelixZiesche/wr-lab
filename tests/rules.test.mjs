@@ -141,3 +141,20 @@ test('Wissenscheck und KI-Coach: nur Punkte als kurze Zeichenkette, Link nur von
   await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ ki: 'https://x.de/mit leerzeichen' }));
   await assertFails(db('schueler').doc(`rooms/${CODE}`).update({ ki: 'https://boese.example/' }));
 });
+
+test('Live-Abstimmung: Umfrage nur von der Lehrkraft, Stimme nur als kleine Zahl im eigenen Eintrag', async () => {
+  const raumRef = uid => db(uid).doc(`rooms/${CODE}`);
+  await assertSucceeds(raumRef('lehrkraft').update({ umfrage: { id: 'gericht-simson', n: 1, auf: false } }));
+  await assertSucceeds(raumRef('lehrkraft').update({ umfrage: { id: 'gericht-simson', n: 1, auf: true } }));
+  await assertSucceeds(raumRef('lehrkraft').update({ umfrage: { id: '', n: 1, auf: false } }));
+  await assertFails(raumRef('schueler').update({ umfrage: { id: 'gericht-simson', n: 2, auf: false } }));
+  await assertFails(raumRef('lehrkraft').update({ umfrage: { id: 'Gericht!', n: 1, auf: false } }));
+  await assertFails(raumRef('lehrkraft').update({ umfrage: { id: 'gericht', n: 1 } }));
+  await assertFails(raumRef('lehrkraft').update({ umfrage: { id: 'gericht', n: 1, auf: false, frage: 'Text' } }));
+  const ich = db('schueler').doc(`rooms/${CODE}/players/schueler`);
+  await assertSucceeds(ich.set({ stimme: { n: 1, w: 2 } }, { merge: true }));
+  await assertFails(ich.set({ stimme: { n: 1, w: 10 } }, { merge: true }));
+  await assertFails(ich.set({ stimme: { n: 1, w: 'wirksam' } }, { merge: true }));
+  await assertFails(ich.set({ stimme: { n: 1, w: 1, text: 'Begründung' } }, { merge: true }));
+  await assertFails(db('fremd').doc(`rooms/${CODE}/players/schueler`).set({ stimme: { n: 1, w: 0 } }, { merge: true }));
+});

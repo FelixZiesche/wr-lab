@@ -10,6 +10,7 @@ Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und
 
 | Klasse | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- | --- |
+| 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber, Haus der Geschäftsfähigkeit mit Hefteintrag und Zitiertechnik, Rechts-Navi, Fall-Akte mit acht Fällen und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“, Gaming, Abos und Klarna, der erste Job (§ 113 BGB), Mission Zwergspitz als Labyrinth und ein Wissenscheck mit 38 Aufgaben in drei Stufen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
 | 11 | [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und ein Wissenscheck mit 31 Aufgaben in drei Stufen. | *noch ergänzen* |
 
 ## Aufbau
@@ -23,7 +24,8 @@ public/                 wird veröffentlicht
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
     js/werkstatt.js     App-Navigation und Gerüst einer Lernwerkstatt, Lehrerpanel
     js/lernraum.js      Lernraum: ein Live-Raum für Werkstätten und Planspiel, Dashboard der Lehrkraft
-    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls
+    js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Wissenscheck,
+                        Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“, Hilfen, Impuls
     js/feedback.js      Feedback ohne KI für den Wissenscheck
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
     js/live.js          Verbindung zum Server (einzige Datei mit Firebase)
@@ -32,6 +34,12 @@ public/                 wird veröffentlicht
     sechseck.js         Werkstätten, Wissen, Navigation
     leben.js            Planspiel Sechseck-Leben (Figuren, Runden, Rechenmodell)
     daten.js            Grunddaten und Sechseck-Grafiken
+    wand.js             Fragen an die Wand, Gesprächsimpulse, Hinweise für das Lehrerpanel
+    wissenscheck.js     Wissenscheck: Aufgaben in drei Stufen mit Erwartungshorizont
+    img/                Fotos
+  geschaeftsfaehigkeit/ Lernwerkstatt Geschäftsfähigkeit
+    geschaeftsfaehigkeit.js  Werkstätten, Mission Zwergspitz, Navigation
+    daten.js            Gesetzestexte, Rechts-Navi, Fälle, Altersgrenzen, Fotos
     wand.js             Fragen an die Wand, Gesprächsimpulse, Hinweise für das Lehrerpanel
     wissenscheck.js     Wissenscheck: Aufgaben in drei Stufen mit Erwartungshorizont
     img/                Fotos
@@ -134,7 +142,7 @@ QR-Codes und Beitrittslinks nutzen automatisch die Adresse, unter der die Seite 
 Kurzfassung (die vollständige Checkliste steht in [CLAUDE.md](CLAUDE.md)):
 
 1. Ordner `public/<id>/` anlegen, z. B. `public/kaufvertrag/`, mit `index.html`, `<id>.css`, `<id>.js` und `img/`. Als Vorlage dient `public/sechseck/`.
-2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen, Lückentext, Test) kommen aus `shared/js/aufgaben.js`. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel. Zum Abschluss kommt ein Wissenscheck mit mindestens 20 Aufgaben in `<id>/wissenscheck.js`, Muster: `public/sechseck/wissenscheck.js`.
+2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Blitzrunde, Rechts-Navi, Fall-Akte, Live-Abstimmung) kommen aus `shared/js/aufgaben.js`. Für Rechtsthemen ist `public/geschaeftsfaehigkeit/` ein gutes Muster. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel. Zum Abschluss kommt ein Wissenscheck mit mindestens 20 Aufgaben in `<id>/wissenscheck.js`, Muster: `public/sechseck/wissenscheck.js`.
 3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`, live läuft es im Lernraum des Themas.
 4. Das Thema mit seiner Klassenstufe (`stufe`: 9, 10, 11 oder 12) in `public/themen.js` eintragen. Es erscheint dann auf der Startseite als Karte unter dieser Klassenstufe.
 5. Tests in `tests/<id>.spec.mjs` ergänzen, `npm test` ausführen, Pull Request öffnen und die Vorschau prüfen.
@@ -165,7 +173,7 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
 
 ### Lernraum
 
-1. **Lehrkraft (Beamer):** https://wr-lab.web.app öffnen, **Magisches Sechseck** wählen und oben auf das Symbol **Lernraum** tippen. Dann **Lernraum öffnen** klicken. Code und QR-Code erscheinen groß.
+1. **Lehrkraft (Beamer):** https://wr-lab.web.app öffnen, ein Thema wählen, z. B. **Geschäftsfähigkeit**, und oben auf das Symbol **Lernraum** tippen. Dann **Lernraum öffnen** klicken. Code und QR-Code erscheinen groß.
 2. **Schüler (Handy):** QR-Code scannen oder die Seite öffnen, oben **Lernraum** tippen, Code und Spitznamen eingeben.
 3. **Im Dashboard der Lehrkraft** (Symbol Lernraum, auch aus jeder Werkstatt heraus):
    - **Teilnehmer:** wer im Raum ist, in welcher Werkstatt gerade gearbeitet wird und wie viele Antworten schon an der Wand sind
@@ -180,9 +188,29 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
 
 Ohne Lernraum funktioniert alles genauso, die Antworten kommen dann ins Heft.
 
+### Blitzrunde als Klassenrunde
+
+Bei der Geschäftsfähigkeit unter **Start → Darfst du das?**: Ist der Lernraum offen, sieht die Lehrkraft statt der Karten die Steuerung. **Klassenrunde starten** zeigt jede Karte auf allen Handys, die Balken zeigen live, wie die Klasse tippt. Das Bauchgefühl bleibt verdeckt. Am Ende zeigt der **Bauchgefühl-Check** (Werkstatt „Hefteintrag und Kurztest“) auf dem Gerät der Lehrkraft das Ergebnis der Klasse und auf den Handys das eigene.
+
+### Fall-Akte mit Gutachten-Baukasten
+
+Jeder Fall hat einen Steckbrief mit Foto und den wichtigen Fakten. Die Schüler lösen ihn mit dem Rechts-Navi, falsche Abzweigungen werden mit einem Tipp erklärt. Danach bauen sie die Lösung aus Sätzen im Gutachtenstil zusammen: Obersatz, Prüfung, Ergebnis.
+
+### Ihr seid das Gericht (Live-Abstimmung)
+
+Bei der Geschäftsfähigkeit unter **Fälle → Ihr seid das Gericht**:
+
+1. Lernraum öffnen, die Werkstatt am Beamer öffnen (auch über **Zur Abstimmung** im Dashboard).
+2. Bei einem Fall **Abstimmung starten**. Auf allen Handys im Lernraum erscheint der Fall mit den Antworten.
+3. Die Balken füllen sich live. Bis zur Auflösung können die Schüler ihre Stimme noch ändern.
+4. Erst diskutieren lassen, dann **Auflösen**: Am Beamer und auf den Handys erscheint das Urteil mit Begründung.
+5. **Abstimmung beenden** schließt die Fenster auf den Handys. Danach den nächsten Fall starten.
+
+Übertragen wird nur die Nummer der gewählten Antwort. Ohne Lernraum fällen die Schüler ihr Urteil allein und sehen es sofort aufgelöst.
+
 ### Wissenscheck
 
-Jedes Thema endet mit einem Wissenscheck (beim Sechseck unter **Wissen**). Die Aufgaben stehen in drei Stufen nach den Anforderungsbereichen: **Grundlagen** (I), **Anwenden** (II) und **Beurteilen** (III).
+Jedes Thema endet mit einem Wissenscheck (unter **Wissen**). Die Aufgaben stehen in drei Stufen nach den Anforderungsbereichen: **Grundlagen** (I), **Anwenden** (II) und **Beurteilen** (III).
 
 - **Feedback ohne KI:** Zu jeder falschen Antwort erklärt die Seite, warum sie nicht stimmt. Bei Rechenaufgaben erkennt sie typische Fehler. Bei offenen Aufgaben gibt **Feedback holen** Hinweise zu Fachbegriffen und zum Operator, ohne die Lösung zu verraten.
 - **Erwartungshorizont erst nach der Antwort:** Bei offenen Aufgaben haken die Schüler ab, was ihre Antwort enthält, und schätzen so ihre Punkte selbst ein.
@@ -221,7 +249,7 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Es gibt keine Anmeldung, keine Statistikdienste und keine Werbung.
 - **Lernraum:**
   - Die Verbindung zu Firebase entsteht erst, wenn jemand einen Lernraum öffnet oder ihm beitritt.
-  - Gespeichert werden nur ein frei gewählter Spitzname, die gerade geöffnete Werkstatt, abgeschickte Antworten (höchstens 1000 Zeichen, nur für die Lehrkraft lesbar), die Punkte im Wissenscheck (ohne Texte) und im Planspiel die Figur und Spieldaten (Stimmen, Check-Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
+  - Gespeichert werden nur ein frei gewählter Spitzname, die gerade geöffnete Werkstatt, abgeschickte Antworten (höchstens 1000 Zeichen, nur für die Lehrkraft lesbar), die Punkte im Wissenscheck (ohne Texte), bei Live-Abstimmungen die Nummer der gewählten Antwort und im Planspiel die Figur und Spieldaten (Stimmen, Check-Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
   - Der KI-Coach schickt selbst nichts an AIS.chat. Er kopiert nur die Antwort in die Zwischenablage, die Schüler fügen sie in AIS.chat selbst ein.
   - Die Schüler sollen keinen vollen echten Namen verwenden. Die Seite weist darauf hin.
 - **Speicherort und Dauer:**
@@ -242,7 +270,27 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
 
 ## Bildnachweise
 
-Alle Fotos stammen von [Unsplash](https://unsplash.com) und stehen unter der [Unsplash-Lizenz](https://unsplash.com/license).
+- **Geschäftsfähigkeit** (Wikimedia Commons):
+  - Goethe Galerie Jena: Andreas Praefcke, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_Goethe-Galerie_2010_1.jpg)
+  - Simson S51: Max schwalbe, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Simson_S_51_B1-3_von_1987_Bild1.jpg)
+  - Zwergspitz: Jiafei Slay Queen, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:Aww..._Cute_pomeranian!.jpg)
+  - Gaming-PC: Benlisquare, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Ricer_gaming_PC_with_CPU_watercooler.jpg)
+  - Pokémon-Karten: Jarek Tuszyński, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Pokemon_collection.jpg)
+  - Halloween-Accessoires: Silar, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:020221016_Halloween_2022_in_Poland,_accessories.jpg)
+  - Bitcoin: Jorge Franganillo, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [Datei](https://commons.wikimedia.org/wiki/File:Bitcoin_%2850799812413%29.jpg)
+  - Air Force 1: Xanor, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:Air_Force_1.JPG)
+  - JBL-Partybox: TaurusEmerald, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:JBL_PartyBox_On-The-Go.jpg)
+  - Pop-Mart-Laden: Thelabubucollector, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Labubu_Pop_Mart_store_in_New_York_City.jpg)
+  - Pokémon-Automat: KKPCW (Kyu3), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Pok%C3%A9mon_Trading_Card_Vending_machine.jpg)
+  - PS5-Controller: InclusiveGameLab, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:InclusiveGameLab_Person-with-PS5-Controller_01_CC-BY-SA.jpg)
+  - Spielkonsolen: InclusiveGameLab, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:InclusiveGameLab_Current_Console_Generation_CC-BY-SA.jpg)
+  - Messe Erfurt: Messe Erfurt AG, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Panorama_Messe_Erfurt.jpg)
+  - Neumarkt Gotha: Roeland P., [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg)
+  - Computermäuse: Gpkp, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Computer_mice_%282026%29.jpg)
+  - Nintendo Switch: KK IN HK, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Nintendo_Switch.jpg)
+  - Eigene Illustrationen: Labyrinth der Mission Zwergspitz, TikTok-LIVE (Fall „Rosen für den Streamer“) und Energydrink (Fall „Der verbotene Energydrink“)
+
+Die Fotos zum Magischen Sechseck stammen von [Unsplash](https://unsplash.com) und stehen unter der [Unsplash-Lizenz](https://unsplash.com/license).
 
 - **Magisches Sechseck, Szenen:**
   - Tankstelle: engin akyurt

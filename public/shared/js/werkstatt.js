@@ -165,7 +165,7 @@ export function createWerkstatt(cfg){
   /** Lehrerpanel: Hinweise und Erwartungshorizont, nur auf dem Gerät der Lehrkraft und nicht im Beamer-Modus. */
   function lehrerpanelHTML(t){
     if(!t||!raum.istLehrkraft()||raum.beamer())return '';
-    const auf=[...AUFGABEN.values()].filter(a=>a.tool===t.id),hw=t.hinweise||[];
+    const auf=[...AUFGABEN.values()].filter(a=>a.tool===t.id&&!a.intern),hw=t.hinweise||[];
     if(!hw.length&&!auf.length)return '';
     return `<details class="lehrerpanel"><summary><span class="ms sm">co_present</span>Lehrerpanel <span class="small muted">nur auf deinem Gerät, im Beamer-Modus ausgeblendet</span></summary><div class="stack">
       ${hw.length?`<div><p class="title-s">Hinweise</p><ul>${hw.map(h=>`<li>${h}</li>`).join('')}</ul></div>`:''}

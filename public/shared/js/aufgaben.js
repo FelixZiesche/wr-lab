@@ -5,10 +5,14 @@
 // aber erst nach der eigenen Antwort.
 //
 //   schreibfeld({id, frage, anfaenge:[…], tipp, denkWeiter, erwartung:[…]})
-//   zuordnen({id, frage, faecher:[{id, t}], karten:[{t, f}]})          f = id des richtigen Fachs
+//   zuordnen({id, frage, faecher:[{id, t}], karten:[{t, f, e}], klasse})  f = id des richtigen Fachs, e = Erklärung nach dem Prüfen,
+//                                                                        klasse = eigenes Layout aus der CSS des Themas (z. B. ein Haus)
 //   lueckentext({id, titel, saetze:['Text mit [Lösung|Alternative] …']})
 //   test({id, titel, fragen:[{f, o:[…], r, e}]})                       r = Index der richtigen Option, e = Erklärung
 //   wissenscheck({id, titel, thema, stufe, aufgaben:[…]})              ein Wissenscheck pro Thema, siehe unten
+//   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, auch als Klassenrunde, siehe unten
+//   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
+//   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
 // id: Kleinbuchstaben, Ziffern, Bindestrich (max. 40 Zeichen), eindeutig im Thema. Texte in frage, tipp usw. dürfen HTML enthalten.
@@ -74,14 +78,15 @@ function bindSchreibfeld(box){
 raum.on(art=>{if(art!=='raum')$$('[data-schreib]').forEach(aktualisiereSchreibfeld)});
 
 /* ---------- Zuordnen (Antippen oder Ziehen) ---------- */
-export function zuordnen({id,frage,faecher,karten}){
+export function zuordnen({id,frage,faecher,karten,klasse}){
   registriere({id,frage,loesung:faecher.map(f=>`<b>${f.t}:</b> ${karten.filter(k=>k.f===f.id).map(k=>k.t).join(' · ')}`)});
-  return `<section class="aufgabe" data-zuordnen="${id}" data-karten="${esc(JSON.stringify(karten.map(k=>k.f)))}">${kopf('category','Zuordnen')}
+  const erkl=karten.some(k=>k.e)?`<details class="hilfe" data-zu-warum hidden><summary><span class="ms sm">help</span>Warum? Die Lösung mit Erklärung</summary><ul class="small">${karten.map(k=>`<li><b>${k.t}</b> → ${faecher.find(f=>f.id===k.f).t}${k.e?`: ${k.e}`:''}</li>`).join('')}</ul></details>`:'';
+  return `<section class="aufgabe${klasse?' '+klasse:''}" data-zuordnen="${id}" data-karten="${esc(JSON.stringify(karten.map(k=>k.f)))}">${kopf('category','Zuordnen')}
   <p class="aufgabe-frage">${frage}</p>
   <p class="small muted">Tippe eine Karte an und dann das passende Fach – oder zieh die Karte hinein.</p>
   <div class="zu-fach zu-pool" data-fach=""><button class="zu-ziel" type="button" data-ziel="">Noch nicht zugeordnet</button><div class="zu-inhalt">${karten.map((k,i)=>`<button class="zu-karte" type="button" draggable="true" data-k="${i}" aria-pressed="false">${k.t}</button>`).join('')}</div></div>
   <div class="zu-faecher">${faecher.map(f=>`<div class="zu-fach" data-fach="${esc(f.id)}"><button class="zu-ziel" type="button" data-ziel="${esc(f.id)}">${f.t}</button><div class="zu-inhalt"></div></div>`).join('')}</div>
-  <div class="row"><button class="btn primary small" type="button" data-pruefen><span class="ms">task_alt</span>Prüfen</button><button class="btn small" type="button" data-neu><span class="ms">restart_alt</span>Neu</button><span class="small" data-ergebnis role="status"></span></div></section>`;
+  <div class="row"><button class="btn primary small" type="button" data-pruefen><span class="ms">task_alt</span>Prüfen</button><button class="btn small" type="button" data-neu><span class="ms">restart_alt</span>Neu</button><span class="small" data-ergebnis role="status"></span></div>${erkl}</section>`;
 }
 function bindZuordnen(box){
   const id=box.dataset.zuordnen,soll=JSON.parse(box.dataset.karten),karten=$$('.zu-karte',box);
@@ -106,7 +111,7 @@ function bindZuordnen(box){
   });
   $('[data-pruefen]',box).addEventListener('click',()=>{
     const gelegt=karten.filter(k=>lage[k.dataset.k]),ok=gelegt.filter(k=>soll[k.dataset.k]===lage[k.dataset.k]).length,offen=karten.length-gelegt.length;
-    zeichne(true);
+    zeichne(true);const warum=$('[data-zu-warum]',box);if(warum&&!offen)warum.hidden=false;
     $('[data-ergebnis]',box).textContent=`${ok} von ${karten.length} richtig${offen?` – ${offen} noch nicht zugeordnet`:ok===karten.length?' – stark!':' – rot markierte Karten noch einmal verschieben.'}`;
   });
   $('[data-neu]',box).addEventListener('click',()=>{lage={};gewaehlt=null;$('[data-ergebnis]',box).textContent='';zeichne(false)});
@@ -449,6 +454,314 @@ function bindWissenscheck(box){
   sichern();zeigeStufe(st.tab??1,false);
 }
 
+/* ---------- Blitzrunde: Bauchgefühl-Karten ----------
+   Eine Karte nach der anderen, Antwort per Knopf (bei zwei Antworten auch per Wischen).
+   blitz({id, titel, werkstatt, optionen:[{id, t, icon}], karten:[{t, r, e}], verdeckt})
+     verdeckt: keine Auflösung; die kommt später mit blitzAufloesung(def), z. B. in der Sichern-Werkstatt.
+     werkstatt: id der Werkstatt mit der Blitzrunde (für den Link aus der Auflösung).
+   Im Lernraum kann die Lehrkraft die Blitzrunde als Klassenrunde spielen: Jede Karte wird zur Live-Abstimmung
+   (Umfrage-id <id>-k<Nummer>), die Stimmen landen auch im Bauchgefühl der Schüler. Das Klassenergebnis
+   speichert nur das Gerät der Lehrkraft und zeigt es in blitzAufloesung(). */
+const BLITZ=new Map();
+const kartenId=(id,i)=>`${id}-k${i}`;
+const blitzKarte=u=>{const m=/^(.+)-k(\d+)$/.exec(u.id||''),def=m&&BLITZ.get(m[1]);return def?{def,i:+m[2]}:null};
+function blitzLaden(def){let x=store(key('blitz',def.id));if(!x||!Array.isArray(x.a)||x.a.length!==def.karten.length)x={a:def.karten.map(()=>null)};return x}
+export function blitz(def){
+  const {id,titel,optionen,karten,verdeckt}=def;BLITZ.set(id,def);
+  const opt=r=>optionen.find(o=>o.id===r);
+  registriere({id,frage:titel,loesung:karten.map(k=>`${k.t} – <b>${opt(k.r).t}</b>`),runde:karten.length});
+  karten.forEach((k,i)=>registriere({id:kartenId(id,i),intern:true,frage:k.t,loesung:[],
+    umfrage:{kopf:`Blitzrunde · Karte ${i+1} von ${karten.length}`,icon:'bolt',frage:k.t,optionen:optionen.map(o=>o.t),r:optionen.findIndex(o=>o.id===k.r),e:verdeckt?'':k.e||''}}));
+  return `<section class="aufgabe blitz" data-blitz="${id}">${kopf('bolt',verdeckt?'Blitzrunde · Bauchgefühl':'Blitzrunde')}
+    <p class="aufgabe-frage">${titel}</p>
+    <div class="stack" data-blitz-spiel>
+      <div class="row" style="justify-content:space-between"><span class="small muted num" data-blitz-n></span>${optionen.length===2?'<span class="small muted">Tippen oder wischen</span>':''}</div>
+      <div class="blitz-karte" data-blitz-karte><p data-blitz-text aria-live="polite"></p></div>
+      <div class="blitz-wahl" role="group" aria-label="Deine Antwort">${optionen.map(o=>`<button class="btn blitz-btn" type="button" data-wahl="${esc(o.id)}">${o.icon?`<span class="ms">${o.icon}</span>`:''}${o.t}</button>`).join('')}</div>
+      <div class="stack" data-blitz-fb hidden></div>
+    </div>
+    <div class="stack" data-blitz-ende hidden></div>
+    <div class="stack" data-blitz-klasse hidden></div></section>`;
+}
+const balkenHTML=(optionen,st,richtig)=>{const n=st.reduce((a,b)=>a+b,0);
+  return `<div class="abst-balken">${optionen.map((o,i)=>{const p=n?Math.round(st[i]/n*100):0,ok=i===richtig;
+    return `<div class="wc-erg abst-zeile${ok?' richtig':''}"><div class="row" style="justify-content:space-between"><span class="title-s">${ok?'<span class="ms sm">check_circle</span> ':''}${o}</span><span class="num" data-abst-zahl="${i}">${st[i]} · ${p} %</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${p}%"></span></div></div>`}).join('')}</div>`};
+const abgestimmtHTML=n=>{const g=raum.zustand().spieler.length;return `<p class="small muted num" data-abst-n>${n} von ${g} ${g===1?'Person hat':'Personen haben'} abgestimmt.</p>`};
+function bindBlitz(box){
+  const def=BLITZ.get(box.dataset.blitz);if(!def)return;
+  const {id,optionen,karten,verdeckt}=def,opt=r=>optionen.find(o=>o.id===r);
+  let st=blitzLaden(def);
+  const spiel=$('[data-blitz-spiel]',box),ende=$('[data-blitz-ende]',box),karte=$('[data-blitz-karte]',box),fb=$('[data-blitz-fb]',box),wahl=$('.blitz-wahl',box),klasse=$('[data-blitz-klasse]',box);
+  let warte=false,modus='';
+  const naechste=()=>st.a.findIndex(x=>x==null);
+  function zeige(fokus){
+    const i=naechste();
+    karte.style.transform='';karte.classList.remove('links','rechts');
+    if(i<0){spiel.hidden=true;ende.hidden=false;zeichneEnde();return}
+    spiel.hidden=false;ende.hidden=true;fb.hidden=true;wahl.hidden=false;warte=false;
+    $('[data-blitz-n]',box).textContent=`Karte ${i+1} von ${karten.length}`;
+    $('[data-blitz-text]',box).innerHTML=karten[i].t;
+    karte.classList.remove('neu');void karte.offsetWidth;karte.classList.add('neu');
+    if(fokus)$('[data-wahl]',wahl).focus();
+  }
+  function waehle(r){
+    if(warte||modus)return;const i=naechste();if(i<0)return;
+    st.a[i]=r;store(key('blitz',id),st);
+    if(verdeckt)return zeige(true);
+    const k=karten[i],ok=k.r===r;warte=true;wahl.hidden=true;fb.hidden=false;
+    fb.innerHTML=`<div class="fb ${ok?'ok':'bad'}"><b>${ok?'Richtig.':`Nicht ganz – richtig ist: ${opt(k.r).t}.`}</b> ${k.e||''}</div><div class="row"><button class="btn primary small" type="button" data-blitz-weiter><span class="ms">arrow_forward</span>${i+1<karten.length?'Weiter':'Zur Auswertung'}</button></div>`;
+    const w=$('[data-blitz-weiter]',fb);w.addEventListener('click',()=>zeige(true));w.focus();
+  }
+  function zeichneEnde(){
+    const ok=karten.filter((k,i)=>st.a[i]===k.r).length;
+    ende.innerHTML=verdeckt
+      ?`<div class="fb ok"><b>Geschafft!</b> Dein Bauchgefühl ist gespeichert. Am Ende der Lernwerkstatt zeigt dir der Bauchgefühl-Check, wie gut du lagst.</div>`
+      :`<p class="title-m num">${ok} von ${karten.length} richtig</p><p class="small">${ok===karten.length?'Stark – alles richtig!':'Schau dir die Erklärungen noch einmal an und versuch es dann erneut.'}</p>`;
+    ende.insertAdjacentHTML('beforeend',`<div class="row"><button class="btn small" type="button" data-blitz-neu><span class="ms">restart_alt</span>Noch einmal</button></div>`);
+    $('[data-blitz-neu]',ende).addEventListener('click',()=>{st={a:karten.map(()=>null)};store(key('blitz',id),st);zeige(true)});
+  }
+  wahl.addEventListener('click',e=>{const b=e.target.closest('[data-wahl]');if(b)waehle(b.dataset.wahl)});
+  // Wischen: links = erste Antwort, rechts = zweite Antwort
+  if(optionen.length===2){
+    let x0=null,dx=0;
+    karte.addEventListener('pointerdown',e=>{if(warte||modus)return;x0=e.clientX;dx=0;karte.setPointerCapture(e.pointerId)});
+    karte.addEventListener('pointermove',e=>{if(x0==null)return;dx=e.clientX-x0;karte.style.transform=`translateX(${dx}px) rotate(${dx/24}deg)`;karte.classList.toggle('links',dx<-40);karte.classList.toggle('rechts',dx>40)});
+    const los=()=>{if(x0==null)return;x0=null;if(Math.abs(dx)>90)waehle(dx<0?optionen[0].id:optionen[1].id);else{karte.style.transform='';karte.classList.remove('links','rechts')}};
+    karte.addEventListener('pointerup',los);karte.addEventListener('pointercancel',los);
+  }
+  // Klassenrunde im Lernraum: Lehrkraft steuert, Schüler stimmen im Fenster ab
+  function zeichneKlasse(i,u){
+    const erg=store(key('blitzklasse',id))||{},gespielt=Object.keys(erg).length;
+    if(i<0){
+      klasse.innerHTML=`<p class="small">Spielt die Blitzrunde mit der ganzen Klasse: Jede Karte erscheint auf allen Handys im Lernraum, die Balken zeigen live, wie die Klasse tippt.${verdeckt?' Die Auflösung kommt erst am Ende im Bauchgefühl-Check.':''}</p>
+        ${u.id?'<p class="small muted">Gerade läuft eine andere Abstimmung. Starten beendet sie.</p>':''}
+        <div class="row"><button class="btn primary" type="button" data-bk-start="0"><span class="ms">play_arrow</span>Klassenrunde starten</button>${gespielt?`<span class="small muted num">Letzte Runde: ${gespielt} von ${karten.length} Karten gespielt</span>`:''}</div>`;
+    }else{
+      const k=karten[i],r=optionen.findIndex(o=>o.id===k.r),stim=raum.stimmen(),n=stim.reduce((a,b)=>a+b,0);
+      erg[i]=stim;store(key('blitzklasse',id),erg);
+      klasse.innerHTML=`<div class="row" style="justify-content:space-between"><span class="small muted num">Karte ${i+1} von ${karten.length}</span><span class="pill ok">Klassenrunde läuft</span></div>
+        <div class="blitz-karte"><p>${k.t}</p></div>
+        ${balkenHTML(optionen.map(o=>o.t),stim,u.auf?r:-1)}${abgestimmtHTML(n)}
+        ${u.auf?`<div class="fb ok"><b>Richtig: ${optionen[r].t}.</b> ${k.e||''}</div>`:''}
+        <div class="row">${!verdeckt&&!u.auf?'<button class="btn" type="button" data-bk-auf><span class="ms">visibility</span>Auflösen</button>':''}${i+1<karten.length?`<button class="btn primary" type="button" data-bk-start="${i+1}"><span class="ms">arrow_forward</span>Nächste Karte</button>`:''}<button class="btn" type="button" data-bk-ende><span class="ms">stop_circle</span>Runde beenden</button></div>`;
+    }
+    $('[data-bk-start]',klasse)?.addEventListener('click',e=>{const j=+e.currentTarget.dataset.bkStart;if(j===0)store(key('blitzklasse',id),{});raum.starteUmfrage(kartenId(id,j))});
+    $('[data-bk-auf]',klasse)?.addEventListener('click',()=>raum.deckeAuf());
+    $('[data-bk-ende]',klasse)?.addEventListener('click',()=>raum.beendeUmfrage());
+  }
+  function steuern(){
+    if(!document.body.contains(box))return;
+    const u=raum.umfrage(),b=blitzKarte(u),i=b&&b.def===def?b.i:-1;
+    if(raum.istLehrkraft()){modus='lk';spiel.hidden=true;ende.hidden=true;klasse.hidden=false;zeichneKlasse(i,u);return}
+    if(raum.istSchueler()&&i>=0){modus='klasse';spiel.hidden=true;ende.hidden=true;klasse.hidden=false;
+      klasse.innerHTML=`<p class="small"><span class="ms sm">groups</span> Die Klasse spielt die Blitzrunde gerade gemeinsam (Karte ${i+1} von ${karten.length}) – stimm im Fenster ab.</p>`;return}
+    klasse.hidden=true;if(modus){modus='';st=blitzLaden(def);zeige(false)}
+  }
+  box.blitzSteuern=steuern;steuern();if(!modus)zeige(false);
+}
+raum.on(art=>{
+  if(['raum','spieler','start','ende','verbunden'].includes(art))$$('[data-blitz]').forEach(b=>b.blitzSteuern&&b.blitzSteuern());
+  // Stimmen aus der Klassenrunde zählen auch als eigenes Bauchgefühl
+  if(art==='stimme'){const b=blitzKarte(raum.umfrage()),w=raum.meineStimme();if(b&&w!=null){const st=blitzLaden(b.def);st.a[b.i]=b.def.optionen[w].id;store(key('blitz',b.def.id),st)}}
+});
+export function blitzAufloesung(def){
+  BLITZ.set(def.id,def);
+  return `<section class="aufgabe" data-blitz-aufl="${def.id}">${kopf('psychology','Bauchgefühl-Check')}<p class="aufgabe-frage">Wie gut war dein Bauchgefühl am Anfang?</p><div class="stack" data-aufl></div></section>`;
+}
+function bindAufloesung(box){
+  const def=BLITZ.get(box.dataset.blitzAufl),el=$('[data-aufl]',box),opt=r=>def.optionen.find(o=>o.id===r);
+  const a=(store(key('blitz',def.id))||{}).a||[],n=a.filter(x=>x!=null).length;
+  // Gerät der Lehrkraft: Ergebnis der letzten Klassenrunde
+  const erg=store(key('blitzklasse',def.id))||{},gespielt=Object.keys(erg).map(Number).sort((x,y)=>x-y);
+  let klasse='';
+  if(gespielt.length){
+    const zeilen=gespielt.map(i=>{const k=def.karten[i],s=erg[i]||[],summe=s.reduce((x,y)=>x+y,0),r=def.optionen.findIndex(o=>o.id===k.r),mehr=summe?s.indexOf(Math.max(...s)):-1;
+      return {ok:mehr===r,html:`<li class="${summe?mehr===r?'right':'wrong':''}"><p>${k.t}</p><p class="small num">${def.optionen.map((o,j)=>`${o.t}: ${summe?Math.round((s[j]||0)/summe*100):0} %`).join(' · ')} · Richtig: <b>${def.optionen[r].t}</b></p>${k.e?`<p class="small">${k.e}</p>`:''}</li>`}});
+    klasse=`<div class="stack"><p class="title-m num">Eure Klasse: ${zeilen.filter(z=>z.ok).length} von ${gespielt.length} Karten mehrheitlich richtig</p><ol class="blitz-liste">${zeilen.map(z=>z.html).join('')}</ol></div>`;
+  }
+  if(!n){el.innerHTML=klasse||`<p class="small">Du hast die Blitzrunde am Anfang noch nicht gemacht. Hol das nach – dann siehst du hier, wie gut dein Bauchgefühl war.</p>${def.werkstatt?`<div class="row"><button class="btn small" type="button" data-gehzu="${esc(def.werkstatt)}"><span class="ms">bolt</span>Zur Blitzrunde</button></div>`:''}`;return}
+  const ok=def.karten.filter((k,i)=>a[i]===k.r).length;
+  el.innerHTML=klasse+`<p class="title-m num">Dein Bauchgefühl: ${ok} von ${n} richtig</p>
+    <p class="small">${ok===def.karten.length?'Wow – du hattest von Anfang an den richtigen Riecher!':'Jetzt weißt du es genauer. Hier lag dein Bauchgefühl daneben:'}</p>
+    <ol class="blitz-liste">${def.karten.map((k,i)=>{const w=a[i];return `<li class="${w==null?'':w===k.r?'right':'wrong'}"><p>${k.t}</p><p class="small">Dein Bauchgefühl: <b>${w==null?'–':opt(w).t}</b> · Richtig: <b>${opt(k.r).t}</b></p>${k.e?`<p class="small">${k.e}</p>`:''}</li>`}).join('')}</ol>`;
+}
+
+/* ---------- Prüfschema (Rechts-Navi) und Fall-Akte ----------
+   schema: {start, schritte:{sid:{frage, hilfe, gesetz:{p, t}, antworten:[{t, weiter: sid} | {t, ergebnis:{art, t}}]}}}
+     art: 'wirksam' | 'schwebend' | 'unwirksam' bestimmt Farbe und Symbol des Ergebnisses.
+   pruefschema({id, titel, schema, beispiel})   Probefahrt: frei durchklicken, dazu die ganze Route auf einen Blick
+   fallakte({id, titel, schema, faelle:[{titel, icon, bild, fakten, text, frage, weg, tipps, loesung, denkWeiter}]})
+     Fälle mit dem Navi lösen: Falsche Abzweigungen werden erklärt, die Lösung erscheint erst danach. Gelöste Fälle bleiben gespeichert.
+     weg: {sid: Index der richtigen Antwort}, tipps: {sid: '…'}
+     bild: {src, alt, nachweis (HTML)}   Foto für den Fall-Steckbrief und die Fallkarte
+     fakten: [['Wer', 'Franz, 30'], ['Was', …], …]   Steckbrief: die wichtigen Fakten auf einen Blick
+     loesung: Text oder Liste von Sätzen im Gutachtenstil. Bei einer Liste bauen die Schüler das Gutachten
+              erst selbst zusammen (Gutachten-Baukasten), dann erscheint die Lösung. */
+const SCHEMAS=new Map(), AKTEN=new Map();
+const ERG={wirksam:['ok','check_circle','Wirksam'],schwebend:['amb','hourglass_top','Schwebend unwirksam'],unwirksam:['bad','block','Unwirksam']};
+const ergebnisHTML=e=>{const [k,ic,t]=ERG[e.art]||ERG.unwirksam;return `<li class="navi-ergebnis fb ${k}"><span class="ms">${ic}</span><span><b>${e.titel||t}</b>${e.t?` – ${e.t}`:''}</span></li>`};
+function uebersichtHTML(schema){
+  const ids=Object.keys(schema.schritte),nr=new Map(ids.map((s,i)=>[s,i+1]));
+  return `<ol class="navi-karte small">${ids.map(sid=>{const s=schema.schritte[sid];return `<li><b>${s.frage}</b>${s.gesetz?` <span class="muted">(${s.gesetz.p})</span>`:''}<ul>${s.antworten.map(a=>`<li>${a.t} → ${a.ergebnis?`<b>${a.ergebnis.titel||ERG[a.ergebnis.art][2]}</b>`:`weiter mit Frage ${nr.get(a.weiter)}`}</li>`).join('')}</ul></li>`}).join('')}</ol>`;
+}
+/** Zeichnet die Route in ol; fall: Fallmodus mit richtigem Weg, fertig(ergebnis, fehler) nach dem Ziel. */
+function route(ol,schema,{fall,fertig}={}){
+  const nr=new Map(Object.keys(schema.schritte).map((s,i)=>[s,i+1]));
+  let weg=[],tipp=null,fehler=0;
+  function zeichne(){
+    let sid=schema.start,html='';
+    for(let k=0;k<50;k++){
+      const s=schema.schritte[sid],w=weg[k];
+      html+=`<li class="navi-schritt${w?' fertig':''}"><p class="navi-frage"><span class="navi-nr" aria-hidden="true">${nr.get(sid)}</span>${s.frage}</p>
+        ${s.hilfe?`<p class="small muted">${s.hilfe}</p>`:''}${s.gesetz?`<details class="hilfe"><summary><span class="ms sm">menu_book</span>${s.gesetz.p} nachlesen</summary><p class="small">${s.gesetz.t}</p></details>`:''}
+        <div class="navi-antw" role="group" aria-label="Antwort zu Frage ${nr.get(sid)}">${s.antworten.map((a,j)=>{const gew=w&&w.j===j,falsch=tipp&&tipp.sid===sid&&tipp.j===j;
+          return `<button class="btn small${gew?' gewaehlt':''}${falsch?' falsch':''}" type="button" data-sid="${sid}" data-j="${j}" aria-pressed="${!!gew}"${w?' disabled':''}>${a.t}</button>`}).join('')}</div>
+        ${tipp&&tipp.sid===sid?`<div class="fb amb" role="status"><b>Nicht ganz.</b> ${tipp.t}</div>`:''}</li>`;
+      if(!w)break;
+      const a=s.antworten[w.j];
+      if(a.ergebnis){html+=ergebnisHTML(a.ergebnis);break}
+      sid=a.weiter;
+    }
+    ol.innerHTML=html;
+  }
+  ol.addEventListener('click',e=>{
+    const b=e.target.closest('[data-j]');if(!b||b.disabled)return;
+    const sid=b.dataset.sid,j=+b.dataset.j;
+    if(fall&&fall.weg[sid]!==undefined&&fall.weg[sid]!==j){tipp={sid,j,t:(fall.tipps||{})[sid]||'Lies den Fall noch einmal genau.'};fehler++;zeichne();$(`[data-sid="${sid}"][data-j="${j}"]`,ol)?.focus();return}
+    tipp=null;weg.push({sid,j});zeichne();
+    const a=schema.schritte[sid].antworten[j];
+    if(a.ergebnis){if(fertig)fertig(a.ergebnis,fehler)}
+    else $$('.navi-schritt:not(.fertig) [data-j]',ol)[0]?.focus();
+  });
+  return {
+    neu(){weg=[];tipp=null;fehler=0;zeichne()},
+    // Fallmodus: den richtigen Weg nachzeichnen (gelöster Fall nach dem Neuladen)
+    loese(){weg=[];tipp=null;let sid=schema.start;for(let k=0;k<50;k++){const j=fall.weg[sid];if(j===undefined)break;weg.push({sid,j});const a=schema.schritte[sid].antworten[j];if(a.ergebnis)break;sid=a.weiter}zeichne()}
+  };
+}
+export function pruefschema({id,titel,schema,beispiel}){
+  SCHEMAS.set(id,schema);
+  return `<section class="aufgabe navi" data-navi="${id}">${kopf('alt_route','Rechts-Navi')}<p class="aufgabe-frage">${titel}</p>${beispiel?`<div class="wc-material">${beispiel}</div>`:''}
+    <ol class="navi-route" data-route></ol>
+    <div class="row"><button class="btn small" type="button" data-navi-neu><span class="ms">restart_alt</span>Neue Fahrt</button></div>
+    <details class="hilfe"><summary><span class="ms sm">map</span>Die ganze Route auf einen Blick</summary>${uebersichtHTML(schema)}</details></section>`;
+}
+function bindNavi(box){
+  const schema=SCHEMAS.get(box.dataset.navi);if(!schema)return;
+  const r=route($('[data-route]',box),schema);r.neu();
+  $('[data-navi-neu]',box).addEventListener('click',()=>{r.neu();$('[data-route] [data-j]',box)?.focus()});
+}
+const loesungText=f=>[].concat(f.loesung).join(' ');
+export function fallakte(def){
+  AKTEN.set(def.id,def);
+  registriere({id:def.id,frage:def.titel,loesung:def.faelle.map(f=>`<b>${f.titel}:</b> ${loesungText(f)}`)});
+  return `<section class="stack akte" data-akte="${def.id}">
+    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3 class="title-m">${def.titel}</h3><span class="small muted num" data-akte-stand></span></div>
+      <div class="akte-faelle" role="group" aria-label="Fall wählen">${def.faelle.map((f,i)=>`<button class="akte-fall${f.bild?' mit-bild':''}" type="button" data-fall="${i}" aria-pressed="false">${f.bild?`<img class="akte-thumb" src="${f.bild.src}" alt="" loading="lazy">`:`<span class="ms">${f.icon||'folder'}</span>`}<span class="akte-fall-text"><span class="akte-titel">${f.titel}</span><span class="akte-status small" data-status></span></span></button>`).join('')}</div>
+      <div data-akte-profi></div></div>
+    <div data-akte-fall></div></section>`;
+}
+const steckbriefHTML=f=>!f.bild&&!f.fakten?'':`<div class="akte-steckbrief">${f.bild?`<figure class="akte-bild"><img src="${f.bild.src}" alt="${esc(f.bild.alt)}" loading="lazy">${f.bild.nachweis?`<figcaption>${f.bild.nachweis}</figcaption>`:''}</figure>`:''}
+  ${f.fakten?`<div class="akte-fakten"><p class="title-s"><span class="ms sm">badge</span>Steckbrief</p><dl>${f.fakten.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></div>`:''}</div>`;
+function bindAkte(box){
+  const def=AKTEN.get(box.dataset.akte);if(!def)return;
+  let st=store(key('akte',def.id))||{geloest:{},fall:0};
+  const sichern=()=>store(key('akte',def.id),st);
+  function stand(){
+    const n=Object.keys(st.geloest).length,gut=def.faelle.every((f,i)=>!Array.isArray(f.loesung)||(st.geloest[i]&&st.geloest[i].gut));
+    $('[data-akte-stand]',box).textContent=`${n} von ${def.faelle.length} gelöst`;
+    $$('[data-fall]',box).forEach(b=>{const i=+b.dataset.fall,g=st.geloest[i];b.classList.toggle('geloest',!!g);b.setAttribute('aria-pressed',String(i===st.fall));$('[data-status]',b).innerHTML=g?'<span class="ms sm">check_circle</span>gelöst':'offen'});
+    $('[data-akte-profi]',box).innerHTML=n===def.faelle.length?`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Alle Fälle gelöst – du bist jetzt Rechtsprofi!</b> ${Object.values(st.geloest).every(g=>!g.fehler)?'Und das ohne eine einzige falsche Abzweigung.':''} ${gut?'Alle Gutachten hast du selbst gebaut.':''}</div>`:'';
+  }
+  function oeffne(i,fokus){
+    st.fall=i;sichern();stand();
+    const f=def.faelle[i],el=$('[data-akte-fall]',box),baukasten=Array.isArray(f.loesung);
+    el.innerHTML=`<article class="aufgabe"><p class="aufgabe-kopf"><span class="ms sm">folder_open</span>Fall ${i+1}: ${f.titel}</p>
+      ${steckbriefHTML(f)}
+      <div class="wc-material akte-text">${f.text}</div>${f.frage?`<p class="aufgabe-frage">${f.frage}</p>`:''}
+      <p class="small muted">Löse den Fall mit dem Rechts-Navi: Tippe bei jeder Frage die Antwort, die zum Fall passt.</p>
+      <ol class="navi-route" data-route></ol><div data-akte-loesung></div>
+      <div class="row"><button class="btn small" type="button" data-akte-neu><span class="ms">restart_alt</span>Noch einmal prüfen</button>${i+1<def.faelle.length?'<button class="btn small primary" type="button" data-akte-weiter><span class="ms">arrow_forward</span>Nächster Fall</button>':''}</div></article>`;
+    const ziel=$('[data-akte-loesung]',el);
+    const loesung=gebaut=>{ziel.innerHTML=`<div class="wc-eh stack"><p class="title-s"><span class="ms sm">gavel</span>So schreibst du die Lösung auf</p>${gebaut?'<div class="fb ok"><b>Gutachten gebaut!</b> Genau so schreibst du die Lösung ins Heft.</div>':''}<p class="small">${loesungText(f)}</p>${f.denkWeiter?`<details class="hilfe pro"><summary><span class="ms sm">psychology</span>Denk weiter</summary><p class="small">${f.denkWeiter}</p></details>`:''}</div>`};
+    // Gutachten-Baukasten: Sätze der Lösung in die richtige Reihenfolge bringen
+    function gutachten(){
+      const saetze=f.loesung,ord=mischen(saetze.length,streuwert(f.titel));let n=0,fehler=0;
+      ziel.innerHTML=`<div class="aufgabe gutachten stack"><p class="aufgabe-kopf"><span class="ms sm">edit_note</span>Gutachten-Baukasten</p>
+        <p class="aufgabe-frage">Bau die Lösung im Gutachtenstil: Tippe die Sätze in der richtigen Reihenfolge an.</p>
+        <p class="small muted">Erst die Frage (Obersatz), dann die Prüfung Schritt für Schritt, am Ende das Ergebnis.</p>
+        <ol class="gutachten-text" data-gut-text></ol>
+        <div class="gutachten-saetze" role="group" aria-label="Sätze zur Auswahl">${ord.map(j=>`<button class="btn gutachten-satz" type="button" data-satz="${j}">${saetze[j]}</button>`).join('')}</div>
+        <div data-gut-fb role="status"></div>
+        <div class="row"><button class="btn text small" type="button" data-gut-zeigen><span class="ms">visibility</span>Lösung zeigen</button></div></div>`;
+      const fertig=gebaut=>{st.geloest[i]={...(st.geloest[i]||{}),gut:gebaut};sichern();stand();loesung(gebaut)};
+      $('[data-gut-zeigen]',ziel).addEventListener('click',()=>fertig(false));
+      $('.gutachten-saetze',ziel).addEventListener('click',e=>{
+        const b=e.target.closest('[data-satz]');if(!b)return;const j=+b.dataset.satz,hinweis=$('[data-gut-fb]',ziel);
+        if(j!==n){fehler++;b.classList.add('falsch');setTimeout(()=>b.classList.remove('falsch'),900);
+          hinweis.innerHTML=`<div class="fb amb"><b>Noch nicht.</b> ${n===0?'Ein Gutachten beginnt mit der Frage, die du prüfst (Obersatz).':n===saetze.length-1?'Jetzt fehlt nur noch das Ergebnis.':'Geh vor wie der Rechts-Navi: erst das Alter, dann die Ausnahmen, zuletzt die Genehmigung. Und die Regel kommt vor dem Fall.'}</div>`;return}
+        hinweis.innerHTML='';$('[data-gut-text]',ziel).insertAdjacentHTML('beforeend',`<li>${saetze[j]}</li>`);b.remove();n++;
+        if(n===saetze.length)fertig(true);else $('[data-satz]',ziel)?.focus();
+      });
+    }
+    const r=route($('[data-route]',el),def.schema,{fall:f,fertig:(erg,fehler)=>{st.geloest[i]={fehler};sichern();stand();if(baukasten)gutachten();else loesung(false)}});
+    const g=st.geloest[i];
+    if(g){r.loese();if(baukasten&&g.gut===undefined)gutachten();else loesung(!!g.gut)}else r.neu();
+    $('[data-akte-neu]',el).addEventListener('click',()=>{delete st.geloest[i];sichern();stand();ziel.innerHTML='';r.neu();$('[data-route] [data-j]',el)?.focus()});
+    $('[data-akte-weiter]',el)?.addEventListener('click',()=>{oeffne(i+1,true)});
+    if(fokus){el.scrollIntoView({block:'start'});$('[data-route] [data-j]',el)?.focus({preventScroll:true})}
+  }
+  $$('[data-fall]',box).forEach(b=>b.addEventListener('click',()=>oeffne(+b.dataset.fall,true)));
+  oeffne(Math.min(st.fall||0,def.faelle.length-1),false);
+}
+
+/* ---------- Ihr seid das Gericht (Live-Abstimmung) ----------
+   abstimmung({id, titel, fall, frage, optionen:[…], r, e})   r = Index des richtigen Urteils, e = Begründung, titel = kurzer Name des Falls
+   Im Lernraum startet die Lehrkraft die Abstimmung, alle Handys zeigen den Fall (Fenster aus lernraum.js), die Lehrkraft
+   sieht die Stimmen live und deckt auf. Ohne Lernraum fällt man das Urteil allein. */
+const URTEILE=new Map();
+export function abstimmung(def){
+  const {id,titel,fall,frage,optionen,r,e}=def;URTEILE.set(id,def);
+  registriere({id,frage:titel?`${titel}: ${frage}`:frage,loesung:[`<b>${optionen[r]}</b>`,e].filter(Boolean),umfrage:{titel,fall,frage,optionen,r,e}});
+  return `<section class="aufgabe abst" data-abst="${id}">${kopf('gavel',titel?`Ihr seid das Gericht · ${titel}`:'Ihr seid das Gericht')}${fall?`<div class="wc-material">${fall}</div>`:''}<p class="aufgabe-frage">${frage}</p><div class="stack" data-abst-inhalt></div></section>`;
+}
+const urteilHTML=(def,w)=>`<div class="fb ${w===def.r?'ok':'bad'}"><b>${w===def.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${def.optionen[def.r]}</b>. ${def.e||''}</div>`;
+function zeichneAbst(box){
+  const def=URTEILE.get(box.dataset.abst);if(!def)return;
+  const el=$('[data-abst-inhalt]',box),u=raum.umfrage();
+  if(raum.istLehrkraft()){
+    if(u.id!==def.id){
+      el.innerHTML=`${u.id?'<p class="small muted">Gerade läuft eine andere Abstimmung. Starten beendet sie.</p>':''}<div class="row"><button class="btn primary" type="button" data-abst-start><span class="ms">how_to_vote</span>Abstimmung starten</button><span class="small muted">Alle Handys im Lernraum zeigen den Fall und die Antworten.</span></div>`;
+      $('[data-abst-start]',el).addEventListener('click',()=>raum.starteUmfrage(def.id));return;
+    }
+    const st=raum.stimmen(),n=st.reduce((a,b)=>a+b,0);
+    el.innerHTML=`${balkenHTML(def.optionen,st,u.auf?def.r:-1)}${abgestimmtHTML(n)}
+      ${u.auf?`<div class="fb ok"><b>Urteil: ${def.optionen[def.r]}.</b> ${def.e||''}</div>`:''}
+      <div class="row">${u.auf?'':'<button class="btn primary" type="button" data-abst-auf><span class="ms">visibility</span>Auflösen</button>'}<button class="btn" type="button" data-abst-ende><span class="ms">stop_circle</span>Abstimmung beenden</button></div>`;
+    $('[data-abst-auf]',el)?.addEventListener('click',()=>raum.deckeAuf());
+    $('[data-abst-ende]',el).addEventListener('click',()=>raum.beendeUmfrage());
+    return;
+  }
+  if(raum.istSchueler()){
+    const meins=raum.urteil(def.id);
+    el.innerHTML=u.id===def.id?'<p class="small"><span class="ms sm">how_to_vote</span> Die Abstimmung läuft – stimm im Fenster ab.</p>'
+      :meins?urteilHTML(def,meins.w):'<p class="small muted">Abstimmen könnt ihr, sobald eure Lehrkraft die Abstimmung startet.</p>';
+    return;
+  }
+  // Allein: Urteil fällen und gleich auflösen
+  const st=store(key('abst',def.id));
+  if(st&&st.w!=null){
+    el.innerHTML=urteilHTML(def,st.w)+'<div class="row"><button class="btn small" type="button" data-abst-neu><span class="ms">restart_alt</span>Noch einmal</button></div>';
+    $('[data-abst-neu]',el).addEventListener('click',()=>{store(key('abst',def.id),{});zeichneAbst(box)});return;
+  }
+  el.innerHTML=`<fieldset class="wc-opts"><legend class="small">Dein Urteil</legend>${def.optionen.map((o,i)=>`<label class="test-opt"><input type="radio" name="abst-${def.id}" value="${i}"><span>${o}</span></label>`).join('')}</fieldset>
+    <div class="row"><button class="btn primary small" type="button" data-abst-urteil disabled><span class="ms">gavel</span>Urteil fällen</button></div>`;
+  const btn=$('[data-abst-urteil]',el);
+  el.onchange=()=>{btn.disabled=!$('input:checked',el)};
+  btn.addEventListener('click',()=>{const r=$('input:checked',el);if(!r)return;store(key('abst',def.id),{w:+r.value});zeichneAbst(box)});
+}
+raum.on(art=>{if(['raum','spieler','start','ende','verbunden','urteil'].includes(art))$$('[data-abst]').forEach(zeichneAbst)});
+
 /** Macht alle Aufgaben in root interaktiv (jede nur einmal). */
 export function bindAufgaben(root){
   const einmal=(sel,f)=>$$(sel,root).forEach(b=>{if(b.dataset.gebunden)return;b.dataset.gebunden='1';f(b)});
@@ -457,4 +770,9 @@ export function bindAufgaben(root){
   einmal('[data-luecken]',bindLuecken);
   einmal('[data-test]',bindTest);
   einmal('[data-wc]',bindWissenscheck);
+  einmal('[data-blitz]',bindBlitz);
+  einmal('[data-blitz-aufl]',bindAufloesung);
+  einmal('[data-navi]',bindNavi);
+  einmal('[data-akte]',bindAkte);
+  einmal('[data-abst]',zeichneAbst);
 }
