@@ -37,13 +37,26 @@
 .haus .zu-fach[data-fach="voll"]{border-color:var(--gf-gruen)}
 .haus .zu-fach[data-fach="ausnahme"]{border-color:var(--gf-blau)}
 .haus .zu-fach[data-fach="basis"]{border-color:var(--md-outline);background:var(--md-surface-container)}
-.haus [data-fach="unfaehig"] .zu-ziel{background:var(--md-gf-rot-container);color:var(--md-on-gf-rot-container)}
-.haus [data-fach="beschraenkt"] .zu-ziel{background:var(--md-gf-gelb-container);color:var(--md-on-gf-gelb-container)}
-.haus [data-fach="voll"] .zu-ziel{background:var(--md-gf-gruen-container);color:var(--md-on-gf-gruen-container)}
-.haus [data-fach="ausnahme"] .zu-ziel{background:var(--md-gf-blau-container);color:var(--md-on-gf-blau-container)}
-.haus [data-fach="basis"] .zu-ziel{background:var(--md-surface-container-highest);color:var(--md-on-surface)}
+.haus [data-fach="unfaehig"] .zu-kopf{background:var(--md-gf-rot-container);color:var(--md-on-gf-rot-container)}
+.haus [data-fach="beschraenkt"] .zu-kopf{background:var(--md-gf-gelb-container);color:var(--md-on-gf-gelb-container)}
+.haus [data-fach="voll"] .zu-kopf{background:var(--md-gf-gruen-container);color:var(--md-on-gf-gruen-container)}
+.haus [data-fach="ausnahme"] .zu-kopf{background:var(--md-gf-blau-container);color:var(--md-on-gf-blau-container)}
+.haus [data-fach="basis"] .zu-kopf{background:var(--md-surface-container-highest);color:var(--md-on-surface)}
 .haus .zu-fach.ueber{background:var(--md-primary-container)}
-@media (max-width:599px){.haus .zu-faecher{grid-template-columns:1fr}}
+.haus .zu-ziel{hyphens:auto;-webkit-hyphens:auto}
+/* Handy: Die drei Räume bleiben nebeneinander unter dem Dach, Schrift und Karten werden kompakter */
+@media (max-width:599px){
+  .haus .zu-faecher{gap:6px}
+  .haus .zu-faecher::before{height:44px;margin:0 -2px -6px;font-size:.75rem;line-height:1rem}
+  .haus .zu-fach{padding:4px;gap:6px;min-height:88px;border-radius:var(--r-m)}
+  .haus .zu-ziel{font-size:.75rem;line-height:1rem;padding:6px 4px 6px 8px}
+  .haus .zu-sub{font-size:.6875rem}
+  .haus :is([data-fach="unfaehig"],[data-fach="beschraenkt"],[data-fach="voll"]) .zu-kopf{flex-direction:column}
+  .haus :is([data-fach="unfaehig"],[data-fach="beschraenkt"],[data-fach="voll"]) .zu-ziel{border-radius:var(--r-s) var(--r-s) 0 0;padding-right:6px}
+  .haus :is([data-fach="unfaehig"],[data-fach="beschraenkt"],[data-fach="voll"]) .zu-info{width:auto;min-height:32px;border-radius:0 0 var(--r-s) var(--r-s);place-items:center start;padding-left:4px}
+  .haus .zu-fach .zu-inhalt{gap:4px}
+  .haus .zu-fach .zu-karte{font-size:.75rem;line-height:1rem;padding:6px 8px;hyphens:auto;-webkit-hyphens:auto}
+}
 
 /* Altersschieber */
 .gf-alter{display:flex;flex-direction:column;gap:12px}
@@ -70,25 +83,5 @@
 /* §-110-Check */
 .gf-check{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:.875rem;line-height:1.25rem}
 
-/* Mission Zwergspitz: Labyrinth (Hecke grün, Gänge hell, erkundete Wege farbig) */
-.gf-lab-fig{max-width:none}
-.gf-lab{display:block;width:100%;height:auto}
-.lab-hecke{fill:var(--md-gf-gruen-container)}
-.lab-gang{fill:none;stroke:var(--md-surface-container-lowest);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
-.lab-gang.schmal{stroke-width:14}
-.lab-weg{fill:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
-.lab-tor{stroke-dasharray:3 10}
-.lab-wand{stroke:var(--md-error);stroke-width:8;stroke-linecap:round}
-.lab-frage{fill:var(--md-warn-container);stroke:var(--md-warn);stroke-width:3}
-.lab-frage-t{fill:var(--md-on-warn-container);font-size:16px;font-weight:700;text-anchor:middle}
-.lab-nr{cursor:pointer}
-.lab-nr circle{fill:var(--md-primary);stroke:var(--md-surface-container-lowest);stroke-width:3}
-.lab-nr text{fill:var(--md-on-primary);font-size:17px;font-weight:600;text-anchor:middle}
-.lab-nr.fertig circle{fill:var(--md-secondary-container)}
-.lab-nr.fertig text{fill:var(--md-on-secondary-container)}
-.lab-nr.aktiv circle{stroke:var(--md-on-surface);stroke-width:4}
-.lab-nr:hover circle{stroke:var(--md-on-surface)}
-.lab-start{fill:var(--md-primary)}
-.lab-start-t{fill:var(--md-on-primary);font-size:12px;font-weight:600;text-anchor:middle}
-.lab-ziel{fill:none;stroke:var(--md-outline);stroke-width:4}
-.lab-ziel.erreicht{stroke:var(--md-ok);stroke-width:6}
+/* Mission Zwergspitz: Farben der Hecke für das Labyrinth-Spiel (shared/js/labyrinth.js) */
+.lab{--lab-hecke:var(--md-gf-gruen-container);--lab-busch:var(--md-gf-gruen);--lab-rand:var(--md-gf-gruen);--lab-pfad:var(--md-surface-container-lowest)}

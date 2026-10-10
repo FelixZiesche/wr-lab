@@ -58,7 +58,7 @@ export const WISSENSCHECK={
   {afb:1,art:'wahl',werkstatt:'haus',f:'Wer ist in der Regel der gesetzliche Vertreter einer 15-Jährigen?',
     o:['Die Eltern','Die Klassenlehrkraft','Das Jugendamt','Die ältere Schwester'],r:0,
     fehler:{1:'Die Schule entscheidet nicht über Verträge ihrer Schüler.',2:'Das Jugendamt hilft in Notlagen, ist aber nicht automatisch Vertreter.',3:'Geschwister sind keine gesetzlichen Vertreter, auch wenn sie volljährig sind.'},
-    e:'Gesetzliche Vertreter sind in der Regel beide Eltern. Bei Volljährigen, die ihre Angelegenheiten nicht regeln können, bestellt das Gericht eine Betreuerin oder einen Betreuer.'},
+    e:'Gesetzliche Vertreter sind in der Regel beide Eltern. Bei Volljährigen, die ihre Angelegenheiten nicht regeln können, bestellt das Gericht einen Betreuer.'},
   {afb:1,art:'reihe',p:2,werkstatt:'alter',f:'Bring die Altersgrenzen in die richtige zeitliche Reihenfolge.',
     schritte:['Geburt: rechtsfähig','7. Geburtstag: beschränkt geschäftsfähig','14. Geburtstag: strafmündig','16. Geburtstag: Kommunalwahl in Thüringen','18. Geburtstag: voll geschäftsfähig'],
     e:'Rechtsfähig ab Geburt (§ 1 BGB), beschränkt geschäftsfähig ab 7 (§ 106 BGB), strafmündig ab 14 (§ 19 StGB), Kommunalwahl in Thüringen ab 16, voll geschäftsfähig ab 18 (§ 2 BGB).'},

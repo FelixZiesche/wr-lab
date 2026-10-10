@@ -1,8 +1,9 @@
 // Lernwerkstatt Geschäftsfähigkeit (Klasse 10): Werkstätten, Fall-Akte, Live-Gericht und Mission Zwergspitz.
 // Gerüst, Navigation und Aufgaben-Bausteine kommen aus /shared/, hier stehen nur die Inhalte.
-import { $, $$, esc, store } from '../shared/js/ui.js';
+import { $, $$, esc } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
 import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls, blitz, blitzAufloesung, pruefschema, fallakte, abstimmung } from '../shared/js/aufgaben.js';
+import { labyrinth } from '../shared/js/labyrinth.js';
 import { GESETZ, NAVI, FAELLE, TASCHENGELD, STUFEN, MEILENSTEINE, FOTO } from './daten.js';
 import { HINWEISE, WAND, IMPULS } from './wand.js';
 import { WISSENSCHECK } from './wissenscheck.js';
@@ -27,7 +28,7 @@ const MS={
 const GLOSS=[
   ['Arbeitsmündigkeit','§ 113 BGB: Erlauben die Eltern einen Job, darf der Minderjährige die Geschäfte rund um diesen Job allein erledigen, etwa Arbeitsvertrag und Kündigung.'],
   ['Beschränkt geschäftsfähig','Minderjährige von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern.'],
-  ['Betreuung','Das Betreuungsgericht bestellt für Volljährige, die ihre Angelegenheiten nicht selbst regeln können, eine Betreuerin oder einen Betreuer (§ 1814 BGB).'],
+  ['Betreuung','Das Betreuungsgericht bestellt für Volljährige, die ihre Angelegenheiten nicht selbst regeln können, einen Betreuer (§ 1814 BGB).'],
   ['BGB','Bürgerliches Gesetzbuch. Es regelt seit 1900 die Rechtsbeziehungen zwischen Privatpersonen, zum Beispiel Kaufverträge.'],
   ['Einwilligung','Vorherige Zustimmung der Eltern (§§ 107, 183 BGB).'],
   ['Endgültig unwirksam','Die Eltern haben die Genehmigung verweigert. Ware und Geld gehen zurück.'],
@@ -35,7 +36,7 @@ const GLOSS=[
   ['Genehmigung','Nachträgliche Zustimmung der Eltern (§§ 108, 184 BGB).'],
   ['Geschäftsfähigkeit','Fähigkeit, selbst wirksam Rechtsgeschäfte abzuschließen, zum Beispiel einen Kaufvertrag.'],
   ['Geschäftsunfähig','Kinder unter 7 Jahren und Menschen mit einer dauerhaften krankhaften Störung der Geistestätigkeit (§ 104 BGB).'],
-  ['Gesetzlicher Vertreter','Bei Minderjährigen in der Regel die Eltern, bei betreuten Volljährigen die Betreuerin oder der Betreuer.'],
+  ['Gesetzlicher Vertreter','Bei Minderjährigen in der Regel die Eltern, bei betreuten Volljährigen der Betreuer.'],
   ['Lediglich rechtlicher Vorteil','Man bekommt etwas, ohne rechtliche Pflichten zu übernehmen, zum Beispiel ein Geschenk (§ 107 BGB).'],
   ['Nichtig','Von Anfang an ohne jede Wirkung (§ 105 BGB).'],
   ['Rechtsfähigkeit','Fähigkeit, Träger von Rechten und Pflichten zu sein. Sie beginnt mit der Vollendung der Geburt (§ 1 BGB).'],
@@ -169,21 +170,31 @@ init(root){
 /* 3 Das Haus der Geschäftsfähigkeit (Grafik und Lückentext aus dem Arbeitsblatt) */
 tool({id:'haus',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.haus,title:'Das Haus der Geschäftsfähigkeit',sub:'Das Haus einrichten, den Hefteintrag aus dem Gesetz ergänzen und richtig zitieren',
 html(){return `<p class="task"><b>Auftrag:</b> Richte das Haus der Geschäftsfähigkeit ein: Ordne jede Karte dem passenden Raum zu. Fülle dann den Hefteintrag mit den Informationen aus den §§ 104 bis 113 BGB aus. Die Gesetzestexte findest du unten zum Aufklappen.</p>
+<p class="small"><span class="ms sm">lightbulb</span> <b>Tipp:</b> Gilt der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern, gehört die Karte zu den Ausnahmen. Das Fragezeichen <span class="ms sm" aria-hidden="true">help</span> an jedem Raum erklärt dir, was er bedeutet.</p>
 ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Haus der Geschäftsfähigkeit?',
-  faecher:[{id:'unfaehig',t:'Geschäftsunfähig · bis 6 Jahre'},{id:'beschraenkt',t:'Beschränkt geschäftsfähig · 7 bis 17 Jahre'},{id:'voll',t:'Voll geschäftsfähig · ab 18 Jahren'},
-    {id:'ausnahme',t:'Ausnahmen: ohne Zustimmung der Eltern wirksam'},{id:'basis',t:'Fundament: Rechtsfähigkeit ab der Geburt'}],
+  faecher:[
+    {id:'unfaehig',t:'Geschäfts&shy;unfähig<span class="zu-sub">unter 7 Jahren</span>',kurz:'Geschäftsunfähig (unter 7 Jahren)',
+      info:'<p>Kinder unter 7 Jahren und Menschen, die dauerhaft geisteskrank sind (§ 104 BGB). Was sie selbst erklären, ist <b>nichtig</b>, also von Anfang an ohne Wirkung (§ 105 BGB).</p><p>Für sie handeln die Eltern oder ein Betreuer.</p>'},
+    {id:'beschraenkt',t:'Beschränkt geschäfts&shy;fähig<span class="zu-sub">7 bis 17 Jahre</span>',kurz:'Beschränkt geschäftsfähig (7 bis 17 Jahre)',
+      info:'<p>Alle von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern: vorher als <b>Einwilligung</b> (§ 107 BGB) oder hinterher als <b>Genehmigung</b> (§ 108 BGB).</p><p>Fehlt die Zustimmung noch, ist der Vertrag <b>schwebend unwirksam</b>: Er wartet auf die Entscheidung der Eltern.</p>'},
+    {id:'voll',t:'Voll geschäfts&shy;fähig<span class="zu-sub">ab 18 Jahren</span>',kurz:'Voll geschäftsfähig (ab 18 Jahren)',
+      info:'<p>Ab dem 18. Geburtstag ist man volljährig (§ 2 BGB) und darf jeden Vertrag allein abschließen, egal ob mit 18 oder mit 80.</p><p>Dafür trägt man auch die volle Verantwortung, zum Beispiel für Schulden.</p>'},
+    {id:'ausnahme',t:'Ausnahmen<span class="zu-sub">Minderjährige, ohne Zustimmung der Eltern wirksam</span>',kurz:'Ausnahmen ohne Zustimmung der Eltern',
+      info:'<p>Eigentlich brauchen Minderjährige ab 7 die Zustimmung der Eltern. In drei Fällen klappt es aber ohne sie:</p><ul><li><b>Nur ein rechtlicher Vorteil:</b> Man bekommt etwas und muss nichts dafür tun, zum Beispiel ein Geschenk (§ 107 BGB).</li><li><b>Taschengeld:</b> Man bezahlt sofort und vollständig mit seinem Taschengeld (§ 110 BGB).</li><li><b>Erlaubter Job:</b> Alles rund um einen Job, den die Eltern erlaubt haben, etwa die Kündigung (§ 113 BGB).</li></ul><p>Hierher gehören also nur Fälle mit Minderjährigen, bei denen es ohne Eltern klappt.</p>'},
+    {id:'basis',t:'Fundament: Rechtsfähigkeit<span class="zu-sub">ab der Geburt</span>',kurz:'Fundament: Rechtsfähigkeit (ab der Geburt)',
+      info:'<p>Rechtsfähig ist jeder Mensch ab der Geburt (§ 1 BGB). Das heißt: Man kann Rechte und Pflichten haben, zum Beispiel ein Handy besitzen, ein Haus erben oder Eigentümer eines Hundes sein.</p><p>Selbst Verträge schließen kann man damit noch nicht, dafür braucht man die Geschäftsfähigkeit. Deshalb ist die Rechtsfähigkeit das Fundament, auf dem das ganze Haus steht.</p>'}],
   karten:[
     {t:'Leon (5) tauscht auf dem Spielplatz seine Pokémon-Karten gegen ein Spielzeugauto.',f:'unfaehig',e:'Unter 7 ist man geschäftsunfähig (§ 104 Nr. 1 BGB), der Tausch ist nichtig (§ 105 BGB).'},
-    {t:'Franz (30) ist dauerhaft geisteskrank.',f:'unfaehig',e:'§ 104 Nr. 2 BGB: Wer sich dauerhaft in einem Zustand krankhafter Störung der Geistestätigkeit befindet, ist geschäftsunfähig – egal wie alt.'},
-    {t:'Lukas (12) braucht für einen Handyvertrag die Zustimmung seiner Eltern.',f:'beschraenkt',e:'Mit 12 ist Lukas beschränkt geschäftsfähig (§§ 106, 107 BGB).'},
-    {t:'Ohne Zustimmung ist der Vertrag erst einmal schwebend unwirksam.',f:'beschraenkt',e:'Das gilt für beschränkt Geschäftsfähige, bis die Eltern genehmigen oder verweigern (§ 108 Abs. 1 BGB).'},
-    {t:'Die Eltern können einen Kauf auch nachträglich genehmigen.',f:'beschraenkt',e:'Die Genehmigung ist die nachträgliche Zustimmung (§ 108 Abs. 1 BGB).'},
-    {t:'Lea hat gestern ihren 18. Geburtstag gefeiert und schließt heute allein einen Handyvertrag ab.',f:'voll',e:'Mit 18 ist Lea volljährig und voll geschäftsfähig (§ 2 BGB).'},
-    {t:'Wer volljährig ist, haftet auch allein für seine Schulden.',f:'voll',e:'Volle Geschäftsfähigkeit heißt auch volle Verantwortung.'},
+    {t:'Franz (30) ist dauerhaft geisteskrank und bestellt sich einen Gaming-PC.',f:'unfaehig',e:'§ 104 Nr. 2 BGB: Wer dauerhaft an einer krankhaften Störung der Geistestätigkeit leidet, ist geschäftsunfähig – egal wie alt. Die Bestellung ist nichtig.'},
+    {t:'Lukas (12) schließt einen Handyvertrag ab. Seine Eltern haben vorher zugestimmt.',f:'beschraenkt',e:'Mit 12 ist Lukas beschränkt geschäftsfähig (§ 106 BGB). Mit der Einwilligung der Eltern ist der Vertrag wirksam (§ 107 BGB). Das ist die Regel, keine Ausnahme.'},
+    {t:'Paula (16) bestellt Kopfhörer auf Rechnung. Ihre Eltern wissen nichts davon.',f:'beschraenkt',e:'Paula ist beschränkt geschäftsfähig. Auf Rechnung heißt: noch nicht bezahlt, also hilft § 110 nicht. Der Vertrag ist schwebend unwirksam, bis die Eltern genehmigen oder verweigern (§ 108 Abs. 1 BGB).'},
+    {t:'Ben (15) kauft ohne zu fragen einen E-Scooter. Seine Eltern genehmigen den Kauf hinterher.',f:'beschraenkt',e:'Die Genehmigung ist die nachträgliche Zustimmung der Eltern (§ 108 Abs. 1 BGB). Erst durch sie wird Bens Vertrag wirksam.'},
+    {t:'Lea (18, Geburtstag war gestern) schließt allein einen Handyvertrag ab.',f:'voll',e:'Mit 18 ist Lea volljährig und voll geschäftsfähig (§ 2 BGB).'},
+    {t:'Opa Gerd (72) kauft in Weimar ein E-Bike auf Raten.',f:'voll',e:'Gerd ist volljährig und damit voll geschäftsfähig (§ 2 BGB), egal wie alt. Für die Raten haftet er allein.'},
     {t:'Emma (10) bekommt vom Nachbarn ein Halloween-Kostüm geschenkt.',f:'ausnahme',e:'Lediglich rechtlicher Vorteil: Emma bekommt etwas und hat keine Pflichten (§ 107 BGB).'},
-    {t:'Jonas (14) kauft sich vom Taschengeld einen Döner und bezahlt sofort.',f:'ausnahme',e:'Taschengeldparagraf (§ 110 BGB).'},
+    {t:'Jonas (14) kauft sich vom Taschengeld einen Döner und bezahlt sofort.',f:'ausnahme',e:'Sofort und vollständig mit Taschengeld bezahlt: Taschengeldparagraf (§ 110 BGB).'},
     {t:'Sophie (16) kündigt ihren Minijob, den ihre Eltern erlaubt haben.',f:'ausnahme',e:'Für Geschäfte rund um den erlaubten Job ist Sophie voll geschäftsfähig (§ 113 BGB).'},
-    {t:'Ein Baby erbt das Haus seiner Oma.',f:'basis',e:'Jeder Mensch ist ab der Geburt rechtsfähig (§ 1 BGB) und kann deshalb Eigentümer werden. Verwalten müssen das Haus die Eltern.'}]})}
+    {t:'Mia (3 Monate) erbt das Haus ihrer Oma.',f:'basis',e:'Jeder Mensch ist ab der Geburt rechtsfähig (§ 1 BGB) und kann deshalb Eigentümer werden. Verwalten müssen das Haus die Eltern.'}]})}
 ${lueckentext({id:'haus-luecken',titel:'Hefteintrag: Stufen der Geschäftsfähigkeit',saetze:[
   'Eine Person unter [7|sieben] Jahren ist [geschäftsunfähig]. Eine Willenserklärung dieser Person ist [nichtig].',
   'Eine minderjährige Person, die mindestens [7|sieben] Jahre, aber noch nicht [18|achtzehn] Jahre alt ist, ist nach § [106] BGB beschränkt geschäftsfähig. Um ein Rechtsgeschäft wirksam abschließen zu können, braucht sie laut § [107] BGB die [Einwilligung|Zustimmung] des gesetzlichen Vertreters, zum Beispiel der [Eltern|Mutter|Vater].',
@@ -312,89 +323,46 @@ ${impuls(IMPULS.job)}
 ${erkHTML('job')}`},
 init(root){bindErk(root)}});
 
-/* 10 Mission Zwergspitz: sieben Wege zum Hund, als Labyrinth */
+/* 10 Mission Zwergspitz: sieben Wege zum Hund – ein Labyrinth-Spiel mit Figur (shared/js/labyrinth.js) */
 const WEGE=[
   {id:'ueberreden',icon:'record_voice_over',titel:'Eltern überzeugen',text:'Du hältst eine Präsentation: Wer geht Gassi, wer zahlt Futter und Tierarzt? Am Ende sagen deine Eltern Ja. Dann kaufst du den Hund beim Züchter.',erg:'ziel',e:'Mit der Einwilligung deiner Eltern ist der Kauf wirksam (§ 107 BGB). Der sicherste Weg!'},
-  {id:'welpenblick',icon:'pets',titel:'Erst kaufen, dann Welpenblick',text:'Du kaufst den Hund heimlich und hoffst, dass deine Eltern beim Anblick des Welpen schmelzen.',erg:'glueck',e:'Ohne Einwilligung ist der Kauf schwebend unwirksam (§ 108 Abs. 1 BGB). Genehmigen deine Eltern, ist er wirksam. Verweigern sie, muss der Hund zurück. Reine Glückssache!'},
+  {id:'welpenblick',icon:'pets',titel:'Erst kaufen, dann Welpenblick',text:'Du kaufst den Hund heimlich und hoffst, dass deine Eltern beim Anblick des Welpen schmelzen.',erg:'glueck',e:'Ohne Einwilligung ist der Kauf schwebend unwirksam (§ 108 Abs. 1 BGB). Genehmigen deine Eltern, ist er wirksam. Verweigern sie, muss der Hund zurück. Reine Glückssache!',
+    wuerfel:{frage:'Schmelzen deine Eltern beim Welpenblick und genehmigen den Kauf?',ja:'Deine Eltern genehmigen den Kauf. Glück gehabt!',nein:'Deine Eltern verweigern die Genehmigung. Der Hund muss zurück zum Züchter.'}},
   {id:'taschengeld',icon:'savings',titel:'Angespartes Taschengeld',text:'Du hast 1.500 € Taschengeld gespart und bezahlst den Hund sofort bar.',erg:'sackgasse',e:'Deine Eltern haben ausdrücklich Nein gesagt, und ein Hund bringt Folgekosten: Futter, Tierarzt, Hundesteuer. So weit reicht die Erlaubnis, über dein Taschengeld frei zu verfügen, nicht (§ 110 BGB). Der Kauf ist schwebend unwirksam – und deine Eltern verweigern.'},
   {id:'raten',icon:'credit_card',titel:'Ratenkauf beim Züchter',text:'Der Züchter bietet an: zwölf Raten zu je 125 €.',erg:'sackgasse',e:'Solange Raten offen sind, ist nicht vollständig bezahlt, also hilft § 110 BGB nicht – und gegen das Nein deiner Eltern ohnehin nicht. Der Kauf ist schwebend unwirksam, nach ihrem Nein endgültig unwirksam.'},
-  {id:'oma',icon:'elderly_woman',titel:'Oma schenkt dir den Hund',text:'Deine Oma findet die Idee super und schenkt dir den Zwergspitz.',erg:'glueck',e:'Ein Geschenk bringt normalerweise lediglich einen rechtlichen Vorteil (§ 107 BGB). Bei einem Tier ist das umstritten, denn wer einen Hund hält, haftet für Schäden und muss Hundesteuer zahlen. Und ob der Hund bei euch wohnen darf, entscheiden sowieso deine Eltern.'},
+  {id:'oma',icon:'elderly_woman',titel:'Oma schenkt dir den Hund',text:'Deine Oma findet die Idee super und schenkt dir den Zwergspitz.',erg:'glueck',e:'Ein Geschenk bringt normalerweise lediglich einen rechtlichen Vorteil (§ 107 BGB). Bei einem Tier ist das umstritten, denn wer einen Hund hält, haftet für Schäden und muss Hundesteuer zahlen. Und ob der Hund bei euch wohnen darf, entscheiden sowieso deine Eltern.',
+    wuerfel:{frage:'Darf der Hund bei euch wohnen? Das entscheiden deine Eltern.',ja:'Deine Eltern sagen Ja, der Zwergspitz darf einziehen.',nein:'Deine Eltern sagen Nein. Der Hund bleibt bei Oma, du darfst ihn dort besuchen.'}},
   {id:'minijob',icon:'work',titel:'Minijob im Café',text:'Deine Eltern erlauben dir einen Minijob. Vom Lohn kaufst du den Hund.',erg:'sackgasse',e:'§ 113 BGB gilt nur für Geschäfte rund um den Job, nicht für Käufe vom Lohn. Die laufen über § 110 BGB – und gegen das ausdrückliche Nein deiner Eltern hilft der nicht.'},
-  {id:'warten',icon:'cake',titel:'Warten bis 18',text:'Du wartest bis zu deinem 18. Geburtstag und kaufst den Hund dann selbst.',erg:'ziel',e:'Mit 18 bist du voll geschäftsfähig (§ 2 BGB) und kaufst allein. Ob der Hund in die Wohnung deiner Eltern darf, ist allerdings eine andere Frage …'}];
-const ZIEL={ziel:['ok','check_circle','Führt zum Hund'],glueck:['amb','casino','Kommt drauf an'],sackgasse:['bad','block','Sackgasse']};
-// Gänge im Labyrinth (gleiche Reihenfolge wie WEGE): p = Gang, n = Nummernschild, tor = gestrichelter Rest bei „Kommt drauf an“
-const LAB=[
-  {p:[[320,360],[320,250],[290,250],[290,160],[320,160],[320,100]],n:[320,300]},
-  {p:[[320,360],[400,360],[400,280],[370,280],[370,170]],n:[400,320],tor:[[370,170],[370,130],[346,96]]},
-  {p:[[320,360],[50,360],[50,200]],n:[50,290]},
-  {p:[[320,360],[140,360],[140,300],[100,300],[100,150]],n:[100,240]},
-  {p:[[320,360],[480,360],[480,230],[440,230],[440,150]],n:[480,300],tor:[[440,150],[440,110],[352,78]]},
-  {p:[[320,360],[590,360],[590,170]],n:[590,290]},
-  {p:[[320,360],[190,360],[190,250],[160,250],[160,90],[240,90],[240,62],[286,62]],n:[160,170]}];
-const LAB_FARBE={ziel:'var(--md-ok)',glueck:'var(--md-warn)',sackgasse:'var(--md-error)'};
-// Unerkundete Wege zeigen nur den Anfang bis zum Nummernschild, damit niemand das Ende vorher sieht
-function bisSchild(l){const [nx,ny]=l.n,out=[l.p[0]];
-  for(let k=1;k<l.p.length;k++){const [ax,ay]=l.p[k-1],[bx,by]=l.p[k];
-    if((ax===bx&&nx===ax&&ny>=Math.min(ay,by)&&ny<=Math.max(ay,by))||(ay===by&&ny===ay&&nx>=Math.min(ax,bx)&&nx<=Math.max(ax,bx)))return [...out,l.n];
-    out.push(l.p[k])}
-  return out}
-function labyrinthHTML(st){
-  const pts=a=>a.map(q=>q.join(',')).join(' '),n=Object.keys(st.tipp).length,erreicht=WEGE.some(w=>w.erg==='ziel'&&st.tipp[w.id]);
-  let s=`<svg class="gf-lab" viewBox="0 0 640 420" role="img" aria-label="Labyrinth zum Zwergspitz: ${n} von ${WEGE.length} Wegen erkundet"><defs><clipPath id="zs-clip"><circle cx="320" cy="58" r="36"/></clipPath></defs>
-    <rect x="6" y="6" width="628" height="408" rx="28" class="lab-hecke"/><polyline points="320,360 320,396" class="lab-gang"/>`;
-  LAB.forEach((l,i)=>{const w=WEGE[i],offen=!st.tipp[w.id];s+=`<polyline points="${pts(offen?bisSchild(l):l.p)}" class="lab-gang"/>`;if(!offen&&w.erg==='glueck')s+=`<polyline points="${pts(l.tor)}" class="lab-gang schmal"/>`});
-  LAB.forEach((l,i)=>{const w=WEGE[i];if(!st.tipp[w.id])return;const c=LAB_FARBE[w.erg],e=l.p[l.p.length-1],v=l.p[l.p.length-2];
-    s+=`<polyline points="${pts(l.p)}" class="lab-weg" style="stroke:${c}"/>`;
-    if(w.erg==='glueck')s+=`<polyline points="${pts(l.tor)}" class="lab-weg lab-tor" style="stroke:${c}"/><circle cx="${e[0]}" cy="${e[1]}" r="13" class="lab-frage"/><text x="${e[0]}" y="${e[1]+5}" class="lab-frage-t">?</text>`;
-    if(w.erg==='sackgasse'){const senk=v[0]===e[0];s+=`<line x1="${senk?e[0]-16:e[0]}" y1="${senk?e[1]:e[1]-16}" x2="${senk?e[0]+16:e[0]}" y2="${senk?e[1]:e[1]+16}" class="lab-wand"/>`}});
-  LAB.forEach((l,i)=>{s+=`<g class="lab-nr${i===st.weg?' aktiv':''}${st.tipp[WEGE[i].id]?' fertig':''}" data-lab="${i}"><circle cx="${l.n[0]}" cy="${l.n[1]}" r="19"/><text x="${l.n[0]}" y="${l.n[1]+6}">${i+1}</text></g>`});
-  s+=`<circle cx="320" cy="396" r="17" class="lab-start"/><text x="320" y="401" class="lab-start-t">Du</text>
-    <image href="${FOTO.zwergspitz.src}" x="284" y="22" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#zs-clip)"/><circle cx="320" cy="58" r="36" class="lab-ziel${erreicht?' erreicht':''}"/></svg>`;
-  return s;
-}
-tool({id:'zwergspitz',ch:4,farben:['gelb','gruen','blau'],hinweise:HINWEISE.zwergspitz,title:'Mission Zwergspitz',sub:'Du willst unbedingt einen Zwergspitz, deine Eltern sagen Nein. Sieben Wege – welche führen zum Hund?',
-html(){return `<p class="task"><b>Auftrag:</b> Prüft zu zweit alle Wege zu eurem Hund. Tippt einen Weg an, lest, was passiert, und schätzt zuerst: Führt er zum Hund, in die Sackgasse oder kommt es darauf an? Erst dann seht ihr die Auflösung.</p>
-<div class="grid2">
-  <figure class="gf-fig gf-lab-fig"><div id="zs-lab"></div><figcaption>Labyrinth: Tippe auf eine Nummer oder unten auf einen Weg. Grün führt zum Hund, Gelb hängt vom Glück ab, Rot ist eine Sackgasse. Im Ziel wartet der Zwergspitz. ${nachweis('zwergspitz')}</figcaption></figure>
-  <div class="stack"><p class="headline-s">Szenario: Du bist 15 und hast dich in einen Zwergspitz verliebt.</p>
-  <p class="body-l">Nach dem Welpenfoto im Unterricht willst du sofort einen. Deine Eltern teilen deine Begeisterung nicht: Ein Hund sei viel zu teuer, sagen sie. Sieben Wege führen durch das Labyrinth – welche enden beim Hund?</p>
-  <p class="small muted num" id="zs-stand"></p></div>
-</div>
-<div class="panel stack"><div class="akte-faelle" role="group" aria-label="Weg wählen" id="zs-wege">${WEGE.map((w,i)=>`<button class="akte-fall" type="button" data-weg="${i}" aria-pressed="false"><span class="ms">${w.icon}</span><span class="akte-titel">${w.titel}</span><span class="akte-status small" data-status></span></button>`).join('')}</div>
-  <div id="zs-profi"></div></div>
-<div id="zs-weg"></div>
+  {id:'warten',icon:'cake',titel:'Warten bis 18',text:'Du wartest bis zu deinem 18. Geburtstag und kaufst den Hund dann selbst.',erg:'ziel',e:'Mit 18 bist du voll geschäftsfähig (§ 2 BGB) und kaufst allein. Ob der Hund in die Wohnung deiner Eltern darf, ist allerdings eine andere Frage …',
+    unterwegs:['Du bist 15. Noch drei Jahre … Du schaust jeden Abend Zwergspitz-Videos.','16! Deine Eltern sagen immer noch Nein. Du sparst weiter.','17. Nur noch ein Jahr. Du suchst schon mal einen Züchter in Thüringen.','Happy Birthday – du bist 18 und voll geschäftsfähig! Ab zum Züchter.']}];
+// Karte: Kreuzungen 1–7 an der Hauptstraße unten, Gänge a–g, Tore B und E (Würfel), Ziel Z in der Mitte oben
+const KARTE=[
+  '#################',
+  '#########ggggggg#',
+  '#######ZZZ#####g#',
+  '#d###bBZZZEe###g#',
+  '#d#c#b##a##e#f#g#',
+  '#d#c#b##a##e#f#g#',
+  '#d#c#b##a##e#f#g#',
+  '#d#c#b##a##e#f#g#',
+  '#d#c#b##a##e#f#g#',
+  '#d#c#b##a##e#f#g#',
+  '#4#3#2##1##5#6#7#',
+  '#...............#',
+  '########S########',
+  '#################'];
+tool({id:'zwergspitz',ch:4,farben:['gelb','gruen','blau'],hinweise:HINWEISE.zwergspitz,title:'Mission Zwergspitz',sub:'Du willst unbedingt einen Zwergspitz, deine Eltern sagen Nein. Lauf durchs Labyrinth: Welche Wege führen zum Hund?',
+html(){return `<p class="task"><b>Auftrag:</b> Spielt zu zweit. Lauft mit der Figur zu einer Kreuzung, lest, was auf dem Weg passiert, und schätzt zuerst: Führt er zum Hund, in die Sackgasse oder kommt es darauf an? Dann lauft ihn ab. Schafft ihr alle sieben Wege?</p>
+<div class="stack"><p class="headline-s">Szenario: Du bist 15 und hast dich in einen Zwergspitz verliebt.</p>
+  <p class="body-l">Nach dem Welpenfoto im Unterricht willst du sofort einen. Deine Eltern teilen deine Begeisterung nicht: Ein Hund sei viel zu teuer, sagen sie. Sieben Wege führen durch das Heckenlabyrinth – welche enden beim Hund?</p></div>
+${labyrinth({id:'zwergspitz-lab',titel:'Das Labyrinth zum Zwergspitz',karte:KARTE,wege:WEGE,speicher:'gf-zs',
+  namen:{ziel:'Führt zum Hund',sackgasse:'Sackgasse',glueck:'Kommt drauf an'},
+  ziel:{bild:{src:FOTO.zwergspitz.src,alt:FOTO.zwergspitz.alt,nachweis:nachweis('zwergspitz')},text:'Der Zwergspitz gehört dir.'},
+  fertig:()=>'Sicher zum Hund führen nur zwei Wege: deine Eltern überzeugen oder warten, bis du 18 bist.'})}
 ${schreibfeld(WAND.zwergspitz)}
 ${impuls(IMPULS.zwergspitz)}
 ${erkHTML('zwergspitz')}`},
-init(root){
-  let st=store('gf-zs')||{tipp:{},weg:0};
-  const sichern=()=>store('gf-zs',st);
-  function stand(){
-    const n=Object.keys(st.tipp).length,richtig=WEGE.filter(w=>st.tipp[w.id]===w.erg).length;
-    $('#zs-stand',root).textContent=`${n} von ${WEGE.length} Wegen erkundet`;
-    $('#zs-lab',root).innerHTML=labyrinthHTML(st);
-    $$('[data-weg]',root).forEach(b=>{const i=+b.dataset.weg,w=WEGE[i],t=st.tipp[w.id];b.setAttribute('aria-pressed',String(i===st.weg));b.classList.toggle('geloest',!!t);
-      $('[data-status]',b).innerHTML=t?`<span class="ms sm">${ZIEL[w.erg][1]}</span>${ZIEL[w.erg][2]}`:'noch offen'});
-    $('#zs-profi',root).innerHTML=n===WEGE.length?`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Mission erfüllt!</b> Du hast ${richtig} von ${WEGE.length} Wegen richtig eingeschätzt. Sicher zum Hund führen nur zwei: deine Eltern überzeugen oder warten, bis du 18 bist.</div>`:'';
-  }
-  function zeige(i,fokus){
-    st.weg=i;sichern();stand();
-    const w=WEGE[i],t=st.tipp[w.id],el=$('#zs-weg',root);
-    el.innerHTML=`<article class="aufgabe"><p class="aufgabe-kopf"><span class="ms sm">${w.icon}</span>Weg ${i+1}: ${w.titel}</p>
-      <div class="wc-material">${w.text}</div>
-      ${t?'':`<p class="aufgabe-frage">Was schätzt du: Wohin führt dieser Weg?</p><div class="navi-antw" role="group" aria-label="Deine Einschätzung">${Object.entries(ZIEL).map(([k,[,ic,txt]])=>`<button class="btn small" type="button" data-tipp="${k}"><span class="ms">${ic}</span>${txt}</button>`).join('')}</div>`}
-      <div id="zs-fb" role="status">${t?ergebnis(w,t):''}</div>
-      ${t&&i+1<WEGE.length?'<div class="row"><button class="btn small primary" type="button" id="zs-weiter"><span class="ms">arrow_forward</span>Nächster Weg</button></div>':''}</article>`;
-    $$('[data-tipp]',el).forEach(b=>b.addEventListener('click',()=>{st.tipp[w.id]=b.dataset.tipp;sichern();zeige(i,false);$('#zs-weiter',root)?.focus()}));
-    $('#zs-weiter',el)?.addEventListener('click',()=>zeige(i+1,true));
-    if(fokus){el.scrollIntoView({block:'start'});$('button',el)?.focus({preventScroll:true})}
-  }
-  function ergebnis(w,t){const [k,ic,txt]=ZIEL[w.erg],ok=t===w.erg;
-    return `<div class="fb ${k}"><p><span class="ms sm">${ic}</span> <b>${txt}.</b> ${ok?'Gut eingeschätzt!':`Du hattest „${ZIEL[t][2]}“ getippt.`}</p><p>${w.e}</p></div>`}
-  $$('[data-weg]',root).forEach(b=>b.addEventListener('click',()=>zeige(+b.dataset.weg,true)));
-  $('#zs-lab',root).addEventListener('click',e=>{const g=e.target.closest('[data-lab]');if(g)zeige(+g.dataset.lab,true)});
-  zeige(Math.min(st.weg||0,WEGE.length-1),false);bindErk(root);
-}});
+init(root){bindErk(root)}});
 
 /* 11 Hefteintrag, Kurztest und Bauchgefühl-Check */
 tool({id:'sichern',ch:5,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, ein Test mit einem Versuch und der Vergleich mit deinem Bauchgefühl vom Anfang',

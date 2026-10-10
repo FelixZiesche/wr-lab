@@ -11,6 +11,44 @@ const WERKSTAETTEN = {
 const nav = page => page.locator(page.viewportSize().width < 600 ? '#nav-bar' : '#rail-items');
 const oeffne = async (page, id) => { await page.goto('about:blank'); await page.goto(`${GF}#${id}`); await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN[id]); };
 
+test.describe('Handy (390 px, Touch)', () => {
+  test.use({ ohneLive: true, viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('Haus: drei Räume nebeneinander unter dem Dach, Hilfeknopf', async ({ page }) => {
+    await oeffne(page, 'haus');
+    const haus = page.locator('[data-zuordnen="haus-bauen"]');
+    const y = [];
+    for (const f of ['unfaehig', 'beschraenkt', 'voll']) y.push(Math.round((await haus.locator(`.zu-fach[data-fach="${f}"]`).boundingBox()).y));
+    expect(new Set(y).size).toBe(1);
+    await haus.locator('[data-zu-info="ausnahme"]').click();
+    await expect(haus.locator('[data-zu-infobox]')).toBeInViewport();
+  });
+
+  test('Labyrinth: Wischen läuft bis zur Kreuzung, Antippen läuft zum Feld', async ({ page }) => {
+    await page.goto(`${GF}#mission`);
+    const lab = page.locator('[data-labyrinth="zwergspitz-lab"]'), feld = lab.locator('.lab-feld');
+    const wische = async (dx, dy) => {
+      const b = await feld.boundingBox(), x = b.x + b.width / 2, y = b.y + b.height / 2;
+      await feld.dispatchEvent('pointerdown', { pointerId: 1, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y });
+      await feld.dispatchEvent('pointerup', { pointerId: 1, pointerType: 'touch', isPrimary: true, clientX: x + dx, clientY: y + dy });
+    };
+    await wische(0, -60);
+    await expect(lab.locator('[data-lab-stand]')).toHaveText('0 von 7 Wegen erkundet · 1 Schritt');
+    await wische(0, -60);
+    await expect(lab.locator('[data-lab-panel]')).toContainText('Weg 1: Eltern überzeugen');
+    await wische(80, 0);
+    await expect(lab.locator('[data-lab-panel]')).toContainText('Weg 1: Eltern überzeugen');
+    await wische(0, 60);
+    await wische(70, 10);
+    await expect(lab.locator('[data-lab-stand]')).toHaveText('0 von 7 Wegen erkundet · 6 Schritte');
+    // Steuerkreuz ist groß genug zum Tippen
+    const pfeil = await lab.locator('[data-lab-dir="hoch"]').boundingBox();
+    expect(pfeil.width).toBeGreaterThanOrEqual(44);
+    await lab.locator('[data-lab-dir="hoch"]').tap();
+    await expect(lab.locator('[data-lab-panel]')).toContainText('Weg 5: Oma schenkt dir den Hund');
+  });
+});
+
 test.describe('ohne Lernraum', () => {
   test.use({ ohneLive: true });
 
@@ -36,7 +74,7 @@ test.describe('ohne Lernraum', () => {
     // Die Mission ist ein eigener Bereich
     await nav(page).locator('[data-dest="mission"]').click();
     await expect(page.locator('#view-title')).toHaveText('Mission Zwergspitz');
-    await expect(page.locator('#view [data-weg]')).toHaveCount(7);
+    await expect(page.locator('#view [data-lab-weg]')).toHaveCount(7);
     // Startseite: Knöpfe zur Blitzrunde und zur Mission
     await nav(page).locator('[data-dest="start"]').click();
     await page.locator('[data-gf-tool="bauchgefuehl"]').click();
@@ -117,15 +155,28 @@ test.describe('ohne Lernraum', () => {
     const haus = page.locator('[data-zuordnen="haus-bauen"]');
     await expect(haus).toHaveClass(/haus/);
     await expect(haus.locator('[data-zu-warum]')).toBeHidden();
-    await haus.locator('.zu-karte', { hasText: 'Ein Baby erbt' }).click();
+    // Hilfeknopf: Erklärung des Raums in der Infobox
+    const info = haus.locator('[data-zu-info="ausnahme"]');
+    await expect(info).toHaveAttribute('aria-expanded', 'false');
+    await info.click();
+    await expect(info).toHaveAttribute('aria-expanded', 'true');
+    await expect(haus.locator('[data-zu-infobox]')).toBeVisible();
+    await expect(haus.locator('[data-zu-infobox]')).toContainText('§ 110 BGB');
+    await haus.locator('[data-zu-info="basis"]').click();
+    await expect(info).toHaveAttribute('aria-expanded', 'false');
+    await expect(haus.locator('[data-zu-infobox]')).toContainText('Rechtsfähig ist jeder Mensch ab der Geburt');
+    await haus.locator('[data-zu-info-zu]').click();
+    await expect(haus.locator('[data-zu-infobox]')).toBeHidden();
+    await expect(haus.locator('[data-zu-info="basis"]')).toBeFocused();
+    await haus.locator('.zu-karte', { hasText: 'Mia (3 Monate)' }).click();
     await haus.locator('[data-ziel="basis"]').click();
     await expect(haus.locator('.zu-fach[data-fach="basis"] .zu-karte')).toHaveCount(1);
     await haus.locator('[data-pruefen]').click();
     await expect(haus.locator('[data-ergebnis]')).toHaveText('1 von 11 richtig – 10 noch nicht zugeordnet');
     // Die Erklärungen erscheinen erst, wenn alle Karten liegen
     await expect(haus.locator('[data-zu-warum]')).toBeHidden();
-    const raeume = { 'Leon (5)': 'unfaehig', 'Franz (30)': 'unfaehig', 'Lukas (12)': 'beschraenkt', 'Ohne Zustimmung': 'beschraenkt', 'nachträglich': 'beschraenkt',
-      'Lea hat gestern': 'voll', 'haftet auch allein': 'voll', 'Emma (10)': 'ausnahme', 'Jonas (14)': 'ausnahme', 'Sophie (16)': 'voll' };
+    const raeume = { 'Leon (5)': 'unfaehig', 'Franz (30)': 'unfaehig', 'Lukas (12)': 'beschraenkt', 'Paula (16)': 'beschraenkt', 'Ben (15)': 'beschraenkt',
+      'Lea (18': 'voll', 'Opa Gerd (72)': 'voll', 'Emma (10)': 'ausnahme', 'Jonas (14)': 'ausnahme', 'Sophie (16)': 'voll' };
     for (const [text, fach] of Object.entries(raeume)) {
       await haus.locator('.zu-karte', { hasText: text }).click();
       await haus.locator(`[data-ziel="${fach}"]`).click();
@@ -233,29 +284,109 @@ test.describe('ohne Lernraum', () => {
     await expect(akte.locator('[data-akte-loesung]')).toContainText('Mit der letzten Rate ist der Kauf');
   });
 
-  test('Mission Zwergspitz: schätzen, auflösen, alle Wege erkunden', async ({ page }) => {
+  test('Mission Zwergspitz: mit der Figur durchs Labyrinth – Tastatur, Steuerkreuz, Würfel, Sackgassen', async ({ page }) => {
     await page.goto(`${GF}#mission`);
-    await expect(page.locator('#zs-stand')).toHaveText('0 von 7 Wegen erkundet');
-    await expect(page.locator('.gf-lab-fig figcaption')).toContainText('CC0');
-    await expect(page.locator('#zs-lab .lab-nr')).toHaveCount(7);
-    // Im Labyrinth auf die Nummer tippen öffnet den Weg
-    await page.locator('#zs-lab [data-lab="3"]').click();
-    await expect(page.locator('#zs-weg')).toContainText('Ratenkauf beim Züchter');
-    await page.locator('[data-weg="2"]').click();
-    await expect(page.locator('#zs-weg')).toContainText('Angespartes Taschengeld');
-    await page.locator('[data-tipp="ziel"]').click();
-    await expect(page.locator('#zs-fb .fb.bad')).toContainText('Sackgasse');
-    await expect(page.locator('#zs-fb')).toContainText('Du hattest „Führt zum Hund“ getippt.');
-    await expect(page.locator('#zs-stand')).toHaveText('1 von 7 Wegen erkundet');
-    await expect(page.locator('#zs-lab .lab-weg')).toHaveCount(1);
-    await expect(page.locator('#zs-lab .lab-wand')).toHaveCount(1);
-    for (const i of [0, 1, 3, 4, 5, 6]) {
-      await page.locator(`[data-weg="${i}"]`).click();
-      await page.locator('[data-tipp="sackgasse"]').click();
+    const lab = page.locator('[data-labyrinth="zwergspitz-lab"]');
+    const feld = lab.locator('.lab-feld'), panel = lab.locator('[data-lab-panel]'), stand = lab.locator('[data-lab-stand]');
+    await expect(stand).toHaveText('0 von 7 Wegen erkundet · 0 Schritte');
+    await expect(lab).toContainText('Im Ziel: Foto:');
+    await expect(lab.locator('.lab-schild')).toHaveCount(7);
+    await expect(panel).toContainText('So spielst du');
+
+    // Tastatur: zur Kreuzung 1, schätzen, mit Umschalt bis ins Ziel laufen
+    await feld.focus();
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    await expect(panel).toContainText('Weg 1: Eltern überzeugen');
+    await expect(panel.locator('[data-lab-tipp="ziel"]')).toBeFocused();
+    // Ohne Tipp ist der Weg gesperrt
+    await feld.focus();
+    await page.keyboard.press('ArrowUp');
+    await expect(panel).toContainText('Erst schätzen, dann laufen');
+    await panel.locator('[data-lab-tipp="ziel"]').click();
+    await expect(feld).toBeFocused();
+    await page.keyboard.press('Shift+ArrowUp');
+    await expect(panel).toContainText('Geschafft!');
+    await expect(panel.locator('.fb.ok').nth(1)).toContainText('Führt zum Hund. Gut eingeschätzt!');
+    await expect(stand).toHaveText('1 von 7 Wegen erkundet · 9 Schritte');
+    await expect(lab.locator('.lab-ziel-ring')).toHaveClass(/erreicht/);
+    await expect(lab.locator('[data-lab-weg="0"] [data-status]')).toHaveText(/Führt zum Hund/);
+    await panel.locator('[data-lab-start]').click();
+    await expect(panel).toContainText('So spielst du');
+
+    // Antippen: Die Figur läuft zum angetippten Feld (Ende der Hauptstraße links)
+    const box = await feld.boundingBox();
+    await page.mouse.click(box.x + box.width * 1.5 / 17, box.y + box.height * 11.5 / 14);
+    await expect(stand).toHaveText('1 von 7 Wegen erkundet · 17 Schritte');
+
+    // Wegeliste und Steuerkreuz: Taschengeld führt in die Sackgasse
+    await lab.locator('[data-lab-weg="2"]').click();
+    await expect(panel).toContainText('Weg 3: Angespartes Taschengeld');
+    await panel.locator('[data-lab-tipp="ziel"]').click();
+    await lab.locator('[data-lab-dir="hoch"]').click();
+    await expect(panel.locator('.fb.bad')).toContainText('Sackgasse! Du steckst fest.');
+    await expect(panel).toContainText('Du hattest „Führt zum Hund“ getippt.');
+    await expect(lab.locator('.lab-x')).toHaveCount(1);
+    await expect(lab.locator('.lab-schild.bad')).toHaveCount(1);
+    await panel.locator('[data-lab-zurueck]').click();
+    await expect(panel).toContainText('Du kannst den Weg noch einmal ablaufen.');
+
+    // Welpenblick: Der Würfel entscheidet (6 = Ja), das Tor geht auf
+    await page.evaluate(() => { Math.random = () => 0.99; });
+    await lab.locator('[data-lab-weg="1"]').click();
+    await panel.locator('[data-lab-tipp="glueck"]').click();
+    await lab.locator('[data-lab-dir="hoch"]').click();
+    await expect(panel).toContainText('Schmelzen deine Eltern beim Welpenblick');
+    await expect(lab.locator('.lab-tor')).toHaveCount(1);
+    await panel.locator('[data-lab-wuerfeln]').click();
+    await expect(panel.locator('.fb.ok')).toContainText('6 – Ja!');
+    await expect(lab.locator('.lab-tor')).toHaveCount(0);
+    await lab.locator('[data-lab-dir="rechts"]').click();
+    await expect(panel).toContainText('Geschafft!');
+    await expect(panel).toContainText('Kommt drauf an. Gut eingeschätzt!');
+    // Im Ziel verrät der Nebel nicht, dass auch Weg 1 hier ankommt
+    await expect(lab.locator('.lab-zu')).toHaveCount(0);
+    await panel.locator('[data-lab-start]').click();
+
+    // Oma: diesmal eine 1 – die Eltern sagen Nein
+    await page.evaluate(() => { Math.random = () => 0; });
+    await lab.locator('[data-lab-weg="4"]').click();
+    await panel.locator('[data-lab-tipp="glueck"]').click();
+    await lab.locator('[data-lab-dir="hoch"]').click();
+    await panel.locator('[data-lab-wuerfeln]').click();
+    await expect(panel.locator('.fb.bad')).toContainText('1 – Nein.');
+    await expect(panel.locator('[data-lab-zurueck]')).toBeFocused();
+    await panel.locator('[data-lab-zurueck]').click();
+
+    // Warten bis 18: Unterwegs werden die Geburtstage gezählt
+    await lab.locator('[data-lab-weg="6"]').click();
+    await panel.locator('[data-lab-tipp="ziel"]').click();
+    await page.keyboard.press('ArrowUp');
+    await expect(panel.locator('.lab-unterwegs')).toContainText('Du bist 15.');
+    await page.keyboard.press('Shift+ArrowUp');
+    await expect(panel).toContainText('Geschafft!');
+
+    // Die letzten beiden Sackgassen
+    for (const i of [3, 5]) {
+      await lab.locator(`[data-lab-weg="${i}"]`).click();
+      await panel.locator('[data-lab-tipp="sackgasse"]').click();
+      await lab.locator('[data-lab-dir="hoch"]').click();
+      await expect(panel.locator('.fb.bad')).toContainText('Sackgasse! Du steckst fest.');
     }
-    await expect(page.locator('#zs-profi')).toContainText('Mission erfüllt!');
-    await expect(page.locator('#zs-profi')).toContainText('2 von 7 Wegen richtig');
-    await expect(page.locator('#zs-lab .lab-ziel')).toHaveClass(/erreicht/);
+    await expect(stand).toContainText('7 von 7 Wegen erkundet');
+    await expect(lab.locator('[data-lab-fertig]')).toContainText('Mission erfüllt! Du hast 6 von 7 Wegen richtig eingeschätzt.');
+    await expect(lab.locator('[data-lab-fertig]')).toContainText('Sicher zum Hund führen nur zwei Wege');
+
+    // Der Spielstand bleibt nach dem Neuladen
+    await page.reload();
+    await expect(page.locator('[data-lab-stand]')).toContainText('7 von 7 Wegen erkundet');
+    await expect(page.locator('.lab-schild.bad')).toHaveCount(3);
+    // Alter Spielstand (nur Tipps) zählt als erkundet
+    await page.evaluate(() => localStorage.setItem('gf-zs', JSON.stringify({ tipp: { taschengeld: 'ziel' }, weg: 2 })));
+    await page.reload();
+    await expect(page.locator('[data-lab-stand]')).toHaveText('1 von 7 Wegen erkundet · 0 Schritte');
+    await page.locator('[data-lab-neu]').click();
+    await expect(page.locator('[data-lab-stand]')).toHaveText('0 von 7 Wegen erkundet · 0 Schritte');
   });
 
   test('Ihr seid das Gericht: ohne Lernraum allein urteilen', async ({ page }) => {
