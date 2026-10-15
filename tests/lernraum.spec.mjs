@@ -1,5 +1,5 @@
 // Lernraum: ein Raum für die ganze Lernwerkstatt (Werkstätten und Planspiel).
-import { test, expect, device, readDoc, SECHSECK } from './helpers.mjs';
+import { test, expect, device, readDoc, writeDoc, SECHSECK } from './helpers.mjs';
 
 async function raumOeffnen(lk) {
   await lk.goto(SECHSECK);
@@ -250,4 +250,233 @@ test('Beitreten: Der Fokus steht im Feld, Fehler werden angesagt und am Feld mar
   // Wer das Feld korrigiert, bekommt es wieder als gültig angezeigt
   await feld.fill('K7Q2XM');
   expect(await feld.getAttribute('aria-invalid')).toBeNull();
+});
+
+// Firebase-Bibliothek von gstatic.com (wie in helpers.mjs) und der Firestore-Emulator: zum Simulieren von Verbindungsproblemen
+const SDK = /^https:\/\/www\.gstatic\.com\/firebasejs\//;
+const DB = 'http://127.0.0.1:8080/**';
+const uidVon = page => page.evaluate(async () => (await import('/shared/js/lernraum.js')).raum.live().uid);
+const antwortSchicken = async (s, bereich, tool, text) => {
+  await werkstatt(s, bereich, tool);
+  const feld = s.locator(`[data-schreib="${tool}-wand"]`);
+  await feld.locator('textarea').fill(text);
+  await feld.locator('[data-schreib-senden]').click();
+  await expect(feld.locator('[data-schreib-status]')).toContainText('An der Wand');
+  await s.locator('#modal-close').click();
+};
+
+test('Wand: einzelne Antworten mit Rückfrage löschen (auch im Beamer-Modus), beim Entfernen Antworten auf Wunsch mitlöschen', async ({ page: lk, browser }) => {
+  test.setTimeout(120_000);
+  const code = await raumOeffnen(lk);
+  const troll = await beitreten(browser, code, 'Troll');
+  const lotte = await beitreten(browser, code, 'Lotte');
+  await antwortSchicken(troll, 'ziele', 'preis', 'Unpassender Text über eine Mitschülerin');
+  await antwortSchicken(lotte, 'ziele', 'preis', 'Bei 0 % droht Deflation.');
+  const [uidT, uidL] = [await uidVon(troll), await uidVon(lotte)];
+  await expect(lk.locator('#lr-antw tr', { hasText: 'Die EZB strebt' })).toContainText('2');
+
+  // Beamer-Modus: Löschknopf ohne Spitznamen
+  await lk.locator('#lr-beamer').click();
+  await lk.locator('[data-lr-wand="preis"]').first().click();
+  const wand = lk.locator('[data-schreib="preis-wand"] [data-wand]');
+  await wand.locator('[data-wand-zeigen]').click();
+  await expect(wand.locator('.wand-karte')).toHaveCount(2);
+  const karte = wand.locator('.wand-karte', { hasText: 'Unpassender Text' });
+  await expect(karte.locator('[data-wand-weg]')).toHaveAttribute('aria-label', 'Antwort löschen');
+  await expect(karte).not.toContainText('Troll');
+  // Rückfrage: Abbrechen führt zurück zum Knopf
+  await karte.locator('[data-wand-weg]').click();
+  await expect(karte.getByRole('group', { name: 'Diese Antwort von der Wand löschen?' })).toBeVisible();
+  await expect(karte.locator('[data-wand-ja]')).toBeFocused();
+  await karte.locator('[data-wand-nein]').click();
+  await expect(karte.locator('[data-wand-ja]')).toHaveCount(0);
+  await expect(karte.locator('[data-wand-weg]')).toBeFocused();
+  // Löschen: nur diese Antwort, der Fokus springt zur nächsten Karte
+  await karte.locator('[data-wand-weg]').click();
+  await karte.locator('[data-wand-ja]').click();
+  await expect(wand.locator('.wand-karte')).toHaveCount(1);
+  await expect(wand.locator('.wand-karte')).toContainText('Bei 0 % droht Deflation.');
+  await expect(wand.locator('[data-wand-weg]')).toBeFocused();
+  await expect.poll(() => readDoc(`rooms/${code}/antworten/${uidT}_preis-wand`)).toBeNull();
+  expect(await readDoc(`rooms/${code}/antworten/${uidL}_preis-wand`)).not.toBeNull();
+
+  // Entfernen: Rückfrage, Antworten nur auf Wunsch mitlöschen
+  await knopf(lk).click();
+  await lk.locator('#lr-beamer').click();
+  const zeile = name => lk.locator('#lr-teil tr', { hasText: name });
+  await zeile('Troll').locator('[data-lr-kick]').click();
+  await expect(lk.locator('#lr-kick-q')).toContainText('Troll aus dem Lernraum entfernen?');
+  await expect(lk.locator('#lr-kick-antw')).toHaveCount(0); // keine Antworten mehr an der Wand
+  await expect(lk.locator('#lr-kick-y')).toBeFocused();
+  await lk.locator('#lr-kick-n').click();
+  await expect(lk.locator('#lr-kick-q')).toHaveCount(0);
+  await expect(zeile('Troll').locator('[data-lr-kick]')).toBeFocused();
+  await zeile('Troll').locator('[data-lr-kick]').click();
+  await lk.locator('#lr-kick-y').click();
+  await expect(troll.locator('#snackbar')).toContainText('aus dem Lernraum entfernt');
+  await expect(zeile('Troll')).toHaveCount(0);
+
+  await zeile('Lotte').locator('[data-lr-kick]').click();
+  await expect(lk.locator('#lr-kick-q')).toContainText('Auch die Antwort von Lotte an der Wand löschen');
+  await expect(lk.locator('#lr-kick-antw')).not.toBeChecked();
+  await lk.locator('#lr-kick-antw').check();
+  await lk.locator('#lr-kick-y').click();
+  await expect(lotte.locator('#snackbar')).toContainText('aus dem Lernraum entfernt');
+  await expect.poll(() => readDoc(`rooms/${code}/antworten/${uidL}_preis-wand`)).toBeNull();
+  await expect(lk.locator('#lr-teil')).toContainText('Noch niemand im Raum.');
+
+  for (const s of [troll, lotte]) { expect(s.errors).toEqual([]); await s.context().close(); }
+});
+
+test('Raum verlassen löscht den eigenen Eintrag und die eigenen Antworten', async ({ page: lk, browser }) => {
+  test.setTimeout(90_000);
+  const code = await raumOeffnen(lk);
+  const s = await beitreten(browser, code, 'Kalle');
+  await antwortSchicken(s, 'ziele', 'preis', 'Mit 2 % bleibt Abstand zur Deflation.');
+  const uid = await uidVon(s);
+  expect(await readDoc(`rooms/${code}/antworten/${uid}_preis-wand`)).not.toBeNull();
+  await knopf(s).click();
+  await s.locator('#lr-leave').click();
+  await expect(s.locator('#lr-leave-q')).toContainText('Dein Eintrag und deine Antworten an der Wand werden gelöscht.');
+  await s.locator('#lr-leave-y').click();
+  await expect(s.locator('#lr-join')).toBeVisible();
+  await expect.poll(() => readDoc(`rooms/${code}/antworten/${uid}_preis-wand`)).toBeNull();
+  await expect.poll(() => readDoc(`rooms/${code}/players/${uid}`)).toBeNull();
+  await expect(lk.locator('#lr-teil')).toContainText('Noch niemand im Raum.');
+  expect(s.errors).toEqual([]);
+  await s.context().close();
+});
+
+test('Datenschutz und Beitrittsweg: ehrlicher Hinweis, ein neuer Raum beendet den alten Raum dieses Geräts', async ({ page: lk }) => {
+  await lk.goto(SECHSECK);
+  await lk.locator('#btn-raum').click();
+  const hinweis = lk.locator('#lr-datenschutz');
+  for (const t of ['Spitzname', 'geöffnete Werkstatt', 'Antworten, die du abschickst', 'Stimmen', 'Punkte im Wissenscheck (keine Texte)', 'Figur und dein Spielstand', '„Raum beenden“ löscht alles sofort'])
+    await expect(hinweis).toContainText(t);
+  await expect(hinweis).not.toContainText('24 Stunden');
+  await lk.locator('#lr-open').click();
+  await expect(lk.locator('.lr-code')).toHaveText(/^[A-Z2-9]{6}$/);
+  const alt = (await lk.locator('.lr-code').textContent()).trim();
+  await expect(lk.locator('#lr-weg')).toContainText('→ Thema „Magisches Sechseck“ → oben das Symbol Lernraum → Code eingeben. Oder QR-Code scannen.');
+  expect(await lk.evaluate(() => JSON.parse(localStorage.getItem('ms6-eigener-raum')))).toBe(alt);
+
+  // Die Sitzung geht verloren (z. B. Browserdaten teilweise gelöscht), der Raum ist noch offen
+  await lk.evaluate(() => localStorage.removeItem('ms6-raum'));
+  await lk.reload();
+  await lk.locator('#btn-raum').click();
+  await lk.locator('#lr-open').click();
+  await expect(lk.locator('.lr-code')).toHaveText(/^[A-Z2-9]{6}$/);
+  const neu = (await lk.locator('.lr-code').textContent()).trim();
+  expect(neu).not.toBe(alt);
+  await expect.poll(() => readDoc(`rooms/${alt}`)).toBeNull();
+  expect(await readDoc(`rooms/${neu}`)).not.toBeNull();
+  expect(await lk.evaluate(() => JSON.parse(localStorage.getItem('ms6-eigener-raum')))).toBe(neu);
+  // Raum beenden: danach merkt sich das Gerät keinen Raum mehr
+  await lk.locator('#lr-ende').click();
+  await lk.locator('#lr-ende-y').click();
+  await expect(lk.locator('#lr-open')).toBeVisible();
+  expect(await lk.evaluate(() => localStorage.getItem('ms6-eigener-raum'))).toBe('null');
+});
+
+test('Gesperrte Werkstatt per Link oder Neuladen: zurück mit Hinweis, beim Sperren offene Werkstätten bleiben offen', async ({ page: lk, browser }) => {
+  test.setTimeout(90_000);
+  const code = await raumOeffnen(lk);
+  await lk.locator('#lr-frei summary').click();
+  await lk.locator('[data-frei="politik"]').click();
+  await expect(lk.locator('[data-frei="politik"]')).toHaveAttribute('aria-pressed', 'false');
+  const s = await beitreten(browser, code, 'Kalle');
+  await s.goto(`${SECHSECK}#politik`);
+  await s.reload();
+  await expect(s.locator('#snackbar')).toContainText('Deine Lehrkraft hat diese Werkstatt noch nicht freigegeben.');
+  await expect(s.locator('#snackbar')).toHaveAttribute('role', 'status');
+  await expect(s.locator('#modal')).toBeHidden();
+  const karte = s.locator('#view [data-tool="politik"]');
+  await expect(karte).toContainText('Noch gesperrt');
+  await expect(karte).toBeFocused();
+
+  // Offen beim Sperren: bleibt offen
+  await werkstatt(s, 'ziele', 'preis');
+  await lk.locator('[data-frei="preis"]').click();
+  await expect(s.locator('#view [data-tool="preis"]')).toHaveClass(/gesperrt/);
+  await expect(s.locator('#modal-title')).toHaveText('Warenkorb-Werkstatt');
+  await expect(s.locator('#modal')).toBeVisible();
+  expect(s.errors).toEqual([]);
+  await s.context().close();
+});
+
+test('Verbindungsproblem beim Neuladen: Lehrkraft und Schüler behalten ihre Sitzung und verbinden sich neu', async ({ page: lk, browser }) => {
+  test.setTimeout(120_000);
+  const code = await raumOeffnen(lk);
+  const s = await beitreten(browser, code, 'Kalle');
+
+  // Lehrkraft: Firestore nicht erreichbar → „Erneut verbinden“
+  const offline = r => r.abort();
+  await lk.context().route(DB, offline);
+  await lk.reload();
+  await expect(lk.locator('#snackbar')).toContainText('Keine Verbindung zum Lernraum.');
+  await knopf(lk).click();
+  await expect(lk.locator('#lr-netz')).toContainText('Keine Verbindung zum Lernraum.');
+  await expect(lk.locator('#lr-netz')).toHaveAttribute('role', 'alert');
+  await expect(lk.locator('#lr-dialog')).toContainText(`Dein Lernraum ${code} (Lehrkraft) bleibt auf diesem Gerät gespeichert.`);
+  expect(await lk.evaluate(() => JSON.parse(localStorage.getItem('ms6-raum')).code)).toBe(code);
+  await expect(knopf(lk)).toHaveAttribute('aria-label', `Lernraum ${code} (Lehrkraft) – keine Verbindung`);
+  await lk.context().unroute(DB, offline);
+  await lk.locator('#lr-neu').click();
+  await expect(lk.locator('.lr-code')).toHaveText(code);
+  await expect(lk.locator('#lr-teil')).toContainText('Kalle');
+
+  // Schüler: Bibliothek lädt nicht → ehrlich „Seite neu laden“, die Sitzung bleibt
+  const sperren = r => r.abort();
+  await s.context().route(SDK, sperren);
+  await s.reload();
+  await knopf(s).click();
+  await expect(s.locator('#lr-netz')).toContainText('Keine Verbindung zum Lernraum. Prüfe das WLAN und lade die Seite neu.');
+  await expect(s.locator('#lr-dialog')).toContainText(`Dein Lernraum ${code} (du bist Kalle)`);
+  await expect(s.locator('#lr-neu')).toHaveCount(0);
+  await s.context().unroute(SDK, sperren);
+  await Promise.all([s.waitForEvent('load'), s.locator('#lr-dialog [data-neu-laden]').click()]);
+  await knopf(s).click();
+  await expect(s.locator('#lr-dialog')).toContainText(`Du bist im Lernraum ${code} als Kalle`);
+  expect(s.errors).toEqual([]);
+  await s.context().close();
+});
+
+test('Keine Verbindung beim Beitreten: ehrliche Meldung, neuer Versuch möglich, „nicht eingerichtet“ nur ohne Konfiguration', async ({ page: lk, browser }) => {
+  test.setTimeout(90_000);
+  const code = await raumOeffnen(lk);
+
+  // Kurzer Aussetzer: Der erste Versuch scheitert, der zweite klappt (kein Neuladen nötig)
+  const s = await device(browser);
+  let einmal = true;
+  await s.route('**/__/firebase/init.json', r => { if (einmal) { einmal = false; return r.abort(); } return r.continue(); });
+  await s.goto(`${SECHSECK}#raum=${code}`);
+  await s.locator('#lr-nick').fill('Kalle');
+  await s.locator('#lr-jgo').click();
+  await expect(s.locator('#lr-jerr')).toHaveText('Keine Verbindung zum Lernraum. Prüfe das WLAN und versuch es noch einmal.');
+  await s.locator('#lr-jgo').click();
+  await expect(s.locator('#lr-dialog')).toContainText(`Du bist im Lernraum ${code} als Kalle`);
+
+  // Bibliothek gesperrt (z. B. Schulfilter): ehrlich „Seite neu laden“, der Code bleibt dabei erhalten
+  const o = await device(browser, { offline: true });
+  await o.goto(`${SECHSECK}#raum=${code}`);
+  await o.locator('#lr-nick').fill('Lotte');
+  for (let i = 0; i < 2; i++) {
+    await o.locator('#lr-jgo').click();
+    await expect(o.locator('#lr-jerr')).toContainText('Keine Verbindung zum Lernraum. Prüfe das WLAN und lade die Seite neu.');
+    await expect(o.locator('#lr-jerr')).not.toContainText('nicht eingerichtet');
+  }
+  await Promise.all([o.waitForEvent('load'), o.locator('#lr-jerr [data-neu-laden]').click()]);
+  await expect(o.locator('#lr-code')).toHaveValue(code);
+
+  // Ohne Firebase-Konfiguration: nicht eingerichtet
+  const k = await device(browser);
+  await k.route('**/__/firebase/init.json', r => r.fulfill({ status: 404, body: '' }));
+  await k.goto(`${SECHSECK}#raum=${code}`);
+  await k.locator('#lr-nick').fill('Mia');
+  await k.locator('#lr-jgo').click();
+  await expect(k.locator('#lr-jerr')).toHaveText('Der Live-Modus ist nicht eingerichtet.');
+  await k.locator('#lr-open').click();
+  await expect(k.locator('#lr-oerr')).toContainText('Der Live-Modus ist nicht eingerichtet.');
+
+  for (const p of [s, o, k]) { expect(p.errors).toEqual([]); await p.context().close(); }
 });

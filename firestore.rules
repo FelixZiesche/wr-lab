@@ -8,6 +8,8 @@ rules_version = '2';
 // - Live-Abstimmung: Die Lehrkraft steuert die Umfrage im Raum, jede Stimme ist eine Zahl im eigenen Eintrag.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
+// - Wer einen Raum, einen Eintrag oder eine Antwort anlegt, setzt ein Ablaufdatum (expireAt, für die TTL-Löschung).
+//   Die Obergrenze ist großzügig (72 Stunden), weil der Client mit der Uhr des Geräts rechnet.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
@@ -17,6 +19,12 @@ service cloud.firestore {
     function isSlug(s, max) { return s is string && s.size() <= max && s.matches('^[a-z0-9-]+$'); }
     function isSmallMap(m) { return m is map && m.size() <= 30; }
     function isTime(t) { return t is timestamp; }
+    // Ablaufdatum beim Anlegen: Pflicht, höchstens 72 Stunden in der Zukunft
+    function validExpire(d) { return 'expireAt' in d && d.expireAt is timestamp && d.expireAt <= request.time + duration.value(72, 'h'); }
+    // Beim Ändern: Ablaufdatum unverändert (auch bei alten Einträgen ohne) oder neu und gültig
+    function keepsExpire() {
+      return request.resource.data.get('expireAt', null) == resource.data.get('expireAt', null) || validExpire(request.resource.data);
+    }
 
     function validRoom(d) {
       return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','createdAt','expireAt'])
@@ -78,19 +86,26 @@ service cloud.firestore {
       allow create: if signedIn()
         && code.matches('^[A-Z2-9]{6}$')
         && request.resource.data.owner == request.auth.uid
-        && validRoom(request.resource.data);
+        && validRoom(request.resource.data)
+        && validExpire(request.resource.data);
       allow update: if signedIn() && resource.data.owner == request.auth.uid
         && request.resource.data.owner == resource.data.owner
         && request.resource.data.topic == resource.data.topic
-        && validRoom(request.resource.data);
+        && validRoom(request.resource.data)
+        && keepsExpire();
       allow delete: if signedIn() && resource.data.owner == request.auth.uid;
 
       match /players/{uid} {
         allow get: if signedIn() && (request.auth.uid == uid || isOwner(code));
         allow list: if isOwner(code);
-        allow create, update: if signedIn() && request.auth.uid == uid
+        allow create: if signedIn() && request.auth.uid == uid
           && room(code).open == true
-          && validPlayer(request.resource.data);
+          && validPlayer(request.resource.data)
+          && validExpire(request.resource.data);
+        allow update: if signedIn() && request.auth.uid == uid
+          && room(code).open == true
+          && validPlayer(request.resource.data)
+          && keepsExpire();
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(code));
       }
 
@@ -102,7 +117,9 @@ service cloud.firestore {
           && id == request.auth.uid + '_' + request.resource.data.aufgabe
           && room(code).open == true
           && exists(/databases/$(database)/documents/rooms/$(code)/players/$(request.auth.uid))
-          && validAntwort(request.resource.data);
+          && validAntwort(request.resource.data)
+          && (resource == null ? validExpire(request.resource.data) : keepsExpire());
+        // Löschen: die eigene Antwort („Raum verlassen“) oder als Lehrkraft jede (einzelne Antwort von der Wand nehmen)
         allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isOwner(code));
       }
     }

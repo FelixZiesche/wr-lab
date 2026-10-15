@@ -66,7 +66,10 @@ test.describe('Klassenspiel ohne Live-Verbindung (Stimmkarten)', () => {
   test('Lehrkraft zählt Stimmen, Schüler tippen den Beschluss ein', async ({ page, browser }) => {
     await page.goto(`${SECHSECK}#spiel`);
     await page.locator('.mode-card[data-m="lk"]').click();
-    await expect(page.getByText('Live-Modus nicht eingerichtet.')).toBeVisible();
+    // Die Bibliothek lädt nicht (z. B. Schulfilter): keine Verbindung, nicht „nicht eingerichtet“
+    await expect(page.locator('#netz')).toContainText('Keine Verbindung zum Live-Klassenraum. Prüfe das WLAN und lade die Seite neu.');
+    await expect(page.locator('#netz [data-neu-laden]')).toBeVisible();
+    await expect(page.getByText('Live-Modus nicht eingerichtet.')).toHaveCount(0);
     await page.locator('#go').click(); // Runde 1 starten
     await expect(page.locator('.photo')).toBeVisible();
     await page.locator('#go').click(); // Abstimmung starten
@@ -230,4 +233,52 @@ test('Live-Klassenraum: ganze Partie, Bilanz im Dashboard stimmt mit dem Handy �
 
   expect(s.errors).toEqual([]);
   await s.context().close();
+});
+
+test.describe('Planspiel ohne Verbindung', () => {
+  test('QR-Link ohne Verbindung: Fehlerfeld mit Code, Seite neu laden behält den Code, ohne Klasse weiterspielen', async ({ browser }) => {
+    const s = await device(browser, { offline: true, viewport: { width: 390, height: 844 } });
+    await s.goto(`${SECHSECK}#join=ABC234`);
+    const box = s.locator('#kv');
+    await expect(box).toContainText('Keine Verbindung zum Klassenraum (Code ABC234). Prüfe das WLAN und lade die Seite neu.');
+    await expect(box).toHaveAttribute('role', 'alert');
+    await expect(s.locator('h3', { hasText: 'Keine Verbindung zum Klassenraum' })).toBeFocused();
+    await expect(s.locator('[data-f]')).toHaveCount(0);
+    await Promise.all([s.waitForEvent('load'), s.locator('#lb-app [data-neu-laden]').click()]);
+    await expect(box).toContainText('Code ABC234');
+    await s.locator('#kv-ohne').click();
+    await expect(s.locator('[data-f]')).toHaveCount(8);
+    await s.locator('[data-f="mia"]').click();
+    await expect(s.locator('.hud')).toContainText('Ohne Live-Verbindung');
+    expect(s.errors).toEqual([]);
+    await s.context().close();
+  });
+
+  test('Kurzer Aussetzer beim QR-Link: Erneut versuchen führt zum Beitritt', async ({ page: lk, browser }) => {
+    await lk.goto(`${SECHSECK}#spiel`);
+    await lk.locator('.mode-card[data-m="lk"]').click();
+    await lk.locator('#mkroom').click();
+    await expect(lk.locator('.panel .code').first()).toHaveText(/^[A-Z2-9]{6}$/);
+    const code = (await lk.locator('.panel .code').first().textContent()).trim();
+    await expect(lk.locator('.panel', { hasText: 'Raumcode' }).first()).toContainText('→ Thema „Magisches Sechseck“ → Planspiel → Schüler → Code eingeben.');
+
+    const s = await device(browser);
+    let einmal = true;
+    await s.route('**/__/firebase/init.json', r => { if (einmal) { einmal = false; return r.abort(); } return r.continue(); });
+    await s.goto(`${SECHSECK}#join=${code}`);
+    await expect(s.locator('#kv')).toContainText(`Keine Verbindung zum Klassenraum (Code ${code}). Prüfe das WLAN und versuch es noch einmal.`);
+    await s.locator('#kv-neu').click();
+    await expect(s.locator('#jc')).toHaveValue(code);
+    await expect(s.locator('#jn')).toBeFocused();
+    expect(s.errors).toEqual([]);
+    await s.context().close();
+  });
+
+  test('Lehrkraft ohne Firebase-Konfiguration: „nicht eingerichtet“, Stimmkarten', async ({ page }) => {
+    await page.route('**/__/firebase/init.json', r => r.fulfill({ status: 404, body: '' }));
+    await page.goto(`${SECHSECK}#spiel`);
+    await page.locator('.mode-card[data-m="lk"]').click();
+    await expect(page.getByText('Live-Modus nicht eingerichtet.')).toBeVisible();
+    await expect(page.locator('#netz')).toHaveCount(0);
+  });
 });

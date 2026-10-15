@@ -26,8 +26,8 @@
 // }
 // g = Spielstand eines Spielers {r, ph, decs, votes, ck, ch, chx, …}, t = Spielstand der Lehrkraft {r, ph, decs, …}
 import { $, $$, esc, store, bindPhoto, neuZeichnen } from './ui.js';
-import { connect } from './live.js';
-import { raum, normCode, qrSVG, linkZu, fehlerZeigen, fehlerWeg } from './lernraum.js';
+import { connect, liveFehler } from './live.js';
+import { raum, normCode, qrSVG, linkZu, fehlerZeigen, fehlerWeg, neuLadenHTML, beitrittsWeg } from './lernraum.js';
 
 export const OPTC={A:'var(--md-o-A);--on-oc:var(--md-on-o-A)',B:'var(--md-o-B);--on-oc:var(--md-on-o-B)',C:'var(--md-o-C);--on-oc:var(--md-on-o-C)'};
 const KEYS=['A','B','C'];
@@ -46,7 +46,7 @@ export function mountPlanspiel(app,spiel){
   const LK=spiel.lehrkraft;
   const privat=Object.assign({wurf:()=>0,rueckmeldung:o=>({cls:'neu',html:esc(o.l)})},spiel.privat);
   const avatarHTML=(f,big)=>`<span class="avatar${big?' lg':''}">${spiel.portrait(f)}</span>`;
-  let unsub=[];
+  let unsub=[],ohneKlasse=false; // ohneKlasse: Schüler spielt nach einem Verbindungsproblem bewusst mit Stimmkarten weiter
   const cleanup=()=>{unsub.forEach(u=>{try{u()}catch(e){}});unsub=[]};
   const obs=new MutationObserver(()=>{if(!document.body.contains(app)){cleanup();obs.disconnect()}});obs.observe(document.body,{childList:true,subtree:true});
   const save=(k,v)=>store(spiel.speicher+'-'+k,v);
@@ -110,7 +110,11 @@ export function mountPlanspiel(app,spiel){
       if(imRaum){if(g.code!==rs.code)g={code:rs.code};g.nick=rs.nick;g.joined=true;save(mode,g)}
       else if(g.joined){g={code:g.code,nick:g.nick};save(mode,g)}
       if(!g.joined)return joinScreen();
-    }else if(mode==='schueler'&&pendingJoin){pendingJoin=null}
+    }else if(mode==='schueler'&&!ohneKlasse){
+      // Beitritt per QR-Link (oder im Lernraum), aber keine Verbindung: nicht still ohne Klasse weiterspielen
+      const rs=raum.sitzung(),code=pendingJoin||(rs&&rs.rolle==='schueler'?rs.code:'');
+      if(code)return keineVerbindung(code);
+    }
     if(!g.fig)return pickFig();
     if(live){
       unsub.push(live.watchRoom(g.code,d=>{
@@ -130,6 +134,20 @@ export function mountPlanspiel(app,spiel){
       // Lag der Fokus im Spiel, springt er auf die Meldung; sonst bleibt er, wo er ist
       if(warDrin)springen=true;gesprungen();
       $('#rj',app).addEventListener('click',()=>{springen=true;player(mode,L)});$('#bk',app).addEventListener('click',zumMenu);
+    }
+    function keineVerbindung(code){
+      const grund=liveFehler(),warDrin=app.contains(document.activeElement);
+      app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
+      <div class="panel stack" style="max-width:560px"><h3 class="title-l">Keine Verbindung zum Klassenraum</h3>
+      <div class="fb bad" role="alert" id="kv">${grund==='config'?'Der Live-Modus ist nicht eingerichtet.':`Keine Verbindung zum Klassenraum (Code <b class="mono">${esc(code)}</b>). Prüfe das WLAN und ${grund==='laden'?'lade die Seite neu.':'versuch es noch einmal.'}`}</div>
+      <p class="small muted">Ohne Klasse spielst du allein mit Stimmkarten weiter. Deine Lehrkraft sieht dich dann nicht im Raum.</p>
+      <div class="cta">${grund==='config'?'':grund==='laden'?neuLadenHTML('join='+code,'btn primary'):'<button class="btn primary" type="button" id="kv-neu"><span class="ms" aria-hidden="true">refresh</span>Erneut versuchen</button>'}
+        <button class="btn" type="button" id="kv-ohne"><span class="ms" aria-hidden="true">person</span>Ohne Klasse spielen</button></div></div>`;
+      $('#bk',app).addEventListener('click',()=>{pendingJoin=null;zumMenu()});
+      $('#kv-neu',app)?.addEventListener('click',()=>{springen=true;waiting('Verbinde mit dem Klassenraum …');
+        connect().then(async L2=>{if(!document.body.contains(app))return;if(L2&&raum.verbindung())await raum.verbinden();player(mode,L2)})});
+      $('#kv-ohne',app).addEventListener('click',()=>{ohneKlasse=true;pendingJoin=null;springen=true;player(mode,null)});
+      if(warDrin)springen=true;gesprungen();
     }
     function joinScreen(err){
       app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
@@ -166,7 +184,8 @@ export function mountPlanspiel(app,spiel){
           try{
             const f=FIG.find(x=>x.id===fig);
             const base={nick:keep.nick,fig,r:0,ph:'event',votes:{},checks:{},choices:{},stats:spiel.werte(f,{r:0,ph:'event',decs:[],ch:[],chx:[]})};
-            if(keep.joined)await live.updatePlayer(keep.code,base);else await live.joinRoom(keep.code,base);
+            // Fehlt der eigene Eintrag (z. B. entfernt), neu anlegen: nur joinRoom setzt das Ablaufdatum, das die Regeln verlangen
+            if(keep.joined)await live.updatePlayer(keep.code,base).catch(()=>live.joinRoom(keep.code,base));else await live.joinRoom(keep.code,base);
           }catch(e){console.warn(e);return pickFig('Beitreten hat nicht geklappt. Ist der Raum noch offen? Frag deine Lehrkraft.')}
           keep.joined=true;
         }
@@ -275,37 +294,54 @@ export function mountPlanspiel(app,spiel){
     const rs0=raum.sitzung();t.code=rs0&&rs0.rolle==='lk'?rs0.code:null;
     const persist=()=>save('lk',t);persist();
     const anon=()=>raum.beamer();
-    let players=[],roomOk=false,roomErr='',busy=false,playersUnsub=null,confirmClose=false,confirmReset=false;
+    let players=[],roomOk=false,roomErr='',roomNetz=false,closeErr='',busy=false,playersUnsub=null,confirmClose=false,confirmReset=false;
     const pushState=()=>{if(live&&t.code&&roomOk)live.updateRoom(t.code,{round:t.r,phase:t.ph,decisions:t.decs.slice(),gameId:t.gameId}).catch(e=>console.warn('Raum-Update',e))};
+    // Nur einen sicher fehlenden, geschlossenen oder fremden Raum verwerfen; bei Verbindungsproblemen bleibt der Code
     async function attach(){
       if(!live||!t.code){render();return}
-      const r=await live.getRoom(t.code);
+      const st=await live.raumStatus(t.code);
       if(!document.body.contains(app))return;
+      if(st.fehler){roomOk=false;roomNetz=true;render();return}
+      roomNetz=false;
+      const r=st.raum;
       if(!r||r.owner!==live.uid||r.phase==='closed'){t.code=null;roomOk=false;persist();render();return}
-      roomOk=true;
+      roomOk=true;beobachte();pushState();render();
+    }
+    function beobachte(){
       if(playersUnsub)playersUnsub();
       playersUnsub=live.watchPlayers(t.code,ps=>{players=ps.filter(p=>p.fig).sort((a,b)=>((a.joinedAt&&a.joinedAt.seconds)||0)-((b.joinedAt&&b.joinedAt.seconds)||0));render()});
       unsub.push(()=>playersUnsub&&playersUnsub());
-      pushState();render();
     }
+    async function neuVerbinden(){busy=true;render();const L2=await connect();if(!document.body.contains(app))return;
+      if(L2&&raum.verbindung())await raum.verbinden();springen=true;teacherStart(L2)}
     async function createRoom(){busy=true;roomErr='';render();
       try{t.code=await raum.oeffnen();persist();await attach()}
-      catch(e){console.warn(e);roomErr='Der Klassenraum konnte nicht erstellt werden. Prüfe die Firebase-Einrichtung (README, Abschnitt „Firebase einrichten“).'}
+      catch(e){console.warn(e);roomErr=e&&e.message&&!e.html?e.message:'Der Klassenraum konnte nicht erstellt werden. Prüfe das WLAN und versuch es noch einmal.'}
       busy=false;render()}
-    async function closeRoom(){busy=true;render();
+    // Erst nach dem Löschen ist der Raum weg; scheitert es, bleibt alles stehen und „Raum löschen“ geht noch einmal
+    async function closeRoom(){busy=true;closeErr='';render();
       if(playersUnsub){playersUnsub();playersUnsub=null}
-      try{await raum.beenden()}catch(e){console.warn(e)}
+      try{await raum.beenden()}
+      catch(e){console.warn(e);busy=false;closeErr='Der Raum konnte nicht vollständig gelöscht werden. Prüfe das WLAN und tippe noch einmal auf „Raum löschen“.';beobachte();render();return}
       t.code=null;roomOk=false;players=[];busy=false;confirmClose=false;persist();render()}
     const liveVotes=()=>{const c={A:0,B:0,C:0};players.forEach(p=>{const v=p.votes&&p.votes[t.r];if(c[v]!=null)c[v]++});return c};
     const label=p=>{if(!anon())return esc(p.nick||'?');const same=players.filter(q=>q.fig===p.fig);return `${esc(FIG.find(f=>f.id===p.fig)?.n||'?')} ${same.indexOf(p)+1}`};
     const figOf=p=>FIG.find(f=>f.id===p.fig)||FIG[0];
     const stepOf=p=>{const order=['event','vote','card','wait','result','check','choice'];return (p.r||0)*10+Math.max(0,order.indexOf(p.ph))+(p.ph==='end'?100:0)};
+    // Keine Verbindung (nicht: nicht eingerichtet): Hinweis mit „Erneut verbinden“ oder, wenn nur das hilft, „Seite neu laden“
+    function netzHTML(){
+      const grund=liveFehler();
+      if(!(!live&&grund!=='config')&&!roomNetz)return '';
+      return `<div class="fb bad stack" id="netz"><p><b>Keine Verbindung zum Live-Klassenraum${t.code?` <span class="mono">${esc(t.code)}</span>`:''}.</b> Prüfe das WLAN und ${!live&&grund==='laden'?'lade die Seite neu':'versuch es noch einmal'}.${t.code?' Der Raum bleibt bestehen.':''} Bis dahin läuft das Planspiel mit Stimmkarten.</p>
+        <div class="row">${!live&&grund==='laden'?neuLadenHTML(''):`<button class="btn small" type="button" id="neu-verbinden" ${busy?'disabled':''}><span class="ms" aria-hidden="true">refresh</span>${t.code?'Erneut verbinden':'Erneut versuchen'}</button>`}</div></div>`;
+    }
     function lobbyLiveHTML(){
-      if(!live)return `<div class="fb neu"><b>Live-Modus nicht eingerichtet.</b> Das Planspiel läuft mit Stimmkarten. Wie du den Live-Klassenraum einschaltest, steht in der README im GitHub-Projekt.</div>`;
+      if(!live&&liveFehler()==='config')return `<div class="fb neu"><b>Live-Modus nicht eingerichtet.</b> Das Planspiel läuft mit Stimmkarten. Wie du den Live-Klassenraum einschaltest, steht in der README im GitHub-Projekt.</div>`;
+      const netz=netzHTML();if(netz)return netz;
       if(!t.code||!roomOk)return `<div class="panel stack"><h3 class="title-l">Live-Klassenraum</h3><p>Erstelle einen Raum. Die Schüler treten mit Code oder QR-Code bei – ohne Konto.</p>${roomErr?`<div class="fb bad">${esc(roomErr)}</div>`:''}<div class="cta"><button class="btn primary" type="button" id="mkroom" ${busy?'disabled':''}><span class="ms" aria-hidden="true">add</span>Live-Klassenraum erstellen</button></div></div>`;
       const url=joinURL(t.code);const cnt={};players.forEach(p=>cnt[p.fig]=(cnt[p.fig]||0)+1);
       return `<div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code" style="font-size:clamp(2.5rem,7vw,4.5rem);letter-spacing:.15em;line-height:1.15;margin-top:4px;display:block">${esc(t.code)}</div>
-        <p class="small">Seite öffnen → <b>Planspiel</b> → <b>Schüler</b> → Code eingeben. Oder QR-Code scannen.</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
+        <p class="small">${beitrittsWeg('join')}</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
         <div><p class="title-s" style="margin-bottom:8px">Figuren in der Klasse</p>${FIG.map(f=>`<div class="row" style="gap:10px;margin-bottom:4px">${avatarHTML(f)}<span style="width:5.5em">${esc(f.n)}</span><div class="bar" style="flex:1"><i style="width:${Math.min(100,(cnt[f.id]||0)*25)}%"></i></div><b class="num" style="width:2ch;text-align:right">${cnt[f.id]||0}</b></div>`).join('')}</div></div>
         <div class="panel stack" style="align-items:center"><div style="width:min(100%,300px);background:#fff;border-radius:16px;padding:8px">${qrSVG(url)}</div><p class="small muted">QR-Code zum Beitreten</p></div></div>`;
     }
@@ -341,7 +377,8 @@ export function mountPlanspiel(app,spiel){
         ${liveOk?`<div><div class="k">Raumcode</div><div class="v mono">${esc(t.code)}</div></div><div class="small"><span class="live-dot"></span>${players.length} live verbunden</div>`:`<div><div class="k">Klassencode</div><div class="v mono">${t.decs.join('')||'–'}</div></div><div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`}
         <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${anon()}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms" aria-hidden="true">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms" aria-hidden="true">restart_alt</span>Neues Spiel</button></div>
         <div id="reset-q" class="fb amb"${confirmReset?'':' hidden'}>Spiel neu starten? Der Raum bleibt offen, alle Spielstände beginnen von vorn. <button class="btn small primary" type="button" id="reset-y">Ja, neu starten</button> <button class="btn small text" type="button" id="reset-n">Abbrechen</button></div>
-        ${confirmClose?`<div class="fb bad">Raum ${esc(t.code)} beenden? Alle Daten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="close-y" ${busy?'disabled':''}>Raum löschen</button> <button class="btn small text" type="button" id="close-n">Abbrechen</button></div>`:''}`;
+        ${confirmClose?`<div class="fb bad">Raum ${esc(t.code)} beenden? Alle Daten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="close-y" ${busy?'disabled':''}>Raum löschen</button> <button class="btn small text" type="button" id="close-n">Abbrechen</button>${closeErr?`<p class="small" role="alert">${esc(closeErr)}</p>`:''}</div>`:''}
+        ${t.ph!=='lobby'&&t.code?netzHTML():''}`;
       if(t.ph==='lobby'){
         h+=`${lobbyLiveHTML()}${dashHTML()}<div class="panel stack"><h3>So läuft eine Runde</h3><ol style="margin:0;padding-left:1.2em"><li>Ereignis am Beamer zeigen, die Schüler lesen auf dem Handy, was es für ihre Figur bedeutet.</li><li>Debatte aus Sicht der Figuren.</li><li>Abstimmung ${liveOk?'auf den Handys – die Stimmen erscheinen hier live':'per Stimmkarte'}, dann Beschluss verkünden.</li></ol>
         <div class="cta"><button class="btn primary" type="button" id="go">Runde 1 starten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div></div>`;
@@ -383,7 +420,8 @@ export function mountPlanspiel(app,spiel){
       $('#mkroom',app)?.addEventListener('click',createRoom);
       $('#anon',app)?.addEventListener('click',()=>raum.setBeamer(!anon()));
       $('#close',app)?.addEventListener('click',()=>{confirmClose=true;render()});
-      $('#close-n',app)?.addEventListener('click',()=>{confirmClose=false;render();$('#close',app)?.focus()});
+      $('#close-n',app)?.addEventListener('click',()=>{confirmClose=false;closeErr='';render();$('#close',app)?.focus()});
+      $('#neu-verbinden',app)?.addEventListener('click',neuVerbinden);
       $('#close-y',app)?.addEventListener('click',closeRoom);
       $$('[data-kick]',app).forEach(b=>b.addEventListener('click',()=>live.kick(t.code,b.dataset.kick).catch(e=>console.warn(e))));
       const go=$('#go',app);

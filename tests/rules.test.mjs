@@ -158,3 +158,59 @@ test('Live-Abstimmung: Umfrage nur von der Lehrkraft, Stimme nur als kleine Zahl
   await assertFails(ich.set({ stimme: { n: 1, w: 1, text: 'Begründung' } }, { merge: true }));
   await assertFails(db('fremd').doc(`rooms/${CODE}/players/schueler`).set({ stimme: { n: 1, w: 0 } }, { merge: true }));
 });
+
+test('Ablaufdatum: beim Anlegen Pflicht und höchstens 72 Stunden in der Zukunft, beim Ändern bleibt es', async () => {
+  const in_ = h => new Date(Date.now() + h * 3600 * 1000);
+  const ohne = ({ expireAt, ...rest }) => rest;
+  // Räume
+  await assertFails(db('neu').doc('rooms/ABCDEQ').set(ohne(room('neu'))));
+  await assertFails(db('neu').doc('rooms/ABCDER').set(room('neu', { expireAt: in_(100) })));
+  await assertFails(db('neu').doc('rooms/ABCDES').set(room('neu', { expireAt: 'morgen' })));
+  await assertSucceeds(db('neu').doc('rooms/ABCDET').set(room('neu', { expireAt: in_(24) })));
+  // Geräteuhr geht zwei Tage vor: noch erlaubt
+  await assertSucceeds(db('neu').doc('rooms/ABCDEU').set(room('neu', { expireAt: in_(70) })));
+  await assertSucceeds(db('neu').doc('rooms/ABCDET').update({ round: 1 }));
+  await assertFails(db('neu').doc('rooms/ABCDET').update({ expireAt: in_(100) }));
+  // Alte Räume ohne Ablaufdatum lassen sich weiter steuern und beenden
+  await env.withSecurityRulesDisabled(ctx => ctx.firestore().doc('rooms/ALTRM2').set(ohne(room('lehrkraft'))));
+  await assertSucceeds(db('lehrkraft').doc('rooms/ALTRM2').update({ open: false, phase: 'closed' }));
+  // Einträge
+  const ich = uid => db(uid).doc(`rooms/${CODE}/players/${uid}`);
+  await assertFails(ich('neu1').set(ohne(player())));
+  await assertFails(ich('neu2').set(player({ expireAt: in_(100) })));
+  await assertSucceeds(ich('neu3').set(player({ expireAt: in_(24) })));
+  await assertSucceeds(ich('neu3').set({ ort: 'preis' }, { merge: true }));
+  await assertFails(ich('neu3').set({ expireAt: in_(100) }, { merge: true }));
+  // Ein entfernter Schüler legt seinen Eintrag ohne Ablaufdatum nicht neu an
+  await assertFails(ich('neu4').set({ nick: 'Testi', ort: 'preis' }, { merge: true }));
+  // Antworten
+  const antwort = extra => ({ uid: 'schueler', aufgabe: 'preis-wand', text: 'Weil die Preise sonst sinken.', at: new Date(), expireAt: in_(24), ...extra });
+  const ref = db('schueler').doc(`rooms/${CODE}/antworten/schueler_preis-wand`);
+  await assertFails(ref.set(ohne(antwort())));
+  await assertFails(ref.set(antwort({ expireAt: in_(100) })));
+  await assertSucceeds(ref.set(antwort()));
+  await assertSucceeds(ref.set(antwort({ text: 'Geändert.', expireAt: in_(24) })));
+});
+
+test('Raum verlassen und Wand aufräumen: Schüler löschen nur eigene Antworten, die Lehrkraft jede', async () => {
+  const antwort = (uid, aufgabe) => ({ uid, aufgabe, text: 'Text', at: new Date(), expireAt: new Date() });
+  await env.withSecurityRulesDisabled(async ctx => {
+    const admin = ctx.firestore();
+    await admin.doc(`rooms/${CODE}/antworten/schueler_preis-wand`).set(antwort('schueler', 'preis-wand'));
+    await admin.doc(`rooms/${CODE}/antworten/schueler_politik-wand`).set(antwort('schueler', 'politik-wand'));
+    await admin.doc(`rooms/${CODE}/antworten/kalle_preis-wand`).set(antwort('kalle', 'preis-wand'));
+    await admin.doc(`rooms/${CODE}/antworten/troll_preis-wand`).set(antwort('troll', 'preis-wand'));
+  });
+  const ref = (uid, id) => db(uid).doc(`rooms/${CODE}/antworten/${id}`);
+  // Eigene Antwort: ja, auch nachdem der eigene Eintrag schon entfernt ist
+  await assertSucceeds(ref('schueler', 'schueler_preis-wand').delete());
+  await assertSucceeds(db('schueler').doc(`rooms/${CODE}/players/schueler`).delete());
+  await assertSucceeds(ref('schueler', 'schueler_politik-wand').delete());
+  // Fremde Antwort: nein; fehlende Antwort: abgelehnt (der Client fängt das ab)
+  await assertFails(ref('schueler', 'kalle_preis-wand').delete());
+  await assertFails(ref('schueler', 'schueler_gibts-nicht').delete());
+  // Lehrkraft nimmt eine einzelne Antwort von der Wand, andere bleiben
+  await assertFails(ref('kalle', 'troll_preis-wand').delete());
+  await assertSucceeds(ref('lehrkraft', 'troll_preis-wand').delete());
+  await assertSucceeds(ref('lehrkraft', 'kalle_preis-wand').get());
+});

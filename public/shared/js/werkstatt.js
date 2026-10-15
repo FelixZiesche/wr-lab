@@ -208,15 +208,22 @@ export function createWerkstatt(cfg){
     ziel.querySelector(':scope > .lehrerpanel')?.remove();
     const h=lehrerpanelHTML(t);if(h)ziel.insertAdjacentHTML('afterbegin',h);
   }
-  let sperreAlt='',pauseVorher=null;
+  let sperreAlt='',pauseVorher=null,sperrePruefen=false;
   function raumGeaendert(art){
-    const s=raum.sitzung(),txt=s?(s.rolle==='lk'?`Lernraum ${s.code} (Lehrkraft)`:`Lernraum ${s.code} – du bist ${s.nick}`):'Lernraum';
+    const s=raum.sitzung(),v=raum.verbindung(),weg=v==='netz'||v==='laden';
+    const txt=s?(s.rolle==='lk'?`Lernraum ${s.code} (Lehrkraft)`:`Lernraum ${s.code} – du bist ${s.nick}`)+(weg?' – keine Verbindung':''):'Lernraum';
     $$('[data-raum-btn]').forEach(b=>{$('.lr-dot',b).hidden=!s;b.setAttribute('aria-label',txt);b.title=txt});
     // Pause: Hintergrund sperren, danach zurück an die vorherige Stelle
     const p=$('#lr-pause'),pause=raum.pausiert();
     if(p.hidden===pause){if(pause)pauseVorher=document.activeElement;p.hidden=!pause;sperreHintergrund();if(pause)p.focus();else{const v=pauseVorher;pauseVorher=null;if(v&&v!==document.body&&document.body.contains(v)&&!v.closest('[inert]'))v.focus();else if(!modal.hidden&&!modal.inert)$('#modal-close').focus()}}
     const z=raum.zustand().raum,sperre=raum.istSchueler()&&z?JSON.stringify(z.gesperrt||[]):'[]';
     if(sperre!==sperreAlt){sperreAlt=sperre;const d=DEST.find(x=>x.id===curView);if(!d||!d.tool||raum.gesperrt(d.tool)||zeigtSperre)renderView()}
+    // Gesperrte Werkstatt per Link oder Neuladen geöffnet (vor dem Verbinden war die Sperre unbekannt): nach dem
+    // ersten Raumzustand schließen, Fokus auf ihre Karte („Noch gesperrt“). Beim Sperren schon offene Werkstätten
+    // bleiben offen, ebenso eine, in die die Lehrkraft alle geholt hat.
+    if(art==='verbunden')sperrePruefen=raum.istSchueler();
+    if(sperrePruefen&&z){sperrePruefen=false;
+      if(!modal.hidden&&offenesTool&&raum.gesperrt(offenesTool)&&z.ziel!==offenesTool){closeModal();zeigeHinweis('Deine Lehrkraft hat diese Werkstatt noch nicht freigegeben.')}}
     if(['start','ende','verbunden','beamer'].includes(art))aktualisiereLehrerpanel();
     nurLk();
   }

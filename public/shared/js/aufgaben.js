@@ -18,7 +18,7 @@
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
 // id: Kleinbuchstaben, Ziffern, Bindestrich (max. 40 Zeichen), eindeutig im Thema. Texte in frage, tipp usw. dürfen HTML enthalten.
-import { $, $$, esc, store, kopieren, neuZeichnen } from './ui.js';
+import { $, $$, esc, store, kopieren, neuZeichnen, zeigeHinweis } from './ui.js';
 import { raum, registriere } from './lernraum.js';
 import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
 import { bindLabyrinth } from './labyrinth.js';
@@ -47,7 +47,9 @@ export function schreibfeld({id,frage,anfaenge,tipp,denkWeiter,erwartung}){
   <div class="stack" data-wand hidden></div>
   ${hilfen({tipp,denkWeiter})}</section>`;
 }
-const wandOffen=new Map();
+// Pro Wand: offen (Antworten gezeigt), frage (uid der Karte mit offener Rückfrage „löschen?“),
+// fokus ({weg, ziel}: nach dem Löschen von weg den Fokus auf die Karte ziel, sonst auf „Antworten zeigen“)
+const wandOffen=new Map(),wandFrage=new Map(),wandFokus=new Map();
 function aktualisiereSchreibfeld(box){
   const id=box.dataset.schreib,ein=$('[data-schreib-eingabe]',box),wand=$('[data-wand]',box);
   if(raum.istLehrkraft()){
@@ -58,9 +60,25 @@ function aktualisiereSchreibfeld(box){
       wand.innerHTML=`<div class="row" style="justify-content:space-between"><p class="title-s">An der Wand <span class="pill neu num" data-wand-n></span></p>
         <button class="btn small" type="button" data-wand-zeigen aria-pressed="false" aria-controls="wand-${id}">Antworten zeigen</button></div><div id="wand-${id}" data-wand-liste></div>`;
       $('[data-wand-zeigen]',wand).addEventListener('click',()=>{wandOffen.set(id,!wandOffen.get(id));aktualisiereSchreibfeld(box)});
+      // Einzelne Antwort löschen (z. B. beleidigend), mit kurzer Rückfrage in der Karte; auch im Beamer-Modus, denn dort zeigt die Lehrkraft die Wand
+      wand.addEventListener('click',async e=>{const b=e.target.closest('[data-wand-weg],[data-wand-ja],[data-wand-nein]');if(!b)return;
+        if(b.dataset.wandWeg){wandFrage.set(id,b.dataset.wandWeg);aktualisiereSchreibfeld(box);$('[data-wand-ja]',wand)?.focus();return}
+        if(b.dataset.wandNein){wandFrage.delete(id);aktualisiereSchreibfeld(box);$(`[data-wand-weg="${CSS.escape(b.dataset.wandNein)}"]`,wand)?.focus();return}
+        const uid=b.dataset.wandJa,karten=$$('[data-wand-karte]',wand).map(k=>k.dataset.wandKarte),i=karten.indexOf(uid);
+        wandFokus.set(id,{weg:uid,ziel:karten[i+1]||karten[i-1]||''});b.disabled=true;
+        try{await raum.loescheAntwort(id,uid)}
+        catch(x){console.warn(x);wandFokus.delete(id);b.disabled=false;zeigeHinweis('Löschen hat nicht geklappt. Prüfe das WLAN und versuch es noch einmal.');return}
+        wandFrage.delete(id);aktualisiereSchreibfeld(box)});
     }
+    if(wandFrage.has(id)&&!liste.some(a=>a.uid===wandFrage.get(id)))wandFrage.delete(id);
+    const frage=wandFrage.get(id);
     $('[data-wand-n]',wand).textContent=liste.length;$('[data-wand-zeigen]',wand).setAttribute('aria-pressed',String(offen));
-    neuZeichnen($('[data-wand-liste]',wand),offen?(liste.length?`<div class="wand-grid">${liste.map(a=>`<article class="wand-karte"><p>${esc(a.text)}</p>${namen?`<span class="small muted">${esc(raum.name(a.uid))}</span>`:''}</article>`).join('')}</div>`:'<p class="small muted">Noch keine Antworten.</p>'):'');
+    neuZeichnen($('[data-wand-liste]',wand),offen?(liste.length?`<div class="wand-grid">${liste.map(a=>{const u=esc(a.uid),wer=namen?esc(raum.name(a.uid)):'';
+      return `<article class="wand-karte" data-wand-karte="${u}"><p>${esc(a.text)}</p><div class="wand-fuss"><span class="small muted">${wer}</span><button class="icon-btn" type="button" data-wand-weg="${u}" aria-label="${wer?`Antwort von ${wer} löschen`:'Antwort löschen'}" title="Antwort löschen"><span class="ms" aria-hidden="true">delete</span></button></div>
+        ${frage===a.uid?`<div class="fb bad stack" role="group" aria-labelledby="wf-${id}"><p id="wf-${id}">Diese Antwort von der Wand löschen?</p><div class="row"><button class="btn small primary" type="button" data-wand-ja="${u}"><span class="ms" aria-hidden="true">delete</span>Löschen</button><button class="btn small text" type="button" data-wand-nein="${u}">Abbrechen</button></div></div>`:''}</article>`}).join('')}</div>`:'<p class="small muted">Noch keine Antworten.</p>'):'');
+    // Nach dem Löschen: Fokus auf die nächste Karte, sonst auf „Antworten zeigen“
+    const f=wandFokus.get(id);
+    if(f&&!liste.some(a=>a.uid===f.weg)){wandFokus.delete(id);((f.ziel&&$(`[data-wand-weg="${CSS.escape(f.ziel)}"]`,wand))||$('[data-wand-zeigen]',wand)).focus()}
     return;
   }
   ein.hidden=false;wand.hidden=true;
