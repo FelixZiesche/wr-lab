@@ -1,5 +1,5 @@
 // Grunddaten und Grafiken des magischen Sechsecks, gemeinsam für Werkstätten und Planspiel.
-import { esc, clamp } from '../shared/js/ui.js';
+import { esc, clamp, svgMass, svgHandy } from '../shared/js/ui.js';
 
 /* ---------- Grunddaten ---------- */
 export const ORDER=['P','B','W','A','U','V'];
@@ -54,12 +54,24 @@ export function hexPts(cx,cy,r,n=6){return Array.from({length:n},(_,i)=>{const a
 export const ptsStr=p=>p.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ');
 export function hexDot(k){return `<svg class="hexdot" viewBox="0 0 12 12" aria-hidden="true"><polygon points="6,0.5 11,3.3 11,8.7 6,11.5 1,8.7 1,3.3" fill="${gc(k)}"/></svg>`}
 
+/** Beschriftung an Ecke i eines Sechsecks (Punkt auf Radius r, Text mit Abstand ab davon). Breit: nach außen wie bisher.
+ *  Handy: mittig über (obere Ecken) bzw. unter dem Punkt, damit lange Namen wie „Beschäftigung“ nicht aus dem Bild ragen. */
+export function eckPos(i,cx,cy,r,ab,{handy,fs,W,txt=''}){
+  if(handy){const [x,y]=hexPts(cx,cy,r)[i],oben=i<2||i===5,hw=txt.length*fs*.3+2;
+    return {x:clamp(x,hw,W-hw),y:oben?y-ab:y+ab+fs*.75,a:'middle'}}
+  const [x,y]=hexPts(cx,cy,r+ab)[i],a=Math.abs(x-cx)<5?'middle':x>cx?'start':'end';
+  return {x,y:y+(i===0?-4:i===3?fs*.8:fs*.36),a};
+}
+
 /* ---------- Radar ---------- */
+// opt.el: Element, in das das Radar kommt (für die Schriftgröße, siehe svgMass). Ohne el (Planspiel, als Text gebaut)
+// wird die Breite geschätzt: auf dem Handy die Fensterbreite, sonst die Vorlage.
 export function radar(series,opt={}){
-  const W=opt.w||520,H=opt.h||380,cx=W/2,cy=H/2+4,r=opt.r||130;
+  const Wv=opt.w||520,handy=svgHandy(),m=opt.el?svgMass(opt.el,Wv):{W:handy?Math.max(260,Math.min(Wv,innerWidth-64)):Wv,handy,fs:f=>handy?Math.max(f,12):Math.max(f,16.5)};
+  const W=m.W,f=m.fs,fl=f(13),r=m.handy?Math.min(130,(W/2-fl*3.3)/.866):(opt.r||130),H=m.handy?Math.round(2*r+4*fl+40):(opt.h||380),cx=W/2,cy=H/2+(m.handy?fl*.4:4);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label||'Zielerreichung als Sechseck')}">`;
   [25,50,75,100].forEach(v=>{s+=`<polygon points="${ptsStr(hexPts(cx,cy,r*v/100))}" fill="none" class="s-line" stroke-width="1"/>`});
-  s+=`<text x="${cx+4}" y="${cy-r-4}" class="t-mu" font-size="10">100</text><text x="${cx+4}" y="${cy-r/2-3}" class="t-mu" font-size="10">50</text>`;
+  s+=`<text x="${cx+4}" y="${cy-r-4}" class="t-mu" font-size="${f(10)}">100</text><text x="${cx+4}" y="${cy-r/2-3}" class="t-mu" font-size="${f(10)}">50</text>`;
   const outer=hexPts(cx,cy,r);
   outer.forEach(([x,y])=>{s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="s-line"/>`});
   series.forEach(se=>{
@@ -67,8 +79,7 @@ export function radar(series,opt={}){
     s+=`<polygon points="${ptsStr(pts)}" fill="${se.fill||'none'}" fill-opacity="${se.fo??0.18}" stroke="${se.stroke}" stroke-width="${se.sw||2.5}" ${se.dash?`stroke-dasharray="${se.dash}"`:''}/>`;
     if(!se.dash) pts.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="4.5" fill="${gc(ORDER[i])}"/>`});
   });
-  const lab=hexPts(cx,cy,r+20);
-  ORDER.forEach((k,i)=>{const [x,y]=lab[i];const a=Math.abs(x-cx)<5?'middle':(x>cx?'start':'end');s+=`<text x="${x}" y="${y+(i===0?-2:i===3?10:4)}" text-anchor="${a}" fill="${gc(k)}" font-size="13" font-weight="700">${G[k].short}</text>`});
+  ORDER.forEach((k,i)=>{const p=eckPos(i,cx,cy,r,m.handy?(i===0?f(10)+16:10):20,{handy:m.handy,fs:fl,W,txt:G[k].short});s+=`<text x="${p.x}" y="${p.y}" text-anchor="${p.a}" fill="${gc(k)}" font-size="${fl}" font-weight="700">${G[k].short}</text>`});
   return s+'</svg>';
 }
 

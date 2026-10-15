@@ -343,7 +343,7 @@ export function mountPlanspiel(app,spiel){
       return `<div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code" style="font-size:clamp(2.5rem,7vw,4.5rem);letter-spacing:.15em;line-height:1.15;margin-top:4px;display:block">${esc(t.code)}</div>
         <p class="small">${beitrittsWeg('join')}</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
         <div><p class="title-s" style="margin-bottom:8px">Figuren in der Klasse</p>${FIG.map(f=>`<div class="row" style="gap:10px;margin-bottom:4px">${avatarHTML(f)}<span style="width:5.5em">${esc(f.n)}</span><div class="bar" style="flex:1"><i style="width:${Math.min(100,(cnt[f.id]||0)*25)}%"></i></div><b class="num" style="width:2ch;text-align:right">${cnt[f.id]||0}</b></div>`).join('')}</div></div>
-        <div class="panel stack" style="align-items:center"><div style="width:min(100%,300px);background:#fff;border-radius:16px;padding:8px">${qrSVG(url)}</div><p class="small muted">QR-Code zum Beitreten</p></div></div>`;
+        <div class="panel stack" style="align-items:center"><div class="lr-qr">${qrSVG(url)}</div><p class="small muted">QR-Code zum Beitreten</p></div></div>`;
     }
     function playersHTML(){
       if(!players.length)return '<p class="small muted">Noch niemand im Raum.</p>';

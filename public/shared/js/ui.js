@@ -50,6 +50,32 @@ export function bindPhoto(root){$$('.photo',root).forEach(fig=>{
     $('button',info).addEventListener('click',()=>{info.hidden=true;b.setAttribute('aria-expanded','false');b.focus()});upd();info.focus()}));
   upd()})}
 
+/* ---------- Diagramme (SVG) ----------
+   Ein SVG schrumpft mit seiner viewBox. Damit die Schrift lesbar bleibt (gerendert mindestens 12 px auf dem Handy,
+   14 px ab 600 px für den Beamer), zeichnen die Diagramme mit svgMass() in der Breite, die wirklich da ist:
+   W = min(Vorlage, Breite des Elements), also nie kleiner als 1 px pro Einheit. fs(f) liefert die Schriftgröße in
+   Einheiten, handy = schmale Fassung (unter 600 px) mit weniger Beschriftung. beiBreite() zeichnet neu, wenn sich die
+   Breite ändert (Drehen, Fenstergröße), aber nicht bei Höhenänderungen und ohne Endlosschleife. */
+export const svgHandy=()=>matchMedia('(max-width:599px)').matches;
+/** Breite des Inhalts von el in px (ohne Innenabstand) */
+export const innenBreite=el=>{if(!el)return 0;const c=getComputedStyle(el);return el.clientWidth-(parseFloat(c.paddingLeft)||0)-(parseFloat(c.paddingRight)||0)};
+export function svgMass(el,Wv){
+  const w=innenBreite(el)||Wv,W=Math.min(Wv,Math.floor(w)),min=svgHandy()?12:14;
+  return {W,handy:svgHandy(),fs:f=>+Math.max(f,min*W/w+.05).toFixed(1)};
+}
+export function beiBreite(el,zeichne){
+  if(!el||typeof ResizeObserver==='undefined')return;
+  let b=el.clientWidth,vorher=-1,t=0,f=0;
+  const ro=new ResizeObserver(()=>{
+    if(!el.isConnected)return ro.disconnect();
+    const n=el.clientWidth;if(!n||n===b)return;
+    // Pendelt die Breite (z. B. Bildlaufleiste kommt und geht), nicht immer wieder neu zeichnen
+    if(n===vorher&&Date.now()-t<600)return;
+    vorher=b;b=n;t=Date.now();cancelAnimationFrame(f);f=requestAnimationFrame(()=>{if(el.isConnected)zeichne()});
+  });
+  ro.observe(el);
+}
+
 /** Kurzer Hinweis am unteren Rand (M3-Snackbar), verschwindet nach einigen Sekunden. */
 let snackT=null;
 export function zeigeHinweis(text){

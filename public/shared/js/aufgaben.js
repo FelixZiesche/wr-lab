@@ -124,6 +124,7 @@ function bindZuordnen(box){
   let lage=store(key('zu',id))||{},gewaehlt=null;
   const fachEl=f=>$(`.zu-fach[data-fach="${CSS.escape(f)}"] .zu-inhalt`,box);
   const zeichne=geprueft=>{
+    box.classList.toggle('zu-waehlt',!!gewaehlt); // Fächer hervorheben, solange eine Karte gewählt ist
     karten.forEach(k=>{const f=lage[k.dataset.k]||'';const ziel=fachEl(f)||fachEl('');if(k.parentElement!==ziel)ziel.append(k);
       k.setAttribute('aria-pressed',String(gewaehlt===k));k.classList.remove('right','wrong');
       if(geprueft&&f){k.classList.add(soll[k.dataset.k]===f?'right':'wrong')}});
@@ -131,12 +132,18 @@ function bindZuordnen(box){
   };
   const fachName=f=>{const x=(ZU_INFO.get(id)||[]).find(y=>y.id===f);return f&&x?plain(x.kurz||x.t):'Noch nicht zugeordnet'};
   const lege=(k,f)=>{lage[k.dataset.k]=f;gewaehlt=null;$('[data-ergebnis]',box).textContent=`Karte liegt jetzt bei „${fachName(f)}“.`;zeichne(false)};
+  // Auf dem Handy liegen die Fächer oft unter dem sichtbaren Bereich: dann sagen, wo es weitergeht
+  const TIPP='Jetzt unten ein Fach antippen.',erg=$('[data-ergebnis]',box);
+  const faecherSichtbar=()=>{const r=$('.zu-faecher',box).getBoundingClientRect(),unten=innerHeight-($('#nav-bar')?.offsetHeight||0);return r.top<unten-40&&r.bottom>80};
   karten.forEach(k=>{
-    k.addEventListener('click',()=>{gewaehlt=gewaehlt===k?null:k;zeichne(false)});
+    k.addEventListener('click',()=>{gewaehlt=gewaehlt===k?null:k;zeichne(false);
+      if(gewaehlt&&matchMedia('(max-width:599px)').matches&&!faecherSichtbar())erg.textContent=TIPP;else if(erg.textContent===TIPP)erg.textContent=''});
     k.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',k.dataset.k);e.dataTransfer.effectAllowed='move'});
   });
   $$('.zu-fach',box).forEach(f=>{
-    $('.zu-ziel',f).addEventListener('click',()=>{if(gewaehlt)lege(gewaehlt,f.dataset.fach)});
+    // Das ganze Fach nimmt die gewählte Karte an, nicht nur sein Kopf (der Knopf darin bleibt für die Tastatur).
+    // Klicks auf Karten und auf den Hilfeknopf zählen nicht, sonst landete die gewählte Karte beim Umwählen im Fach.
+    f.addEventListener('click',e=>{if(!gewaehlt||e.target.closest('.zu-karte,.zu-info'))return;lege(gewaehlt,f.dataset.fach)});
     f.addEventListener('dragover',e=>{e.preventDefault();f.classList.add('ueber')});
     f.addEventListener('dragleave',()=>f.classList.remove('ueber'));
     f.addEventListener('drop',e=>{e.preventDefault();f.classList.remove('ueber');const k=karten[+e.dataTransfer.getData('text/plain')];if(k)lege(k,f.dataset.fach)});
@@ -762,7 +769,7 @@ function bindAkte(box){
   function oeffne(i,fokus){
     st.fall=i;sichern();stand();
     const f=def.faelle[i],el=$('[data-akte-fall]',box),baukasten=Array.isArray(f.loesung);
-    el.innerHTML=`<article class="aufgabe"><p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">folder_open</span>Fall ${i+1}: ${f.titel}</p>
+    el.innerHTML=`<article class="aufgabe"><p class="aufgabe-kopf" tabindex="-1" data-akte-kopf><span class="ms sm" aria-hidden="true">folder_open</span>Fall ${i+1}: ${f.titel}</p>
       ${steckbriefHTML(f)}
       <div class="wc-material akte-text">${f.text}</div>${f.frage?`<p class="aufgabe-frage">${f.frage}</p>`:''}
       <p class="small muted">Löse den Fall mit dem Rechts-Navi: Tippe bei jeder Frage die Antwort, die zum Fall passt.</p>
@@ -795,7 +802,8 @@ function bindAkte(box){
     if(g){r.loese();if(baukasten&&g.gut===undefined)gutachten();else loesung(!!g.gut)}else r.neu();
     $('[data-akte-neu]',el).addEventListener('click',()=>{delete st.geloest[i];sichern();stand();ziel.innerHTML='';r.neu();$('[data-route] [data-j]',el)?.focus()});
     $('[data-akte-weiter]',el)?.addEventListener('click',()=>{oeffne(i+1,true)});
-    if(fokus){el.scrollIntoView({block:'start'});$('[data-route] [data-j]',el)?.focus({preventScroll:true})}
+    // Fokus auf die Fallüberschrift: Man sieht den Fall (Abstand zur Kopfzeile: scroll-padding in m3.css) und hört ihn angesagt
+    if(fokus){el.scrollIntoView({block:'start'});$('[data-akte-kopf]',el).focus({preventScroll:true})}
   }
   $$('[data-fall]',box).forEach(b=>b.addEventListener('click',()=>oeffne(+b.dataset.fall,true)));
   oeffne(Math.min(st.fall||0,def.faelle.length-1),false);

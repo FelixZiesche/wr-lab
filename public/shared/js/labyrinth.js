@@ -19,7 +19,7 @@
 // Icons, die das Thema in icon_names braucht: block, casino, check_circle, directions_walk, explore, flag,
 // keyboard_arrow_down, keyboard_arrow_left, keyboard_arrow_right, keyboard_arrow_up, lock, lock_open, replay,
 // restart_alt, undo, workspace_premium und die Icons der Wege.
-import { $, $$, store } from './ui.js';
+import { $, $$, store, zeigeHinweis } from './ui.js';
 import { raum, registriere } from './lernraum.js';
 
 const T=40,TEMPO=90,DEFS=new Map();
@@ -86,6 +86,8 @@ export function bindLabyrinth(box){
   if(!st.erg){st.erg={};wege.forEach(w=>{if(st.tipp[w.id])st.erg[w.id]=w.erg})} // alter Spielstand: geschätzt = erkundet
   const sichern=()=>store(K,{tipp:st.tipp,erg:st.erg,weg:st.weg,schritte:st.schritte});
   let pos=F[start],offen={},wurf={},gesehen,timer=null,modus={},angesagt=false;
+  // Würfel: rollt = laufender Wurf (Intervall), lauf zählt die Würfe; ein abgebrochener Wurf schreibt kein Ergebnis mehr
+  let rollt=null,lauf=0;const wurfStopp=()=>{clearInterval(rollt);rollt=null;lauf++};
   const frei=f=>!!f&&(['gang','start','schild','ziel'].includes(f.typ)||(f.typ==='ast'&&!!st.tipp[wege[f.k].id])||(f.typ==='tor'&&!!offen[f.k]));
   const erkundet=k=>!!st.erg[wege[k].id];
   function nebel(){gesehen=new Set(F.filter(f=>['gang','start','schild','ziel'].includes(f.typ)||((f.typ==='ast'||f.typ==='tor')&&erkundet(f.k))).map(f=>f.i))}
@@ -103,7 +105,7 @@ export function bindLabyrinth(box){
       [[1,0],[0,1]].forEach(([dx,dy])=>{const n=at(f.x+dx,f.y+dy);if(!n||!sicht(n))return;const cc=c&&(farbe(n)===c||n.typ==='schild')?c:'';
         rand+=dx?`<rect x="${x}" y="${y-18}" width="${T}" height="36"/>`:`<rect x="${x-18}" y="${y}" width="36" height="${T}"/>`;
         pfad+=dx?`<rect class="lab-pfad${cc}" x="${x}" y="${y-15}" width="${T}" height="30"/>`:`<rect class="lab-pfad${cc}" x="${x-15}" y="${y}" width="30" height="${T}"/>`});
-      if(f.typ==='start')deko+=`<text x="${x}" y="${y}" class="lab-start-t">Start</text>`;
+      if(f.typ==='start')deko+=`<text x="${x}" y="${y+T*.66}" class="lab-start-t">Start</text>`; // unter dem Feld, die Figur verdeckt es nicht
       if(f.typ==='ast'&&!st.tipp[wege[f.k].id])deko+=`<g class="lab-zu"><circle cx="${x}" cy="${y}" r="11"/><text x="${x}" y="${y}">?</text></g>`;
       if(f.typ==='tor'&&!offen[f.k])deko+=`<g class="lab-tor">${[-9,0,9].map(d=>`<line x1="${x+d}" y1="${y-13}" x2="${x+d}" y2="${y+13}"/>`).join('')}<line x1="${x-14}" y1="${y-4}" x2="${x+14}" y2="${y-4}"/></g>`});
     // Ziel: Lichtung mit Foto
@@ -125,12 +127,15 @@ export function bindLabyrinth(box){
   function stoss(){const fi=$('.lab-figur-in',figur);fi.classList.remove('stoss');void fi.getBoundingClientRect();fi.classList.add('stoss');ansage('Hecke. Hier geht es nicht weiter.')}
   function ansage(t){angesagt=true;ansageEl.textContent='';requestAnimationFrame(()=>{ansageEl.textContent=t})}
   const ortText=()=>{const r=nachbarn(pos).map(([r])=>r);return `${pos.typ==='schild'?`Kreuzung ${pos.k+1}`:pos.typ==='start'?'Start':'Gang'}. Frei: ${r.join(', ')||'nichts'}.`};
-  // Bei einer Entscheidung: Tastaturnutzer springen ins Panel, alle anderen sehen es (Handy: hinscrollen)
+  // Bei einer Entscheidung: Tastaturnutzer springen ins Panel, alle sehen es. Auf dem Handy so weit scrollen, dass die
+  // Knöpfe über der Navigation Bar liegen (die Leiste unten verdeckt sonst die Schätz-Knöpfe).
   function fokusPanel(){
-    if(box.contains(document.activeElement)&&document.activeElement!==document.body){$('button',panel)?.focus();return}
-    const r=panel.getBoundingClientRect();if(r.top>innerHeight-60||r.bottom<60)panel.scrollIntoView({block:'nearest',behavior:ruhig()?'auto':'smooth'});
+    if(box.contains(document.activeElement)&&document.activeElement!==document.body)$('button',panel)?.focus({preventScroll:true});
+    const ziel=$('.navi-antw',panel)||panel,unten=innerHeight-($('#nav-bar')?.offsetHeight||0),r=ziel.getBoundingClientRect();
+    if(r.bottom>unten-8||r.top<72)ziel.scrollIntoView({block:r.height>unten-120?'start':'end',behavior:ruhig()?'auto':'smooth'});
   }
-  const zurFigur=()=>feld.focus({preventScroll:true});
+  // Zurück zur Figur: Auf dem Handy liegt das Labyrinth nach dem Schätzen oft außerhalb des Bildes
+  const zurFigur=()=>{feld.focus({preventScroll:true});if(matchMedia('(max-width:599px)').matches)feld.scrollIntoView({block:'nearest',behavior:ruhig()?'auto':'smooth'})};
 
   /* ---------- Panel ---------- */
   const tippFb=w=>{const t=st.tipp[w.id];return !t?'':t===w.erg?'Gut eingeschätzt!':`Du hattest „${namen[t]}“ getippt.`};
@@ -158,16 +163,17 @@ export function bindLabyrinth(box){
   function wurfHTML(k,n){const w=wege[k],wf=w.wuerfel||{};
     return n>=ja?`<div class="fb ok"><p><span class="ms sm" aria-hidden="true">lock_open</span> <b>${n} – Ja!</b> ${wf.ja||''}</p><p>Das Tor ist offen. Lauf weiter ins Ziel!</p></div>`
       :`<div class="fb bad"><p><span class="ms sm" aria-hidden="true">lock</span> <b>${n} – Nein.</b> ${wf.nein||''}</p></div>${ergebnisHTML(w)}`+knopf('data-lab-zurueck','undo','Zurück zur Kreuzung')}
-  function wuerfelPanel(k){const w=wege[k],n=wurf[k];modus={art:'wuerfel',k};st.weg=k;
+  function wuerfelPanel(k){if(rollt&&modus.art==='wuerfel'&&modus.k===k)return; // der Würfel rollt noch: kein zweiter Wurf
+    const w=wege[k],n=wurf[k];modus={art:'wuerfel',k};st.weg=k;
     panel.innerHTML=kopfHTML(k)+`<div class="lab-wurf"><div data-lab-wuerfel>${wuerfelHTML(n||5,!n)}</div><div class="stack lab-info"><p><b>${namen.glueck}!</b> ${w.wuerfel?.frage||''}</p><p class="small muted">Der Würfel entscheidet: Bei ${ja} oder mehr Augen heißt es Ja.</p></div></div>`
       +(n?wurfHTML(k,n):knopf('data-lab-wuerfeln','casino','Würfeln'));
     $('[data-lab-zurueck]',panel)?.addEventListener('click',()=>{springe(schild[k]);zurFigur()});
     $('[data-lab-wuerfeln]',panel)?.addEventListener('click',e=>{e.currentTarget.disabled=true;
-      const z=1+Math.floor(Math.random()*6),el=$('[data-lab-wuerfel]',panel);
-      const fertig=()=>{wurf[k]=z;st.erg[w.id]=z>=ja?'ja':'nein';if(z>=ja)offen[k]=true;sichern();zeichneKarte();zeichneStand();wuerfelPanel(k);
+      const z=1+Math.floor(Math.random()*6),el=$('[data-lab-wuerfel]',panel),meins=++lauf;
+      const fertig=()=>{if(meins!==lauf)return;rollt=null;wurf[k]=z;st.erg[w.id]=z>=ja?'ja':'nein';if(z>=ja)offen[k]=true;sichern();zeichneKarte();zeichneStand();wuerfelPanel(k);
         ansage(z>=ja?`${z}. Ja! Das Tor ist offen.`:`${z}. Nein.`);if(z>=ja)zurFigur();else $('[data-lab-zurueck]',panel)?.focus({preventScroll:true})};
       if(ruhig())return fertig();
-      let i=0;const t=setInterval(()=>{el.innerHTML=wuerfelHTML(1+Math.floor(Math.random()*6));el.firstElementChild.classList.add('rollt');if(++i>=8){clearInterval(t);fertig()}},70);
+      let i=0;const t=rollt=setInterval(()=>{el.innerHTML=wuerfelHTML(1+Math.floor(Math.random()*6));el.firstElementChild.classList.add('rollt');if(++i>=8){clearInterval(t);fertig()}},70);
     });
     ansage(`${namen.glueck}! ${w.wuerfel?.frage||''}`);fokusPanel();
   }
@@ -209,19 +215,21 @@ export function bindLabyrinth(box){
       r=aus[0][0];timer=setTimeout(weiter,ruhig()?0:TEMPO)};
     weiter();
   }
-  // Antippen: kürzester Weg über begehbare Felder; das Zielfeld selbst darf gesperrt sein (dann kommt die Meldung)
+  // Antippen: kürzester Weg über begehbare Felder; das Zielfeld selbst darf gesperrt sein (dann kommt die Meldung).
+  // Ein Tipp auf das Foto im Ziel zählt für jedes Zielfeld (das Foto liegt über mehreren Feldern).
   function geheZu(z){
-    if(!z||z.typ==='hecke'||!gesehen.has(z.i)||z===pos)return;
+    if(!z||z===pos)return;
+    if(z.typ==='hecke'||!gesehen.has(z.i))return zeigeHinweis('Dorthin führt kein freier Weg. Hecke oder Nebel – lauf erst näher heran.');
     const vor=new Map([[pos.i,null]]),q=[pos];
-    while(q.length){const f=q.shift();if(f===z)break;if(f!==pos&&(f.typ==='ziel'))continue;
+    while(q.length){const f=q.shift();if(f===z||(z.typ==='ziel'&&f.typ==='ziel'&&f!==pos)){z=f;break}if(f!==pos&&(f.typ==='ziel'))continue;
       for(const [r,n] of nachbarn(f))if(!vor.has(n.i)&&(n===z||frei(n))){vor.set(n.i,[f,r]);q.push(n)}}
-    if(!vor.has(z.i))return ansage('Dorthin führt kein freier Weg.');
+    if(!vor.has(z.i))return zeigeHinweis('Dorthin führt noch kein freier Weg.');
     const pfad=[];for(let f=z;vor.get(f.i);f=vor.get(f.i)[0])pfad.unshift(vor.get(f.i)[1]);
     halt();angesagt=false;let i=0;
     const weiter=()=>{if(i>=pfad.length||!schritt(pfad[i++]))return fertigGelaufen();timer=setTimeout(weiter,ruhig()?0:TEMPO)};
     weiter();
   }
-  function springe(f){halt();pos=f;setze(f,true);sehe(f);zeichneKarte();ankommen(f);zeichneStand()}
+  function springe(f){halt();wurfStopp();pos=f;setze(f,true);sehe(f);zeichneKarte();ankommen(f);zeichneStand()}
 
   /* ---------- Stand und Wegeliste ---------- */
   function zeichneStand(){
@@ -229,7 +237,8 @@ export function bindLabyrinth(box){
     $('[data-lab-stand]',box).textContent=`${n} von ${wege.length} Wegen erkundet · ${st.schritte} ${st.schritte===1?'Schritt':'Schritte'}`;
     $$('[data-lab-weg]',box).forEach(bt=>{const k=+bt.dataset.labWeg,w=wege[k];bt.classList.toggle('geloest',erkundet(k));
       if(k===st.weg)bt.setAttribute('aria-current','true');else bt.removeAttribute('aria-current');
-      $('[data-status]',bt).innerHTML=erkundet(k)?`<span class="ms sm" aria-hidden="true">${ERG[w.erg][1]}</span>${namen[w.erg]}`:st.tipp[w.id]?'Tipp abgegeben':'noch offen'});
+      const stx=$('[data-status]',bt);stx.className='akte-status small'+(erkundet(k)?' '+ERG[w.erg][0]:''); // Farbe wie auf der Karte
+      stx.innerHTML=erkundet(k)?`<span class="ms sm" aria-hidden="true">${ERG[w.erg][1]}</span>${namen[w.erg]}`:st.tipp[w.id]?'Tipp abgegeben':'noch offen'});
     $('[data-lab-fertig]',box).innerHTML=n===wege.length?`<div class="fb ok"><span class="ms sm" aria-hidden="true">workspace_premium</span> <b>Mission erfüllt!</b> Du hast ${richtig} von ${n} Wegen richtig eingeschätzt. ${def.fertig?def.fertig(richtig,n):''}</div>`:'';
     sichern();
   }
@@ -244,7 +253,7 @@ export function bindLabyrinth(box){
     const r=svg.getBoundingClientRect();geheZu(at(Math.floor((e.clientX-r.left)/r.width*b),Math.floor((e.clientY-r.top)/r.height*h)))});
   $$('[data-lab-dir]',box).forEach(bt=>bt.addEventListener('click',()=>laufe(bt.dataset.labDir,true)));
   $$('[data-lab-weg]',box).forEach(bt=>bt.addEventListener('click',()=>{springe(schild[+bt.dataset.labWeg]);fokusPanel()}));
-  $('[data-lab-neu]',box).addEventListener('click',()=>{halt();st={tipp:{},erg:{},schritte:0};offen={};wurf={};nebel();pos=F[start];setze(pos,true);sehe(pos);zeichneKarte();panelStart();zeichneStand();ansage('Neue Mission. Du stehst am Start.')});
+  $('[data-lab-neu]',box).addEventListener('click',()=>{halt();wurfStopp();st={tipp:{},erg:{},schritte:0};offen={};wurf={};nebel();pos=F[start];setze(pos,true);sehe(pos);zeichneKarte();panelStart();zeichneStand();ansage('Neue Mission. Du stehst am Start.')});
 
   nebel();sehe(pos);setze(pos,true);zeichneKarte();panelStart();zeichneStand();
 }

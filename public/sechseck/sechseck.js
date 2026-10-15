@@ -1,11 +1,11 @@
 // Lernwerkstatt Magisches Sechseck: Werkstätten, Wissen und Planspiel „Sechseck-Leben“.
 // Gerüst, Navigation und Planspiel-Mechanik kommen aus /shared/, hier stehen nur die Inhalte.
-import { $, $$, fmt, sgn, clamp, esc, store } from '../shared/js/ui.js';
+import { $, $$, fmt, sgn, clamp, esc, store, svgMass, svgHandy, innenBreite, beiBreite, zeigeHinweis } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
 import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls } from '../shared/js/aufgaben.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
 import { raum } from '../shared/js/lernraum.js';
-import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, START, GOAL_IMG } from './daten.js';
+import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, eckPos, START, GOAL_IMG } from './daten.js';
 import { SPIEL, PHOTOS } from './leben.js';
 import { HINWEISE, WAND, IMPULS } from './wand.js';
 import { WISSENSCHECK } from './wissenscheck.js';
@@ -72,7 +72,7 @@ const GLOSS=[
 /* ---------- Kapitel und Bereiche ---------- */
 const CH={1:['Kapitel 1 – Grundlagen','Einstieg für alle'],2:['Kapitel 2 – Die sechs Ziele messen','Sechs Werkstätten, eine pro Ziel'],3:['Kapitel 3 – Zielbeziehungen','Harmonie, Konflikt, Neutralität'],4:['Kapitel 4 – Wirtschaftspolitik','Entscheiden und bewerten'],5:['Kapitel 5 – Planspiel','Allein oder als ganze Klasse'],6:['Kapitel 6 – Sichern','Wiederholung und Abiturvorbereitung']};
 const DEST=[
-  {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Magisches Sechseck',kurz:'Magisches Sechseck',render:startHTML},
+  {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Magisches Sechseck',kurz:'Sechseck',render:startHTML},
   {id:'ziele',icon:'hexagon',label:'Ziele',title:'Die sechs Ziele messen',ch:[2],desc:'Sechs Werkstätten: Warenkorb, Arbeitsmarkt, Konjunktur, Leistungsbilanz, Lorenzkurve, Klima'},
   {id:'abwaegen',icon:'balance',label:'Abwägen',title:'Zielbeziehungen und Politik',ch:[3,4],desc:'Zielkonflikte aufdecken, Phillips-Kurve prüfen, Politik simulieren, Deutschland bewerten'},
   {id:'spiel',icon:'sports_esports',label:'Planspiel',title:'Planspiel Sechseck-Leben',ch:[5],tool:'leben',desc:'Acht Figuren aus Thüringen, vier Jahre Wirtschaftspolitik – allein oder als Klasse'},
@@ -91,7 +91,14 @@ const W=createWerkstatt({
   punkte:x=>x.goals.map(hexDot).join(''),
   hash(h){const c=joinHash(h);if(c){setPendingJoin(c);return 'spiel'}},
   beimZeigen(id,v){
-    $$('#hero-hex .hexcorner',v).forEach(g=>{const f=()=>openSteckbrief(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})});
+    // Sechseck-Grafik in der Breite zeichnen, die wirklich da ist (Schriftgröße), bei Größenänderung neu
+    const hx=$('#hero-hex',v);
+    if(hx){const z=()=>{const k=document.activeElement?.closest?.('#hero-hex .hexcorner')?.dataset.k;hx.innerHTML=heroHex(hx);
+      // Die ganze Ecke mit Beschriftung ist antippbar, auch die Lücke zwischen Punkt und Text
+      $$('.hexcorner',hx).forEach(g=>{try{const b=g.getBBox();g.insertAdjacentHTML('afterbegin',`<rect x="${b.x-4}" y="${b.y-4}" width="${b.width+8}" height="${b.height+8}" fill="transparent"/>`)}catch(e){}});
+      $$('.hexcorner',hx).forEach(g=>{const f=()=>openSteckbrief(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})});
+      if(k)$(`.hexcorner[data-k="${k}"]`,hx)?.focus({preventScroll:true})};
+      z();beiBreite(hx,z)}
     $$('.lage .chip',v).forEach(c=>c.addEventListener('click',()=>openTool(G[c.dataset.k].tool)));
     $('#cta-leben',v)?.addEventListener('click',()=>go('spiel'));
     if($('#reset',v)){
@@ -105,26 +112,47 @@ const {tool,erkHTML,bindErk,openModal,openTool,go,chapterHTML}=W;
 
 /* ---------- Sechseck-Grafik (Hero) ---------- */
 function wrapText(str,max){const w=str.split(' ');const out=[];let cur='';w.forEach(x=>{if((cur+' '+x).trim().length>max&&cur){out.push(cur);cur=x}else cur=(cur+' '+x).trim()});if(cur)out.push(cur);return out}
-function heroHex(){
-  const W=660,H=480,cx=330,cy=240,r=145;
+// Keine Zeile nur mit einem kurzen Wort („und“): das letzte Wort der Zeile davor dazunehmen, wenn es passt
+function ausgleichen(z,max){for(let i=1;i<z.length-1;i++)if(z[i].length<=4){const w=z[i-1].split(' ');if(w.length>1&&(w.at(-1)+' '+z[i]).length<=max){z[i]=w.pop()+' '+z[i];z[i-1]=w.join(' ')}}return z}
+// Breit: Kurzname und Langname an jeder Ecke. Schmal (unter 480 px, z. B. Handy): nur Buchstabe und Kurzname,
+// die Langnamen stehen im Steckbrief. Schrift gerendert mindestens 12 px (Handy) bzw. 14 px.
+function heroHex(el){
+  const w=innenBreite(el)||660,min=svgHandy()?12:14,kompakt=w<480;
+  if(kompakt){
+    const W=Math.floor(w),f=x=>Math.max(x,min),fl=f(15),r=Math.min(130,W*.35),ab=17+8,H=Math.round(2*r+2*(ab+fl)+16),cx=W/2,cy=H/2,p=hexPts(cx,cy,r);
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Magisches Sechseck mit sechs Zielen">`;
+    s+=`<polygon points="${ptsStr(p)}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.5"/>`;
+    for(let i=0;i<6;i++)for(let j=i+2;j<6;j++){ if(i===0&&j===5)continue; s+=`<line x1="${p[i][0]}" y1="${p[i][1]}" x2="${p[j][0]}" y2="${p[j][1]}" class="s-line" stroke-width="1" stroke-dasharray="3 5"/>`}
+    s+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" class="t-fg" font-size="${f(19)}" font-weight="700">Magisches</text><text x="${cx}" y="${cy+f(19)}" text-anchor="middle" class="t-fg" font-size="${f(19)}" font-weight="700">Sechseck</text>`;
+    ORDER.forEach((k,i)=>{const [x,y]=p[i],q=eckPos(i,cx,cy,r,ab,{handy:true,fs:fl,W,txt:G[k].short});
+      s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-label="${k} ${esc(G[k].short)} – ${esc(G[k].name)}: Steckbrief öffnen">
+      <circle class="dot" cx="${x}" cy="${y}" r="17" fill="${gc(k)}" stroke="var(--surface)" stroke-width="3"/>
+      <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="${f(14)}" font-weight="700">${k}</text>
+      <text x="${q.x}" y="${q.y}" text-anchor="middle" fill="${gc(k)}" class="t-halo" font-size="${fl}" font-weight="700">${esc(G[k].short)}</text></g>`});
+    return s+'</svg>';
+  }
+  // Breite Fassung: viewBox 660 × 480 wie bisher, Schrift wächst mit, wenn die Grafik kleiner dargestellt wird
+  const W=660,H=480,cx=330,cy=240,f=x=>+Math.max(x,min*W/w+.05).toFixed(1),fu=f(12),lh=fu*1.25;
+  // Platz für 20 Zeichen der Untertitel neben den seitlichen Ecken
+  const r=Math.min(145,(cx-20*fu*.52-6)/.866-30),zeichen=Math.floor((cx-.866*(r+30)-6)/(fu*.52));
   const p=hexPts(cx,cy,r);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Magisches Sechseck mit sechs Zielen">`;
   s+=`<polygon points="${ptsStr(hexPts(cx,cy,r))}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.5"/>`;
   for(let i=0;i<6;i++)for(let j=i+2;j<6;j++){ if(i===0&&j===5)continue; s+=`<line x1="${p[i][0]}" y1="${p[i][1]}" x2="${p[j][0]}" y2="${p[j][1]}" class="s-line" stroke-width="1" stroke-dasharray="3 5"/>`}
-  s+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" class="t-fg" font-size="21" font-weight="700">Magisches</text><text x="${cx}" y="${cy+18}" text-anchor="middle" class="t-fg" font-size="21" font-weight="700">Sechseck</text>`;
-  s+=`<text x="${cx}" y="${cy+40}" text-anchor="middle" class="t-mu" font-size="12">gestrichelt: Zielbeziehungen</text>`;
+  s+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" class="t-fg" font-size="${f(21)}" font-weight="700">Magisches</text><text x="${cx}" y="${cy+f(21)-3}" text-anchor="middle" class="t-fg" font-size="${f(21)}" font-weight="700">Sechseck</text>`;
+  s+=`<text x="${cx}" y="${cy+f(21)+fu+8}" text-anchor="middle" class="t-mu" font-size="${fu}">gestrichelt: Zielbeziehungen</text>`;
   ORDER.forEach((k,i)=>{
     const [x,y]=p[i]; const lp=hexPts(cx,cy,r+30)[i];
     const anchor=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');
     const lx=lp[0]+(anchor==='start'?-6:anchor==='end'?6:0);
-    const sub=wrapText(G[k].name,24); if(G[k].since==='Erweiterung') sub.push('(Erweiterung)');
-    const n=1+sub.length, lh=15;
+    const sub=ausgleichen(wrapText(G[k].name,anchor==='middle'?28:zeichen),zeichen); if(G[k].since==='Erweiterung') sub.push('(Erweiterung)');
+    const n=1+sub.length;
     const top= i===0 ? lp[1]-(n-1)*lh-2 : i===3 ? lp[1]+12 : lp[1]-((n-1)*lh)/2+5;
     s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-label="${k} ${esc(G[k].short)} – ${esc(G[k].name)}: Steckbrief öffnen">
       <circle class="dot" cx="${x}" cy="${y}" r="17" fill="${gc(k)}" stroke="var(--surface)" stroke-width="3"/>
-      <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="14" font-weight="700">${k}</text>
-      <text x="${lx}" y="${top}" text-anchor="${anchor}" fill="${gc(k)}" font-size="16" font-weight="700">${esc(G[k].short)}</text>
-      ${sub.map((ln,li)=>`<text x="${lx}" y="${top+(li+1)*lh}" text-anchor="${anchor}" class="t-mu" font-size="12">${esc(ln)}</text>`).join(' ')}
+      <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="${f(14)}" font-weight="700">${k}</text>
+      <text x="${lx}" y="${top}" text-anchor="${anchor}" fill="${gc(k)}" font-size="${f(16)}" font-weight="700">${esc(G[k].short)}</text>
+      ${sub.map((ln,li)=>`<text x="${lx}" y="${top+(li+1)*lh}" text-anchor="${anchor}" class="t-mu" font-size="${fu}">${esc(ln)}</text>`).join(' ')}
     </g>`;
   });
   s+='</svg>';
@@ -197,19 +225,20 @@ ${erkHTML('grundlagen')}`},
 init(root){
   let six=false, sel='P';
   const draw=()=>{
-    const W=500,H=380,cx=250,cy=188,r=120,p=hexPts(cx,cy,r);
+    const m=svgMass($('#gl-svg',root),500),W=m.W,f=m.fs,fl=f(14),kompakt=m.handy||W<480;
+    const r=kompakt?Math.min(120,W*.34):120,H=kompakt?Math.round(2*r+2*(29+fl)+12):380,cx=W/2,cy=kompakt?H/2:188,p=hexPts(cx,cy,r);
     const vis=six?ORDER:['P','B','W','A'];
     let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${six?'Magisches Sechseck':'Magisches Viereck'}">`;
     const poly=ORDER.map((k,i)=>vis.includes(k)?p[i]:null).filter(Boolean);
     s+=`<polygon points="${ptsStr(poly)}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.5" style="transition:all .4s"/>`;
     ORDER.forEach((k,i)=>{
-      const on=vis.includes(k);const [x,y]=p[i];const lp=hexPts(cx,cy,r+28)[i];const a=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');
+      const on=vis.includes(k);const [x,y]=p[i];const q=eckPos(i,cx,cy,r,kompakt?27:28,{handy:kompakt,fs:fl,W,txt:G[k].short});
       s+=`<g class="hexcorner" tabindex="${on?0:-1}" role="button" data-k="${k}" opacity="${on?1:.28}" aria-pressed="${sel===k}"${on?'':' aria-disabled="true"'} aria-label="${k} ${esc(G[k].short)} – ${esc(G[k].name)}">
         <circle class="dot" cx="${x}" cy="${y}" r="${sel===k?19:15}" fill="${on?gc(k):'none'}" stroke="${on?'var(--surface)':'var(--muted)'}" stroke-width="3" ${on?'':'stroke-dasharray="4 3"'}/>
-        <text x="${x}" y="${y+5}" text-anchor="middle" fill="${on?'var(--md-on-g-'+k+')':'var(--muted)'}" font-size="13" font-weight="700">${k}</text>
-        <text x="${lp[0]}" y="${lp[1]+(i===0?-4:i===3?14:5)}" text-anchor="${a}" fill="${on?gc(k):'var(--muted)'}" font-size="14" font-weight="700">${G[k].short}</text></g>`;
+        <text x="${x}" y="${y+5}" text-anchor="middle" fill="${on?'var(--md-on-g-'+k+')':'var(--muted)'}" font-size="${f(13)}" font-weight="700">${k}</text>
+        <text x="${q.x}" y="${q.y}" text-anchor="${q.a}" fill="${on?gc(k):'var(--muted)'}" font-size="${fl}" font-weight="700">${G[k].short}</text></g>`;
     });
-    s+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" class="t-fg" font-size="17" font-weight="700">${six?'6 Ziele':'4 Ziele'}</text></svg>`;
+    s+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" class="t-fg" font-size="${f(17)}" font-weight="700">${six?'6 Ziele':'4 Ziele'}</text></svg>`;
     $('#gl-svg',root).innerHTML=s;
     $$('.hexcorner',root).forEach(g=>{const f=()=>{if(!six&&['U','V'].includes(g.dataset.k))return;sel=g.dataset.k;draw()};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();$(`#gl-svg .hexcorner[data-k="${g.dataset.k}"]`,root)?.focus()}})}); // neu gezeichnet: Fokus zurück auf die Ecke
     $('#gl-sb',root).innerHTML=steckbriefHTML(sel);
@@ -218,7 +247,7 @@ init(root){
     $('#gl-ext',root).hidden=!six;
   };
   $('#gl-toggle',root).addEventListener('click',()=>{six=!six;if(!six&&['U','V'].includes(sel))sel='P';draw()});
-  draw();
+  draw();beiBreite($('#gl-svg',root),draw);
   bindErk(root);
 }});
 
@@ -240,7 +269,8 @@ html(){return `
 <p class="task"><b>Auftrag:</b> Passt den Warenkorb an euer Leben an: Mengen pro Monat und Preise (letztes Jahr / heute). Die Werkstatt berechnet euren persönlichen Preisindex nach dem Verfahren des Statistischen Bundesamts (Laspeyres). Vergleicht mit der offiziellen Inflationsrate.</p>
 <div class="grid2 wide-left">
   <div class="panel"><h3>Unser Warenkorb <span class="small muted">(Beispielpreise – ersetzt sie durch eure!)</span></h3>
-  <div class="tbl-wrap"><table><thead><tr><th>Gut</th><th class="r">Menge/Monat</th><th class="r">Preis 2025 (€)</th><th class="r">Preis 2026 (€)</th><th class="r">Änderung</th></tr></thead><tbody id="pr-body"></tbody></table></div>
+  <p class="small muted pr-wisch" id="pr-wisch" hidden><span class="ms sm" aria-hidden="true">swipe_left</span>Zur Seite wischen: Rechts stehen die Preise 2026 und die Änderung.</p>
+  <div class="tbl-wrap" id="pr-wrap"><table id="pr-tab"><thead><tr><th>Gut</th><th class="r"><span class="th-lang">Menge/Monat</span><span class="th-kurz">Menge</span></th><th class="r"><span class="th-lang">Preis 2025 (€)</span><span class="th-kurz">2025 €</span></th><th class="r"><span class="th-lang">Preis 2026 (€)</span><span class="th-kurz">2026 €</span></th><th class="r"><span class="th-lang">Änderung</span><span class="th-kurz">±</span></th></tr></thead><tbody id="pr-body"></tbody></table></div>
   <p class="small muted" style="margin-top:6px">Tankfüllung: Super E10 im Monatsmittel September 2025 und September 2026 (ADAC). Seit dem 1. Oktober 2026 macht der Tankrabatt den Liter um bis zu 17 Cent billiger.</p>
   <div class="row" style="margin-top:8px"><button class="btn small" id="pr-add" type="button"><span class="ms" aria-hidden="true">add</span>Eigenes Gut</button><button class="btn small" id="pr-reset" type="button"><span class="ms" aria-hidden="true">refresh</span>Beispielwerte laden</button></div></div>
   <div class="stack">
@@ -272,12 +302,14 @@ ${erkHTML('preis')}`},
 init(root){
   let items=store('ms6-basket')||BASKET.map(o=>({...o}));
   const body=$('#pr-body',root);
-  const row=(o,i)=>`<tr><td><input type="text" value="${esc(o.n)}" data-i="${i}" data-f="n" aria-label="Gut" style="border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--surface);width:100%;min-width:9em"></td>
+  const row=(o,i)=>`<tr><td><input class="pr-gut" type="text" value="${esc(o.n)}" data-i="${i}" data-f="n" aria-label="Gut"></td>
     <td class="r"><input type="number" min="0" step="1" value="${o.q}" data-i="${i}" data-f="q" aria-label="Menge"></td>
     <td class="r"><input type="number" min="0" step="0.01" value="${o.p0}" data-i="${i}" data-f="p0" aria-label="Preis 2025"></td>
     <td class="r"><input type="number" min="0" step="0.01" value="${o.p1}" data-i="${i}" data-f="p1" aria-label="Preis 2026"></td>
     <td class="r num" data-ch="${i}"></td></tr>`;
-  const renderRows=()=>{body.innerHTML=items.map(row).join('');calc()};
+  // Handy: Passt die Tabelle nicht ganz hinein, sagt ein Hinweis, dass rechts noch Spalten kommen
+  const wisch=()=>{const w=$('#pr-wrap',root);$('#pr-wisch',root).hidden=!(w.scrollWidth>w.clientWidth+2)};
+  const renderRows=()=>{body.innerHTML=items.map(row).join('');calc();wisch()};
   const calc=()=>{
     let c0=0,c1=0;items.forEach(o=>{c0+=o.q*o.p0;c1+=o.q*o.p1});
     items.forEach((o,i)=>{const el=$(`[data-ch="${i}"]`,body);if(el){const ch=o.p0>0?(o.p1/o.p0-1)*100:0;el.textContent=sgn(ch)+' %';el.style.color=ch>0.05?'var(--bad)':ch<-0.05?'var(--ok)':'var(--muted)'}});
@@ -285,17 +317,29 @@ init(root){
     $('#pr-idx',root).textContent=fmt(idx,1);
     $('#pr-rate',root).textContent=sgn(rate)+' %';
     $('#pr-cost',root).textContent=`Warenkorb kostet ${fmt(c0,2)} € (2025) bzw. ${fmt(c1,2)} € (2026) pro Monat: ${sgn(c1-c0,2)} €.`;
-    $('#pr-thermo',root).innerHTML=thermo(rate);
+    $('#pr-thermo',root).innerHTML=thermo(rate,$('#pr-thermo',root));
     // Beiträge
     const contr=items.map(o=>({n:o.n,v:c0>0?o.q*(o.p1-o.p0)/c0*100:0})).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v));
     const mx=Math.max(0.5,...contr.map(c=>Math.abs(c.v)));
-    const W=640,rh=24,H=contr.length*rh+10,x0=230,x1=W-60,zero=x0+(x1-x0)/2;
-    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beiträge der Güter zur Inflationsrate">`;
-    s+=`<line x1="${zero}" y1="0" x2="${zero}" y2="${H}" class="s-mu"/>`;
-    contr.forEach((c,i)=>{const y=5+i*rh;const w=(c.v/mx)*(x1-x0)/2;
-      s+=`<text x="${x0-8}" y="${y+15}" text-anchor="end" class="t-fg" font-size="12.5">${esc(c.n.length>32?c.n.slice(0,31)+'…':c.n)}</text>
-      <rect x="${w>=0?zero:zero+w}" y="${y+3}" width="${Math.max(1,Math.abs(w))}" height="${rh-8}" rx="3" fill="${c.v>=0?'var(--g-P)':'var(--ok)'}"/>
-      <text x="${w>=0?zero+w+5:zero+w-5}" y="${y+15}" text-anchor="${w>=0?'start':'end'}" class="t-mu num" font-size="11.5">${sgn(c.v,2)}</text>`});
+    const el=$('#pr-contrib',root),m=svgMass(el,640),W=m.W,fn=m.fs(12.5),fv=m.fs(11.5),kurz=(t,px)=>{const n=Math.floor(px/(fn*.53));return t.length>n?t.slice(0,n-1)+'…':t};
+    let s;
+    if(m.handy){
+      // Handy: Name über dem Balken, Wert daneben (sonst bliebe für die Balken kein Platz)
+      const rh=fn+26,x0=fv*3.6,x1=W-fv*3.6,zero=(x0+x1)/2,H=contr.length*rh+6;
+      s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beiträge der Güter zur Inflationsrate">`;
+      contr.forEach((c,i)=>{const y=4+i*rh,w=(c.v/mx)*(x1-x0)/2,yb=y+fn+6;
+        s+=`<line x1="${zero}" y1="${yb-3}" x2="${zero}" y2="${yb+17}" class="s-mu"/><text x="2" y="${y+fn}" class="t-fg" font-size="${fn}">${esc(kurz(c.n,W-4))}</text>
+        <rect x="${w>=0?zero:zero+w}" y="${yb}" width="${Math.max(1,Math.abs(w))}" height="14" rx="3" fill="${c.v>=0?'var(--g-P)':'var(--ok)'}"/>
+        <text x="${w>=0?zero+w+5:zero+w-5}" y="${yb+12}" text-anchor="${w>=0?'start':'end'}" class="t-mu num" font-size="${fv}">${sgn(c.v,2)}</text>`});
+    }else{
+      const rh=Math.max(24,fn+10),H=contr.length*rh+10,x0=Math.min(230,W*.42),x1=W-fv*4.2,zero=x0+(x1-x0)/2;
+      s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beiträge der Güter zur Inflationsrate">`;
+      s+=`<line x1="${zero}" y1="0" x2="${zero}" y2="${H}" class="s-mu"/>`;
+      contr.forEach((c,i)=>{const y=5+i*rh,w=(c.v/mx)*(x1-x0)/2,ym=y+rh/2;
+        s+=`<text x="${x0-8}" y="${ym+fn*.36}" text-anchor="end" class="t-fg" font-size="${fn}">${esc(kurz(c.n,x0-12))}</text>
+        <rect x="${w>=0?zero:zero+w}" y="${ym-8}" width="${Math.max(1,Math.abs(w))}" height="16" rx="3" fill="${c.v>=0?'var(--g-P)':'var(--ok)'}"/>
+        <text x="${w>=0?zero+w+5:zero+w-5}" y="${ym+fv*.36}" text-anchor="${w>=0?'start':'end'}" class="t-mu num" font-size="${fv}">${sgn(c.v,2)}</text>`});
+    }
     $('#pr-contrib',root).innerHTML=s+'</svg>';
     store('ms6-basket',items);
   };
@@ -303,6 +347,7 @@ init(root){
   $('#pr-add',root).addEventListener('click',()=>{items.push({n:'Neues Gut',q:1,p0:10,p1:10});renderRows()});
   $('#pr-reset',root).addEventListener('click',()=>{items=BASKET.map(o=>({...o}));renderRows()});
   renderRows();
+  beiBreite($('#pr-contrib',root),calc);beiBreite($('#pr-thermo',root),()=>{calc();wisch()});
   const rl=()=>{const n=+$('#rl-n',root).value,i=+$('#rl-i',root).value;const r=((1+n/100)/(1+i/100)-1)*100;
     $('#rl-no',root).textContent=sgn(n)+' %';$('#rl-io',root).textContent=sgn(i)+' %';
     const el=$('#rl-r',root);el.textContent=sgn(r,2)+' %';el.style.color=r>=0?'var(--ok)':'var(--bad)';
@@ -312,14 +357,17 @@ init(root){
   ['#kk-i','#kk-y'].forEach(s=>$(s,root).addEventListener('input',kk));kk();
   bindErk(root);
 }});
-function thermo(rate){
-  const W=520,H=86,x0=20,x1=W-20,min=-2,max=10,sx=v=>x0+(clamp(v,min,max)-min)/(max-min)*(x1-x0);
+// Zonen-Namen in zwei Reihen, damit sie sich auch bei großer Schrift nicht überlappen
+function thermo(rate,el){
+  const m=svgMass(el,520),W=m.W,fl=m.fs(11),x0=Math.max(20,fl*1.6),x1=W-x0,min=-2,max=10,sx=v=>x0+(clamp(v,min,max)-min)/(max-min)*(x1-x0);
+  const r1=fl+2,r2=2*fl+6,yb=r2+6,yt=yb+16+fl+4,H=yt+28;
   const zones=[[-2,0,'var(--g-B)','Deflation'],[0,1.5,'var(--neu)','niedrig'],[1.5,2.5,'var(--ok)','Zielbereich'],[2.5,5,'var(--amb)','erhöht'],[5,10,'var(--bad)','hoch']];
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Inflationsrate ${fmt(rate)} Prozent auf einer Skala">`;
-  zones.forEach(([a,b,c,l])=>{s+=`<rect x="${sx(a)}" y="22" width="${sx(b)-sx(a)}" height="16" fill="${c}" opacity=".75"/><text x="${(sx(a)+sx(b))/2}" y="14" text-anchor="middle" class="t-mu" font-size="11">${l}</text>`});
-  [-2,0,2,4,6,8,10].forEach(v=>{s+=`<text x="${sx(v)}" y="54" text-anchor="middle" class="t-mu num" font-size="11">${v} %</text>`});
-  s+=`<line x1="${sx(2)}" y1="18" x2="${sx(2)}" y2="42" class="s-fg" stroke-width="2"/>`;
-  const x=sx(rate);s+=`<polygon points="${x-8},80 ${x+8},80 ${x},62" fill="var(--fg)"/>`;
+  zones.forEach(([a,b,c,l],i)=>{const hw=l.length*fl*.28+2,x=clamp((sx(a)+sx(b))/2,hw,W-hw);
+    s+=`<rect x="${sx(a)}" y="${yb}" width="${sx(b)-sx(a)}" height="16" fill="${c}" opacity=".75"/><text x="${x}" y="${i%2?r2:r1}" text-anchor="middle" class="t-mu" font-size="${fl}">${l}</text>`});
+  [-2,0,2,4,6,8,10].forEach(v=>{s+=`<text x="${sx(v)}" y="${yt}" text-anchor="middle" class="t-mu num" font-size="${fl}">${v<0?'−'+-v:v} %</text>`});
+  s+=`<line x1="${sx(2)}" y1="${yb-4}" x2="${sx(2)}" y2="${yb+20}" class="s-fg" stroke-width="2"/>`;
+  const x=sx(rate);s+=`<polygon points="${x-8},${H-2} ${x+8},${H-2} ${x},${yt+6}" fill="var(--fg)"/>`;
   return s+'</svg>';
 }
 
@@ -368,15 +416,18 @@ init(root){
   const PR={de:[2994,43790],th:[69,1027],vb:[1300,44500]};
   const upd=()=>{const a=+$('#al-a',root).value,e=+$('#al-e',root).value;const q=a/(a+e)*100;
     $('#al-ao',root).textContent=fmt(a,0);$('#al-eo',root).textContent=fmt(e,0);$('#al-q',root).textContent=fmt(q,1)+' %';
-    const W=520,H=60,x0=16,x1=W-16,mx=15,sx=v=>x0+clamp(v,0,mx)/mx*(x1-x0);
+    // „Vollbeschäftigung“ steht über dem schmalen Feld 0 bis 3 % in einer eigenen Reihe, linksbündig (ragt nicht aus dem Bild)
+    const el=$('#al-g',root),m=svgMass(el,520),W=m.W,fl=m.fs(10.5),x0=Math.max(16,fl*1.4),x1=W-x0,mx=15,sx=v=>x0+clamp(v,0,mx)/mx*(x1-x0);
+    const r1=fl+1,r2=2*fl+5,yb=r2+5,yt=yb+12+fl+4,H=yt+18;
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Arbeitslosenquote auf Skala">`;
-    [[0,3,'var(--ok)','Vollbeschäftigung (Faustregel)'],[3,6,'var(--amb)','mittel'],[6,15,'var(--bad)','hoch']].forEach(([a,b,c,l])=>{s+=`<rect x="${sx(a)}" y="18" width="${sx(b)-sx(a)}" height="12" fill="${c}" opacity=".7"/><text x="${(sx(a)+sx(b))/2}" y="12" text-anchor="middle" class="t-mu" font-size="10.5">${l}</text>`});
-    [0,3,6,9,12,15].forEach(v=>s+=`<text x="${sx(v)}" y="46" text-anchor="middle" class="t-mu" font-size="10.5">${v} %</text>`);
-    const x=sx(q);s+=`<polygon points="${x-7},58 ${x+7},58 ${x},34" fill="var(--fg)"/>`;
-    $('#al-g',root).innerHTML=s+'</svg>'};
+    [[0,3,'var(--ok)','Vollbeschäftigung (Faustregel)'],[3,6,'var(--amb)','mittel'],[6,15,'var(--bad)','hoch']].forEach(([a,b,c,l],i)=>{s+=`<rect x="${sx(a)}" y="${yb}" width="${sx(b)-sx(a)}" height="12" fill="${c}" opacity=".7"/>`+
+      (i?`<text x="${(sx(a)+sx(b))/2}" y="${r2}" text-anchor="middle" class="t-mu" font-size="${fl}">${l}</text>`:`<text x="${sx(a)}" y="${r1}" class="t-mu" font-size="${fl}">${l}</text>`)});
+    [0,3,6,9,12,15].forEach(v=>s+=`<text x="${sx(v)}" y="${yt}" text-anchor="${v?'middle':'start'}" class="t-mu" font-size="${fl}">${v} %</text>`);
+    const x=sx(q);s+=`<polygon points="${x-7},${H-2} ${x+7},${H-2} ${x},${yt+4}" fill="var(--fg)"/>`;
+    el.innerHTML=s+'</svg>'};
   $$('[data-preset]',root).forEach(b=>b.addEventListener('click',()=>{const [a,e]=PR[b.dataset.preset];
     const sa=$('#al-a',root),se=$('#al-e',root);if(b.dataset.preset==='th'){sa.min=5;se.min=200}sa.value=a;se.value=e;upd()}));
-  ['#al-a','#al-e'].forEach(s=>$(s,root).addEventListener('input',upd));upd();
+  ['#al-a','#al-e'].forEach(s=>$(s,root).addEventListener('input',upd));upd();beiBreite($('#al-g',root),upd);
   bindErk(root);
 }});
 
@@ -415,35 +466,39 @@ ${impuls(IMPULS.wachstum)}
 ${erkHTML('wachstum')}`},
 init(root){
   const draw=t=>{
-    const W=600,H=260,x0=40,x1=W-14,y0=210,sx=v=>x0+v/100*(x1-x0);
+    const el=$('#kz-svg',root),m=svgMass(el,600),W=m.W,fl=m.fs(11),H=260,x0=m.handy?16:40,x1=W-14,y0=H-fl-36,sx=v=>x0+v/100*(x1-x0);
     const per=50, yv=v=>y0-30-v*1.1-48*Math.sin(2*Math.PI*v/per);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Konjunkturzyklus">`;
     s+=`<line x1="${x0}" y1="${y0+20}" x2="${x1}" y2="${y0+20}" class="s-mu"/><line x1="${x0}" y1="10" x2="${x0}" y2="${y0+20}" class="s-mu"/>`;
-    s+=`<text x="${x1}" y="${y0+36}" text-anchor="end" class="t-mu" font-size="11">Zeit</text><text x="${x0+4}" y="18" class="t-mu" font-size="11">reales BIP</text>`;
-    s+=`<line x1="${sx(0)}" y1="${y0-30}" x2="${sx(100)}" y2="${y0-30-110}" stroke="var(--muted)" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${sx(100)-4}" y="${y0-30-110+16}" text-anchor="end" class="t-mu" font-size="11">Trend (Potenzial)</text>`;
+    s+=`<text x="${x1}" y="${y0+24+fl}" text-anchor="end" class="t-mu" font-size="${fl}">Zeit</text><text x="${x0+4}" y="${fl+6}" class="t-mu" font-size="${fl}">reales BIP</text>`;
+    // Beschriftung links unter dem Anfang der Trendlinie, dort kreuzt keine Kurve; Halo als Schutz
+    s+=`<line x1="${sx(0)}" y1="${y0-30}" x2="${sx(100)}" y2="${y0-30-110}" stroke="var(--muted)" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${sx(1)}" y="${y0-30+fl+6}" class="t-mu t-halo" font-size="${fl}">Trend (Potenzial)</text>`;
     let d='';for(let v=0;v<=100;v+=0.5)d+=(v?'L':'M')+sx(v).toFixed(1)+','+yv(v).toFixed(1);
     s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="3"/>`;
     const ph=v=>{const th=((2*Math.PI*v/per)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);if(th<Math.PI/4||th>=7*Math.PI/4)return 'auf';if(th<3*Math.PI/4)return 'boom';if(th<5*Math.PI/4)return 'ab';return 'tief'};
     // Phasen-Beschriftung an Hoch- und Tiefpunkten
-    [[12.5,'Boom'],[37.5,'Tiefstand'],[62.5,'Boom'],[87.5,'Tiefstand']].forEach(([v,l])=>{s+=`<text x="${sx(v)}" y="${yv(v)+(l==='Boom'?-14:24)}" text-anchor="middle" class="t-mu" font-size="11">${l}</text>`});
+    [[12.5,'Boom'],[37.5,'Tiefstand'],[62.5,'Boom'],[87.5,'Tiefstand']].forEach(([v,l])=>{s+=`<text x="${sx(v)}" y="${yv(v)+(l==='Boom'?-14:14+fl)}" text-anchor="middle" class="t-mu" font-size="${fl}">${l}</text>`});
     const x=sx(t),y=yv(t);s+=`<line x1="${x}" y1="${y}" x2="${x}" y2="${y0+20}" stroke="var(--g-W)" stroke-dasharray="3 3"/><circle cx="${x}" cy="${y}" r="8" fill="var(--g-W)" stroke="var(--surface)" stroke-width="3"/>`;
     $('#kz-svg',root).innerHTML=s+'</svg>';
     const P=PHASES[ph(t)];$('#kz-name',root).textContent=P.n;$('#kz-desc',root).textContent=P.d;
     $('#kz-tab',root).innerHTML=['Produktion, Auslastung','Arbeitslosigkeit','Preise','Zinsen','Stimmung (ifo-Index)'].map((n,i)=>`<tr><td class="muted">${n}</td><td><b>${P.t[i]}</b></td></tr>`).join('');
     $('#kz-to',root).textContent=Math.round(t)+' %';
   };
-  const sl=$('#kz-t',root);sl.addEventListener('input',()=>{draw(+sl.value);$('#kz-de-t',root).hidden=true});draw(+sl.value);
+  const sl=$('#kz-t',root);sl.addEventListener('input',()=>{draw(+sl.value);$('#kz-de-t',root).hidden=true});draw(+sl.value);beiBreite($('#kz-svg',root),()=>draw(+sl.value));
   $('#kz-de',root).addEventListener('click',()=>{sl.value=53;draw(53);$('#kz-de-t',root).hidden=false});
   // Balken
   // Werte negativer Balken stehen über der Nulllinie, damit sie nicht mit den Jahreszahlen kollidieren
-  const W=520,H=230,x0=40,x1=W-10,yz=128,sc=18;let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reales BIP-Wachstum Deutschland 2019 bis 2027">`;
-  [-4,-2,0,2,4].forEach(v=>{const y=yz-v*sc;s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="s-line"/><text x="${x0-6}" y="${y+4}" text-anchor="end" class="t-mu" font-size="11">${v}</text>`});
-  const bw=(x1-x0)/BIP.length;
+  // Ist für jede Jahreszahl zu wenig Platz (Handy), steht nur jede zweite da
+  const bip=()=>{const el=$('#bip-bars',root),m=svgMass(el,520),W=m.W,fl=m.fs(11),fv=m.fs(11.5),H=230,x0=fl*2.4,x1=W-6,yz=128,sc=18;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reales BIP-Wachstum Deutschland 2019 bis 2027">`;
+  [-4,-2,0,2,4].forEach(v=>{const y=yz-v*sc;s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="s-line"/><text x="${x0-6}" y="${y+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v}</text>`});
+  const bw=(x1-x0)/BIP.length,jede=bw<fl*3.1?2:1;
   BIP.forEach(([j,v],i)=>{const x=x0+i*bw+bw*0.18,w=bw*0.64,y=v>=0?yz-v*sc:yz;const pr=j.includes('*');
     s+=`<rect x="${x}" y="${y}" width="${w}" height="${Math.max(1,Math.abs(v)*sc)}" rx="3" fill="var(--g-W)" ${pr?'fill-opacity=".45" stroke="var(--g-W)" stroke-dasharray="4 3"':''}/>
-    <text x="${x+w/2}" y="${v>=0?y-5:yz-5}" text-anchor="middle" class="t-fg num" font-size="11.5" font-weight="700">${v?sgn(v):'0,0'}</text>
-    <text x="${x+w/2}" y="${H-6}" text-anchor="middle" class="t-mu" font-size="11">${j}</text>`});
-  $('#bip-bars',root).innerHTML=s+'</svg>';
+    <text x="${x+w/2}" y="${v>=0?y-5:yz-5}" text-anchor="middle" class="t-fg num" font-size="${fv}" font-weight="700">${v?sgn(v):'0,0'}</text>
+    ${i%jede?'':`<text x="${x+w/2}" y="${H-6}" text-anchor="middle" class="t-mu" font-size="${fl}">${j}</text>`}`});
+  el.innerHTML=s+'</svg>'};
+  bip();beiBreite($('#bip-bars',root),bip);
   const bn=()=>{const n=+$('#bn-n',root).value,p=+$('#bn-p',root).value,b=+$('#bn-b',root).value;const r=((1+n/100)/(1+p/100)-1)*100,k=((1+r/100)/(1+b/100)-1)*100;
     $('#bn-no',root).textContent=sgn(n)+' %';$('#bn-po',root).textContent=sgn(p)+' %';$('#bn-bo',root).textContent=sgn(b)+' %';$('#bn-r',root).textContent=sgn(r,2)+' %';$('#bn-k',root).textContent=sgn(k,2)+' %'};
   ['#bn-n','#bn-p','#bn-b'].forEach(s=>$(s,root).addEventListener('input',bn));bn();
@@ -492,22 +547,22 @@ init(root){
     else if(pct<-4){fb.className='fb bad';fb.textContent='Unter −4 %: Das Land lebt über seine Verhältnisse und verschuldet sich im Ausland. Liegt auch der Dreijahresdurchschnitt so tief, prüft die EU-Kommission ein Ungleichgewicht.'}
     else if(Math.abs(pct)<=1){fb.className='fb ok';fb.textContent='Nahezu ausgeglichen – das Ziel ist erreicht.'}
     else{fb.className='fb amb';fb.textContent=pct>0?'Überschuss innerhalb der EU-Schwelle, aber deutlich vom Gleichgewicht entfernt.':'Defizit innerhalb der EU-Schwelle.'}
-    const W=520,H=240,cx=260,cy=110,ang=clamp(-pct*3.2,-24,24),rad=ang*Math.PI/180,L=180;
+    const el=$('#lb-svg',root),m=svgMass(el,520),W=m.W,f=m.fs,H=240,cx=W/2,cy=110,ang=clamp(-pct*3.2,-24,24),rad=ang*Math.PI/180,L=Math.min(180,W/2-58);
     const lx=cx-L*Math.cos(rad),ly=cy-L*Math.sin(rad),rx=cx+L*Math.cos(rad),ry=cy+L*Math.sin(rad);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Waage: Leistungsbilanzsaldo ${fmt(pct)} Prozent">`;
     s+=`<polygon points="${cx-30},${H-12} ${cx+30},${H-12} ${cx},${cy+6}" fill="var(--surface-2)" class="s-mu"/>`;
     s+=`<line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="var(--fg)" stroke-width="5" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="var(--fg)"/>`;
     const pan=(x,y,lab,val,col)=>`<line x1="${x}" y1="${y}" x2="${x-40}" y2="${y+50}" class="s-mu"/><line x1="${x}" y1="${y}" x2="${x+40}" y2="${y+50}" class="s-mu"/>
       <path d="M${x-52},${y+50} Q${x},${y+82} ${x+52},${y+50} Z" fill="${col}" fill-opacity=".85"/>
-      <text x="${x}" y="${y+46}" text-anchor="middle" class="t-fg" font-size="12" font-weight="700">${lab}</text><text x="${x}" y="${y+68}" text-anchor="middle" class="t-fg" font-size="12" font-weight="700">${val}</text>`;
+      <text x="${x}" y="${y+46}" text-anchor="middle" class="t-fg" font-size="${f(12)}" font-weight="700">${lab}</text><text x="${x}" y="${y+68}" text-anchor="middle" class="t-fg" font-size="${f(12)}" font-weight="700">${val}</text>`;
     const inflow=v.filter(x=>x>0).reduce((a,b)=>a+b,0),outflow=-v.filter(x=>x<0).reduce((a,b)=>a+b,0);
     // Links die Summe der positiven Salden, rechts die der negativen (keine Einnahmen und Ausgaben, nur Salden)
     s+=pan(lx,ly,'Plus-Salden',fmt(inflow,0),'var(--md-ok-container)')+pan(rx,ry,'Minus-Salden',fmt(outflow,0),'var(--md-error-container)');
-    s+=`<text x="${cx}" y="22" text-anchor="middle" class="t-fg" font-size="14" font-weight="700">${pct>0.05?'Überschuss':pct<-0.05?'Defizit':'ausgeglichen'}</text>`;
-    $('#lb-svg',root).innerHTML=s+'</svg>';
+    s+=`<text x="${cx}" y="22" text-anchor="middle" class="t-fg" font-size="${f(14)}" font-weight="700">${pct>0.05?'Überschuss':pct<-0.05?'Defizit':'ausgeglichen'}</text>`;
+    el.innerHTML=s+'</svg>';
   };
   ids.forEach(k=>$('#lb-'+k,root).addEventListener('input',upd));
-  $$('[data-lb]',root).forEach(b=>b.addEventListener('click',()=>set(PRE[b.dataset.lb])));set(PRE.de);
+  $$('[data-lb]',root).forEach(b=>b.addEventListener('click',()=>set(PRE[b.dataset.lb])));set(PRE.de);beiBreite($('#lb-svg',root),upd);
   const fx=()=>{const r=+$('#fx',root).value;$('#fxo',root).textContent=fmt(r,2);$('#fx-e',root).textContent=fmt(10000*r,0)+' $';$('#fx-i',root).textContent=fmt(999/r,0)+' €';
     $('#fx-t',root).textContent=r>1.18?'Starker Euro (Aufwertung): Deutsche Waren werden im Ausland teurer, Importe billiger → Exporte sinken tendenziell, Importe steigen, der Überschuss schrumpft. Dafür wird importierte Energie günstiger (dämpft die Inflation).':r<1.08?'Schwacher Euro (Abwertung): Deutsche Waren werden im Ausland billiger → Exporte steigen, Importe (auch Öl und Gas in Dollar) werden teurer → importierte Inflation.':'Wechselkurs im mittleren Bereich. Bewegt den Regler nach links und rechts.'};
   $('#fx',root).addEventListener('input',fx);fx();
@@ -558,25 +613,25 @@ init(root){
     // Eine Lorenzkurve ist immer von arm nach reich sortiert: Regler bleiben, gerechnet und gezeichnet wird sortiert
     const srt=cur.slice().sort((a,b)=>a-b),neu=cur.some((v,i)=>v!==srt[i]);$('#lz-sort',root).hidden=!neu;
     const g=gini(srt);$('#lz-g',root).textContent=fmt(g,2);
-    const W=420,H=400,x0=56,y0=350,S=300,X=v=>x0+v*S,Y=v=>y0-v*S;
+    const el=$('#lz-svg',root),m=svgMass(el,420),W=m.W,f=m.fs,fl=f(11),fa=f(11.5),x0=Math.max(56,fl*2.8+fa+8),S=Math.min(300,W-x0-fl*1.4),y0=20+S,H=y0+fl+fa+18,X=v=>x0+v*S,Y=v=>y0-v*S;
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Lorenzkurve, Gini ${fmt(g,2)}">`;
     [0,.2,.4,.6,.8,1].forEach(v=>{s+=`<line x1="${X(v)}" y1="${Y(0)}" x2="${X(v)}" y2="${Y(1)}" class="s-line"/><line x1="${X(0)}" y1="${Y(v)}" x2="${X(1)}" y2="${Y(v)}" class="s-line"/>
-      <text x="${X(v)}" y="${y0+16}" text-anchor="middle" class="t-mu" font-size="11">${v*100}%</text><text x="${x0-6}" y="${Y(v)+4}" text-anchor="end" class="t-mu" font-size="11">${v*100}%</text>`});
+      <text x="${X(v)}" y="${y0+fl+5}" text-anchor="middle" class="t-mu" font-size="${fl}">${v*100}%</text><text x="${x0-6}" y="${Y(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v*100}%</text>`});
     let pts=[[0,0]],c=0;srt.forEach((v,i)=>{c+=v/t;pts.push([(i+1)*0.2,c])});
     const ps=pts.map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ');
     s+=`<polygon points="${X(0)},${Y(0)} ${X(1)},${Y(1)} ${pts.slice().reverse().map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ')}" fill="var(--g-V)" fill-opacity=".22"/>`;
     s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" class="s-fg" stroke-width="1.5" stroke-dasharray="6 4"/>`;
     s+=`<polyline points="${ps}" fill="none" stroke="var(--g-V)" stroke-width="3"/>`;
     pts.forEach(([a,b])=>s+=`<circle cx="${X(a)}" cy="${Y(b)}" r="4" fill="var(--g-V)"/>`);
-    s+=`<text x="${X(.47)}" y="${Y(.56)}" class="t-mu" font-size="11" transform="rotate(-45 ${X(.47)} ${Y(.56)})">Gleichverteilungsgerade</text>`;
-    s+=`<text x="${X(.62)}" y="${Y(.3)}" class="t-fg" font-size="12">Fläche ≈ Ungleichheit</text>`;
-    s+=`<text x="${X(.5)}" y="${H-6}" text-anchor="middle" class="t-mu" font-size="11.5">Anteil der Bevölkerung (kumuliert, von arm nach reich)</text>`;
-    s+=`<text x="14" y="${Y(.5)}" text-anchor="middle" class="t-mu" font-size="11.5" transform="rotate(-90 14 ${Y(.5)})">Anteil am Einkommen (kumuliert)</text>`;
-    $('#lz-svg',root).innerHTML=s+'</svg>';
+    s+=`<text x="${X(.47)}" y="${Y(.56)}" class="t-mu" font-size="${fl}" transform="rotate(-45 ${X(.47)} ${Y(.56)})">Gleichverteilungsgerade</text>`;
+    s+=`<text x="${X(1)-4}" y="${Y(.3)}" text-anchor="end" class="t-fg t-halo" font-size="${f(12)}">Fläche ≈ Ungleichheit</text>`;
+    s+=`<text x="${X(.5)}" y="${H-6}" text-anchor="middle" class="t-mu" font-size="${fa}">${S<280?'Bevölkerung (kumuliert, arm bis reich)':'Anteil der Bevölkerung (kumuliert, von arm nach reich)'}</text>`;
+    s+=`<text x="${fa}" y="${Y(.5)}" text-anchor="middle" class="t-mu" font-size="${fa}" transform="rotate(-90 ${fa} ${Y(.5)})">Anteil am Einkommen (kumuliert)</text>`;
+    el.innerHTML=s+'</svg>';
   };
   [1,2,3,4,5].forEach(i=>$('#lz'+i,root).addEventListener('input',e=>{cur[i-1]=+e.target.value;$('#lz-name',root).textContent='Eigene Verteilung';draw()}));
   $$('[data-lz]',root).forEach(b=>b.addEventListener('click',()=>{cur=LZ[b.dataset.lz].v.slice();$('#lz-name',root).textContent=LZ[b.dataset.lz].n;draw()}));
-  $('#lz-name',root).textContent=LZ.verf.n;draw();
+  $('#lz-name',root).textContent=LZ.verf.n;draw();beiBreite($('#lz-svg',root),draw);
   const ml=()=>{const h=+$('#ml-h',root).value,l=+$('#ml-l',root).value;$('#ml-ho',root).textContent=h+' h';$('#ml-lo',root).textContent=fmt(l,2)+' €';$('#ml-r',root).textContent=fmt(h*l*13/3,0)+' €'};
   ['#ml-h','#ml-l'].forEach(s=>$(s,root).addEventListener('input',ml));ml();
   bindErk(root);
@@ -607,26 +662,29 @@ ${erkHTML('umwelt')}`},
 init(root){
   const draw=()=>{
     const red=+$('#th-r',root).value;$('#th-ro',root).textContent=fmt(red,0)+' Mio. t';
-    const W=760,H=300,x0=50,x1=W-16,y0=260,yt=20,sx=y=>x0+(y-1990)/(2046-1990)*(x1-x0),sy=v=>y0-(v/1300)*(y0-yt);
+    // Handy: höher als breit genug für die Beschriftung, Jahreszahlen ausgedünnt (2040 fällt weg, sie stünde zu dicht an 2045)
+    const el=$('#th-svg',root),m=svgMass(el,760),W=m.W,f=m.fs,fl=f(11),fz=f(11.5),x0=Math.max(50,fl*3.4),x1=W-fl*1.4,H=300,y0=H-fl-22,yt=20,sx=y=>x0+(y-1990)/(2046-1990)*(x1-x0),sy=v=>y0-(v/1300)*(y0-yt);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Emissionspfad Deutschland">`;
-    [0,250,500,750,1000,1250].forEach(v=>{s+=`<line x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}" class="s-line"/><text x="${x0-6}" y="${sy(v)+4}" text-anchor="end" class="t-mu" font-size="11">${v}</text>`});
-    [1990,2000,2010,2020,2030,2040,2045].forEach(y=>s+=`<text x="${sx(y)}" y="${y0+18}" text-anchor="middle" class="t-mu" font-size="11">${y}</text>`);
+    [0,250,500,750,1000,1250].forEach(v=>{s+=`<line x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}" class="s-line"/><text x="${x0-6}" y="${sy(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v}</text>`});
+    const jahre=(sx(2045)-sx(2040))<fl*2.6?[1990,2000,2010,2020,2030,2045]:[1990,2000,2010,2020,2030,2040,2045];
+    if(sx(2000)-sx(1990)<fl*2.6)jahre.splice(0,jahre.length,1990,2010,2030,2045);
+    jahre.forEach(y=>s+=`<text x="${sx(y)}" y="${y0+fl+7}" text-anchor="middle" class="t-mu" font-size="${fl}">${y}</text>`);
     // Zielpfad
     const goal=[[2025,649],[2030,438],[2040,150],[2045,0]];
     s+=`<polyline points="${goal.map(([y,v])=>sx(y)+','+sy(v)).join(' ')}" fill="none" stroke="var(--ok)" stroke-width="2" stroke-dasharray="7 5"/>`;
-    [[2030,438,'Ziel 2030: 438',-10,22,'end'],[2040,150,'2040: −88 %',-10,22,'end'],[2045,0,'',0,0,'end']].forEach(([y,v,l,dx,dy,a])=>s+=`<circle cx="${sx(y)}" cy="${sy(v)}" r="5" fill="var(--ok)"/>${l?`<text x="${sx(y)+dx}" y="${sy(v)+dy}" text-anchor="${a}" fill="var(--ok)" font-size="11.5" font-weight="700">${l}</text>`:''}`);
+    [[2030,438,'Ziel 2030: 438',-10,fz+10,'end'],[2040,150,'2040: −88 %',-10,fz+10,'end'],[2045,0,'',0,0,'end']].forEach(([y,v,l,dx,dy,a])=>s+=`<circle cx="${sx(y)}" cy="${sy(v)}" r="5" fill="var(--ok)"/>${l?`<text x="${sx(y)+dx}" y="${sy(v)+dy}" text-anchor="${a}" fill="var(--ok)" class="t-halo" font-size="${fz}" font-weight="700">${l}</text>`:''}`);
     // Projektion
     let pr=[[2025,649]];for(let y=2026;y<=2045;y++)pr.push([y,Math.max(0,649-red*(y-2025))]);
     s+=`<polyline points="${pr.map(([y,v])=>sx(y)+','+sy(v)).join(' ')}" fill="none" stroke="var(--g-U)" stroke-width="2.5" stroke-dasharray="2 4"/>`;
     s+=`<polyline points="${THG.map(([y,v])=>sx(y)+','+sy(v)).join(' ')}" fill="none" stroke="var(--g-U)" stroke-width="3"/>`;
     THG.forEach(([y,v])=>s+=`<circle cx="${sx(y)}" cy="${sy(v)}" r="3.5" fill="var(--g-U)"/>`);
-    s+=`<text x="${sx(1990)+6}" y="${sy(1251)-6}" class="t-fg" font-size="11.5">1990: 1.251</text><text x="${sx(2024)}" y="${sy(649)+24}" text-anchor="end" class="t-fg" font-size="11.5">2025: 649 (−48 %)</text>`;
-    $('#th-svg',root).innerHTML=s+'</svg>';
+    s+=`<text x="${sx(1990)+6}" y="${sy(1251)-6}" class="t-fg t-halo" font-size="${fz}">1990: 1.251</text><text x="${sx(2024)}" y="${sy(649)+fz+12}" text-anchor="end" class="t-fg t-halo" font-size="${fz}">2025: 649 (−48 %)</text>`;
+    el.innerHTML=s+'</svg>';
     const v30=Math.max(0,649-red*5),zero=red>0?2025+Math.ceil(649/red):null,fb=$('#th-fb',root);
     fb.className='fb '+(v30<=438?'ok':'bad');
     fb.innerHTML=`2030 lägen die Emissionen bei <b>${fmt(v30,0)} Mio. t</b> (${sgn((v30/1251-1)*100,0)} % ggü. 1990). ${v30<=438?'Ziel 2030 erreicht.':`Ziel um ${fmt(v30-438,0)} Mio. t verfehlt.`} ${zero&&zero<=2100?`Klimaneutral wäre Deutschland ${zero<=2045?'bereits ':''}im Jahr ${zero}.`:'Klimaneutralität rückt in weite Ferne.'} <span class="muted">Zum Vergleich: 2019 bis 2025 sanken die Emissionen im Schnitt um rund 25 Mio. t pro Jahr, 2025 kaum noch. Das Umweltbundesamt erwartet mit der heutigen Politik bis 2030 nur −62,6 %, zum Ziel fehlen rund 30 Mio. t (Projektion März 2026).</span>`;
   };
-  $('#th-r',root).addEventListener('input',draw);draw();
+  $('#th-r',root).addEventListener('input',draw);draw();beiBreite($('#th-svg',root),draw);
   const co=()=>{const p=+$('#co-p',root).value;$('#co-po',root).textContent=fmt(p,0)+' €';
     const rows=[['1 Liter Benzin',2.33,'ct',100],['1 Liter Diesel',2.65,'ct',100],['Tankfüllung 50 l Benzin',2.33*50,'€',1],['1.000 kWh Erdgas (Heizen)',201,'€',1],['Jahresverbrauch Gas, 2-Zimmer-Wohnung (8.000 kWh)',1608,'€',1]];
     $('#co-tab',root).innerHTML=rows.map(([n,kg,u,f])=>`<tr><td>${n}</td><td class="r num"><b>${fmt(kg/1000*p*f,u==='ct'?1:2)} ${u}</b></td></tr>`).join('')};
@@ -676,15 +734,16 @@ init(root){
   let pick=[], seen=new Set(store('ms6-rel')||[]), guess=null, alleAuf=false;
   const alle=()=>alleAuf&&raum.istLehrkraft(), offen=key=>seen.has(key)||alle();
   const draw=()=>{
-    const W=520,H=400,cx=260,cy=200,r=136,p=hexPts(cx,cy,r);
+    const m=svgMass($('#zb-svg',root),520),W=m.W,f=m.fs,fl=f(14),kompakt=m.handy||W<480;
+    const r=kompakt?Math.min(136,W*.35):136,H=kompakt?Math.round(2*r+2*(31+fl)+12):400,cx=W/2,cy=H/2,p=hexPts(cx,cy,r);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Beziehungsnetz der sechs Ziele">`;
     s+=`<polygon points="${ptsStr(p)}" fill="none" class="s-line" stroke-width="1.5"/>`;
     Object.keys(REL).forEach(key=>{const [a,b]=key.split('-');const ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);const on=offen(key);
       s+=`<line x1="${p[ia][0]}" y1="${p[ia][1]}" x2="${p[ib][0]}" y2="${p[ib][1]}" stroke="${on?RELC[REL[key][0]][1]:'var(--line)'}" stroke-width="${on?4:1.5}" ${on?'':'stroke-dasharray="3 5"'} stroke-linecap="round"/>`});
-    ORDER.forEach((k,i)=>{const [x,y]=p[i];const lp=hexPts(cx,cy,r+30)[i];const a=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');const sel=pick.includes(k);
+    ORDER.forEach((k,i)=>{const [x,y]=p[i];const q=eckPos(i,cx,cy,r,kompakt?29:30,{handy:kompakt,fs:fl,W,txt:G[k].short});const sel=pick.includes(k);
       s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-pressed="${sel}" aria-label="${k} ${G[k].short} auswählen"><circle class="dot" cx="${x}" cy="${y}" r="${sel?21:16}" fill="${gc(k)}" stroke="${sel?'var(--fg)':'var(--surface)'}" stroke-width="3"/>
-      <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="13" font-weight="700">${k}</text>
-      <text x="${lp[0]}" y="${lp[1]+(i===0?-4:i===3?14:5)}" text-anchor="${a}" fill="${gc(k)}" font-size="14" font-weight="700">${G[k].short}</text></g>`});
+      <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="${f(13)}" font-weight="700">${k}</text>
+      <text x="${q.x}" y="${q.y}" text-anchor="${q.a}" fill="${gc(k)}" font-size="${fl}" font-weight="700">${G[k].short}</text></g>`});
     $('#zb-svg',root).innerHTML=s+'</svg>';
     $('#zb-cnt',root).textContent=alle()?'(alle aufgedeckt)':`(${seen.size}/15 aufgeklärt)`;
     $$('.hexcorner',root).forEach(g=>{const f=()=>clickK(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();$(`#zb-svg .hexcorner[data-k="${g.dataset.k}"]`,root)?.focus()}})}); // neu gezeichnet: Fokus zurück auf die Ecke
@@ -715,7 +774,7 @@ init(root){
   const netz=$('#zb-svg',root),stop=raum.on(()=>{if(!document.body.contains(netz))return stop();
     if(alleAuf&&!raum.istLehrkraft()){alleAuf=false;$('#zb-all',root).setAttribute('aria-pressed','false')}
     if(alle()!==warAlle){warAlle=alle();draw()}});
-  draw();bindErk(root);
+  draw();beiBreite($('#zb-svg',root),draw);bindErk(root);
 }});
 
 /* 9 Phillips */
@@ -742,19 +801,22 @@ init(root){
   const TXT={2020:'Corona: Nachfrageeinbruch, Mehrwertsteuersenkung.',2021:'Nachholeffekte, CO₂-Preis eingeführt, Mehrwertsteuer wieder normal.',2022:'Russlands Krieg gegen die Ukraine: Energiepreisschock. Die Preise steigen stark, aber die Arbeitslosigkeit sinkt noch, und die Wirtschaft wächst (+1,9 %).',2023:'Inflation bleibt hoch, die Wirtschaft schrumpft (−1,0 %), die Arbeitslosigkeit steigt: Stagflation.',2019:'Höchststand der Beschäftigung, niedrige Inflation – widerspricht dem Zielkonflikt.',2017:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2018:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2025:'Arbeitslosigkeit steigt bei moderater Inflation.'},info=$('#ph-info',root);
   const zeige=(i,scroll)=>{sel=i;const [y,u,p]=PH[i];info.innerHTML=`<b>${y}</b>: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %. ${TXT[y]||''}`;draw();if(scroll)info.scrollIntoView({block:'nearest'})};
   const draw=()=>{
-    const W=560,H=380,x0=56,x1=W-20,y0=320,yt=20,sx=v=>x0+(v-4.5)/(7-4.5)*(x1-x0),sy=v=>y0-v/8*(y0-yt);
+    // Handy: Jahreszahlen nur am gewählten Punkt (sonst überlappen sie), die Jahresleiste darunter nennt alle
+    const el=$('#ph-svg',root),m=svgMass(el,560),W=m.W,f=m.fs,fl=f(11),fa=f(12),H=380,x0=Math.max(56,fl*2.6+fa+10),x1=W-20,y0=H-fa-fl-22,yt=20,sx=v=>x0+(v-4.5)/(7-4.5)*(x1-x0),sy=v=>y0-v/8*(y0-yt);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Phillips-Diagramm Deutschland 2015 bis 2025">`;
-    [0,2,4,6,8].forEach(v=>s+=`<line x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}" class="s-line"/><text x="${x0-6}" y="${sy(v)+4}" text-anchor="end" class="t-mu" font-size="11">${v} %</text>`);
-    [4.5,5,5.5,6,6.5,7].forEach(v=>s+=`<text x="${sx(v)}" y="${y0+18}" text-anchor="middle" class="t-mu" font-size="11">${fmt(v)} %</text>`);
-    s+=`<text x="${(x0+x1)/2}" y="${H-8}" text-anchor="middle" class="t-mu" font-size="12">Arbeitslosenquote (BA)</text><text x="14" y="${(y0+yt)/2}" text-anchor="middle" class="t-mu" font-size="12" transform="rotate(-90 14 ${(y0+yt)/2})">Inflationsrate (VPI)</text>`;
-    s+=`<line x1="${x0}" y1="${sy(2)}" x2="${x1}" y2="${sy(2)}" stroke="var(--ok)" stroke-dasharray="6 4"/><text x="${x1}" y="${sy(2)-5}" text-anchor="end" fill="var(--ok)" font-size="11">EZB-Ziel 2 %</text>`;
-    if(theo){let d='';for(let u=4.6;u<=7;u+=0.05){const pi=0.9+ 3.2/(u-3.6)-0.4;d+=(d?'L':'M')+sx(u).toFixed(1)+','+sy(clamp(pi,0,8)).toFixed(1)}s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="2.5"/><text x="${sx(4.62)}" y="${sy(3.9)}" fill="var(--g-W)" font-size="11.5" font-weight="700">theoretische Phillips-Kurve</text>`}
+    [0,2,4,6,8].forEach(v=>s+=`<line x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}" class="s-line"/><text x="${x0-6}" y="${sy(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v} %</text>`);
+    const xs=(sx(5)-sx(4.5))<fl*3.4?[4.5,5.5,6.5]:[4.5,5,5.5,6,6.5,7];
+    xs.forEach(v=>s+=`<text x="${sx(v)}" y="${y0+fl+7}" text-anchor="middle" class="t-mu" font-size="${fl}">${fmt(v)} %</text>`);
+    s+=`<text x="${(x0+x1)/2}" y="${H-8}" text-anchor="middle" class="t-mu" font-size="${fa}">Arbeitslosenquote (BA)</text><text x="${fa+2}" y="${(y0+yt)/2}" text-anchor="middle" class="t-mu" font-size="${fa}" transform="rotate(-90 ${fa+2} ${(y0+yt)/2})">Inflationsrate (VPI)</text>`;
+    s+=`<line x1="${x0}" y1="${sy(2)}" x2="${x1}" y2="${sy(2)}" stroke="var(--ok)" stroke-dasharray="6 4"/><text x="${x1}" y="${sy(2)+fl+3}" text-anchor="end" fill="var(--ok)" class="t-halo" font-size="${fl}">EZB-Ziel 2 %</text>`;
+    if(theo){let d='';for(let u=4.6;u<=7;u+=0.05){const pi=0.9+ 3.2/(u-3.6)-0.4;d+=(d?'L':'M')+sx(u).toFixed(1)+','+sy(clamp(pi,0,8)).toFixed(1)}s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="2.5"/><text x="${sx(4.62)}" y="${sy(3.9)}" fill="var(--g-W)" class="t-halo" font-size="${f(11.5)}" font-weight="700">theoretische Phillips-Kurve</text>`}
     s+=`<polyline points="${PH.map(([,u,p])=>sx(u)+','+sy(p)).join(' ')}" fill="none" class="s-mu" stroke-width="1.2" stroke-dasharray="2 3"/>`;
     PH.forEach(([y,u,p],i)=>{const st=stag&&y===2023,sch=stag&&y===2022,on=sel===i;s+=`<g class="hexcorner" data-i="${i}"><circle cx="${sx(u)}" cy="${sy(p)}" r="21" fill="transparent"/><circle cx="${sx(u)}" cy="${sy(p)}" r="${st||sch||on?9:6.5}" fill="${st?'var(--bad)':sch?'var(--amb)':'var(--g-P)'}" stroke="${on?'var(--fg)':'var(--surface)'}" stroke-width="${on?3:2}"/>
-      ${st||sch?'':`<text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg" font-size="11"${on?' font-weight="700"':''}>${y}</text>`}</g>`}); // markierte Jahre stehen in der Beschriftung
-    if(stag)s+=`<text x="${sx(5.3)+16}" y="${sy(6.9)-24}" class="t-fg" font-size="12" font-weight="700">2022: Angebotsschock</text><text x="${sx(5.3)+16}" y="${sy(6.9)-10}" class="t-mu" font-size="11">Preise steigen, Arbeitsmarkt noch stark</text>
-      <text x="${sx(5.7)+16}" y="${sy(5.9)+10}" fill="var(--bad)" font-size="12" font-weight="700">2023: Stagflation</text><text x="${sx(5.7)+16}" y="${sy(5.9)+24}" class="t-mu" font-size="11">BIP −1,0 %, mehr Arbeitslose</text>`;
-    $('#ph-svg',root).innerHTML=s+'</svg>';
+      ${st||sch||(m.handy&&!on)?'':`<text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg t-halo" font-size="${fl}"${on?' font-weight="700"':''}>${y}</text>`}</g>`}); // markierte Jahre stehen in der Beschriftung
+    // Beschriftung der Stagflation: Zeilen so umbrechen, dass sie rechts nicht aus dem Bild ragt
+    const notiz=(x,y,fett,farbe,rest)=>{const n=Math.max(12,Math.floor((W-x-4)/(fl*.53)));return `<text x="${x}" y="${y}" ${farbe} font-size="${fa}" font-weight="700">${fett}</text>`+wrapText(rest,n).map((z,i)=>`<text x="${x}" y="${y+(i+1)*(fl+3)}" class="t-mu t-halo" font-size="${fl}">${z}</text>`).join('')};
+    if(stag)s+=notiz(sx(5.3)+16,sy(6.9)-2*(fl+3)-6,'2022: Angebotsschock','class="t-fg"','Preise steigen, Arbeitsmarkt noch stark')+notiz(sx(5.7)+16,sy(5.9)+fa,'2023: Stagflation','fill="var(--bad)"','BIP −1,0 %, mehr Arbeitslose');
+    el.innerHTML=s+'</svg>';
     $$('#ph-svg .hexcorner',root).forEach(g=>g.addEventListener('click',()=>zeige(+g.dataset.i,true)));
     $$('#ph-jahre button',root).forEach(b=>{const an=+b.dataset.i===sel;b.classList.toggle('sel',an);b.setAttribute('aria-pressed',an)});
   };
@@ -762,7 +824,7 @@ init(root){
   $('#ph-theo',root).addEventListener('click',e=>{theo=!theo;e.currentTarget.setAttribute('aria-pressed',theo);draw()});
   $('#ph-stag',root).addEventListener('click',e=>{stag=!stag;e.currentTarget.setAttribute('aria-pressed',stag);if(stag)sel=null;draw();
     if(stag)info.innerHTML='<b>2022</b> war ein Angebotsschock: Die Preise stiegen stark, die Arbeitslosigkeit sank aber noch, und die Wirtschaft wuchs. <b>2023</b> kam beides zusammen: Inflation 5,9 %, BIP −1,0 %, die Arbeitslosenquote stieg auf 5,7 %. Das ist Stagflation.'});
-  draw();bindErk(root);
+  draw();beiBreite($('#ph-svg',root),draw);bindErk(root);
 }});
 
 /* 10 Politik-Simulator */
@@ -802,7 +864,7 @@ init(root){
   const calc=()=>{
     const base=START[st].v,res={},dsum=MEAS.filter(m=>on.has(m.id)).reduce((a,m)=>a+m.d,0);
     ORDER.forEach(k=>{res[k]=clamp(base[k]+MEAS.filter(m=>on.has(m.id)).reduce((a,m)=>a+m.e[k]*9,0),0,100)});
-    $('#ps-radar',root).innerHTML=radar([{v:base,stroke:'var(--muted)',dash:'6 5',fo:0},{v:res,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Zielerreichung vor und nach den Maßnahmen'});
+    $('#ps-radar',root).innerHTML=radar([{v:base,stroke:'var(--muted)',dash:'6 5',fo:0},{v:res,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Zielerreichung vor und nach den Maßnahmen',el:$('#ps-radar',root)});
     $('#ps-tab',root).innerHTML=`<div class="tbl-wrap"><table><tbody>${ORDER.map(k=>{const d=res[k]-base[k];return `<tr><td>${hexDot(k)} ${G[k].short}</td><td class="r num">${Math.round(base[k])}</td><td class="r num"><b>${Math.round(res[k])}</b></td><td class="r num" style="color:${d>0?'var(--ok)':d<0?'var(--bad)':'var(--muted)'}">${d?sgn(d,0):'±0'}</td></tr>`}).join('')}</tbody></table></div>`;
     const debt=clamp(50+dsum*8,5,100);$('#ps-debt',root).style.width=debt+'%';$('#ps-debt',root).style.background=debt>66?'var(--bad)':debt<40?'var(--ok)':'var(--amb)';
     $('#ps-debt-t',root).textContent=dsum>0?'Eure Maßnahmen erhöhen die Staatsschulden – künftige Zinslasten und die Schuldenbremse beachten.':dsum<0?'Eure Maßnahmen senken die Neuverschuldung.':'Neutral für die Staatsfinanzen.';
@@ -814,12 +876,18 @@ init(root){
     else{fb.className='fb neu small';fb.innerHTML=`Durchschnittliche Zielerreichung: <b>${Math.round(ORDER.reduce((a,k)=>a+res[k],0)/6)}</b> Punkte.`}
     $('#ps-n',root).textContent=`(${on.size}/${MAX} gewählt)`;
     $$('#ps-m .toggle-card',root).forEach(b=>{const sel=on.has(b.dataset.m);b.setAttribute('aria-pressed',sel);b.disabled=!sel&&on.size>=MAX;b.style.opacity=b.disabled?.5:1;$('.chain',b).hidden=!sel});
+    return res;
   };
+  // Liegt das Sechseck außer Sicht (Handy: es steht weit über den Maßnahmen), kurz einblenden, was sich geändert hat
+  const wirkung=(alt,neu,an)=>{const r=$('#ps-radar',root).getBoundingClientRect(),unten=innerHeight-($('#nav-bar')?.offsetHeight||0);
+    if(r.bottom>80&&r.top<unten-80)return;
+    const d=ORDER.filter(k=>Math.round(neu[k])!==Math.round(alt[k])).map(k=>`${G[k].short} ${sgn(Math.round(neu[k])-Math.round(alt[k]),0)}`).join(' · ');
+    zeigeHinweis(`${an?'Maßnahme gewählt':'Maßnahme abgewählt'}. Sechseck oben: ${d||'keine Änderung'}`)};
   $('#ps-m',root).innerHTML=MEAS.map(m=>`<button class="toggle-card" type="button" data-m="${m.id}" aria-pressed="false"><span class="actor">${m.a}</span><b>${m.n}</b>
     <span class="row" style="gap:4px">${ORDER.filter(k=>m.e[k]).map(k=>`<span class="pill ${m.e[k]>0?'ok':'bad'}"><span aria-hidden="true">${k}</span><span class="ms" aria-hidden="true">${Math.abs(m.e[k])>1?(m.e[k]>0?'keyboard_double_arrow_up':'keyboard_double_arrow_down'):(m.e[k]>0?'arrow_upward':'arrow_downward')}</span><span class="sr-only">${G[k].short} ${m.e[k]>0?'steigt':'sinkt'}${Math.abs(m.e[k])>1?' stark':''}</span></span>`).join('')}</span><span class="chain" hidden>${m.c}</span></button>`).join('');
-  $$('#ps-m .toggle-card',root).forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.m;on.has(id)?on.delete(id):on.size<MAX&&on.add(id);calc()}));
+  $$('#ps-m .toggle-card',root).forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.m,alt=calc();on.has(id)?on.delete(id):on.size<MAX&&on.add(id);wirkung(alt,calc(),on.has(id))}));
   $$('[data-st]',root).forEach(b=>b.addEventListener('click',()=>{st=b.dataset.st;$$('[data-st]',root).forEach(x=>x.setAttribute('aria-pressed',x===b));$('#ps-st',root).textContent=START[st].t;calc()}));
-  $('#ps-st',root).textContent=START[st].t;calc();bindErk(root);
+  $('#ps-st',root).textContent=START[st].t;calc();beiBreite($('#ps-radar',root),calc);bindErk(root);
 }});
 
 /* 11 Deutschland-Check */
@@ -862,13 +930,13 @@ init(root){
   const draw=()=>{
     const sa={},sb={};ORDER.forEach(k=>{sa[k]=score(k,a);if(b)sb[k]=score(k,b)});
     const ser=[];if(b)ser.push({v:sb,stroke:'var(--muted)',dash:'6 5',fo:0});ser.push({v:sa,stroke:'var(--accent)',fill:'var(--accent)',fo:.2});
-    $('#ck-radar',root).innerHTML=radar(ser,{label:'Zielerreichung Deutschland'});
+    $('#ck-radar',root).innerHTML=radar(ser,{label:'Zielerreichung Deutschland',el:$('#ck-radar',root)});
     $('#ck-leg',root).innerHTML=`<span><i style="background:var(--accent)"></i>${a}</span>${b?`<span><i style="background:var(--muted)"></i>${b} (gestrichelt)</span>`:''}`;
     $('#ck-ya',root).textContent=a;$('#ck-yb',root).textContent=b?b:'';
     $('#ck-tab',root).innerHTML=ORDER.map(k=>`<tr><td>${hexDot(k)} ${G[k].short}</td><td class="num">${SCORE[k].show(YEARS[a][k],YEARS[a])}</td><td class="r num"><b>${sa[k]}</b></td><td class="r num muted">${b?sb[k]:''}</td></tr>`).join('')+
       `<tr><td><b>Durchschnitt</b></td><td></td><td class="r num"><b>${Math.round(ORDER.reduce((s,k)=>s+sa[k],0)/6)}</b></td><td class="r num muted">${b?Math.round(ORDER.reduce((s,k)=>s+sb[k],0)/6):''}</td></tr>`;
   };
-  btns('#ck-a',()=>a,v=>a=v);btns('#ck-b',()=>b,v=>b=v);draw();bindErk(root);
+  btns('#ck-a',()=>a,v=>a=v);btns('#ck-b',()=>b,v=>b=v);draw();beiBreite($('#ck-radar',root),draw);bindErk(root);
 }});
 
 /* 12b Hefteintrag und Kurztest */
@@ -919,8 +987,8 @@ init(root){
 /* ---------- Startseite und Wissen ---------- */
 function startHTML(){
   return `<section class="banner"><img src="${PHOTOS[2]}" alt="Blick über das Saaletal auf Jena mit dem JenTower"><span class="credit">Foto: Lukas D. / Unsplash</span>
-    <div class="banner-text"><p class="eyebrow">Stand der Daten: Oktober 2026</p><h2 style="font-size:clamp(1.5rem,3.6vw,2.25rem);line-height:1.2">Sechs Ziele sollen gleichzeitig gelten. Sie stehen sich gegenseitig im Weg.</h2></div></section>
-  <section class="hero"><div class="hero-hex" id="hero-hex">${heroHex()}</div>
+    <div class="banner-text"><p class="eyebrow">Stand der Daten: Oktober 2026</p><h2>Sechs Ziele sollen gleichzeitig gelten. Sie stehen sich gegenseitig im Weg.</h2></div></section>
+  <section class="hero"><div class="hero-hex" id="hero-hex">${heroHex(null)}</div>
     <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Werkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
     <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}" aria-labelledby="lage-${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody" id="lage-${k}"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
     <p class="small muted">Fotos: ${ORDER.map(k=>esc(GOAL_IMG[k].credit)).join(', ')} / Unsplash</p>

@@ -104,8 +104,8 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   const codeEl = lk.locator('.panel .code').first();
   await expect(codeEl).toHaveText(/^[A-Z2-9]{6}$/);
   const code = (await codeEl.textContent()).trim();
-  await expect(lk.locator('.panel [style*="background:#fff"] svg')).toBeVisible(); // QR-Code
-  expect(await lk.locator('.panel [style*="background:#fff"] svg rect, .panel [style*="background:#fff"] svg path').count()).toBeGreaterThan(0);
+  await expect(lk.locator('.panel .lr-qr svg')).toBeVisible(); // QR-Code
+  expect(await lk.locator('.panel .lr-qr svg rect, .panel .lr-qr svg path').count()).toBeGreaterThan(0);
 
   // Schüler 1 kommt über den QR-Link, Schüler 2 tippt den Code ein.
   const s1 = await device(browser, { viewport: { width: 390, height: 844 } });

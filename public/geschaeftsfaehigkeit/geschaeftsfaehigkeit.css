@@ -24,6 +24,9 @@
 
 /* Fotos mit Bildnachweis darunter */
 .gf-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.wc-material .gf-fig{margin-bottom:8px}
+/* Ihr seid das Gericht am Beamer: Foto und Falltext nebeneinander, damit Frage und „Urteil fällen“ ohne Scrollen zu sehen sind */
+@media (min-width:900px){.abst .wc-material:has(.gf-fig){display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:16px;align-items:start}.abst .wc-material .gf-fig{margin-bottom:0}}
 .gf-fig img{display:block;width:100%;height:auto;border-radius:var(--r-l);background:var(--md-surface-container-high)}
 .gf-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
 
@@ -43,7 +46,7 @@
 .haus [data-fach="ausnahme"] .zu-kopf{background:var(--md-gf-blau-container);color:var(--md-on-gf-blau-container)}
 .haus [data-fach="basis"] .zu-kopf{background:var(--md-surface-container-highest);color:var(--md-on-surface)}
 .haus .zu-fach.ueber{background:var(--md-primary-container)}
-.haus .zu-ziel{hyphens:auto;-webkit-hyphens:auto}
+.haus .zu-ziel{hyphens:auto;-webkit-hyphens:auto;overflow:visible;overflow-wrap:break-word}
 /* Handy: Die drei Räume bleiben nebeneinander unter dem Dach, Schrift und Karten werden kompakter */
 @media (max-width:599px){
   .haus .zu-faecher{gap:6px}
@@ -55,8 +58,12 @@
   .haus :is([data-fach="unfaehig"],[data-fach="beschraenkt"],[data-fach="voll"]) .zu-ziel{border-radius:var(--r-s) var(--r-s) 0 0;padding-right:6px}
   .haus :is([data-fach="unfaehig"],[data-fach="beschraenkt"],[data-fach="voll"]) .zu-info{width:auto;min-height:32px;border-radius:0 0 var(--r-s) var(--r-s);place-items:center start;padding-left:4px}
   .haus .zu-fach .zu-inhalt{gap:4px}
-  .haus .zu-fach .zu-karte{font-size:.75rem;line-height:1rem;padding:6px 8px;hyphens:auto;-webkit-hyphens:auto}
+  .haus .zu-fach .zu-karte{font-size:.75rem;line-height:1rem;padding:6px 8px;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
+  /* Häkchen bzw. Kreuz nach dem Prüfen in eigener Zeile, damit es in den schmalen Räumen nie abgeschnitten wird */
+  .haus .zu-karte:is(.right,.wrong)::after{display:block;margin:4px 0 0}
 }
+/* Sehr schmal (kleine Handys, starke Vergrößerung): Räume untereinander, das Dach bleibt */
+@media (max-width:359px){.haus .zu-faecher{grid-template-columns:1fr}}
 
 /* Altersschieber */
 .gf-alter{display:flex;flex-direction:column;gap:12px}

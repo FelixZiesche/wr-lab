@@ -47,6 +47,75 @@ test.describe('Handy (390 px, Touch)', () => {
     await lab.locator('[data-lab-dir="hoch"]').tap();
     await expect(lab.locator('[data-lab-panel]')).toContainText('Weg 5: Oma schenkt dir den Hund');
   });
+
+  test('Browserverlauf: Zurück schließt die Werkstatt, Adresse #haus öffnet sie', async ({ page }) => {
+    await page.goto(GF);
+    await nav(page).locator('[data-dest="regeln"]').tap();
+    await page.locator('#view [data-tool="haus"]').tap();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.haus);
+    await expect(page).toHaveURL(/#haus$/);
+    // Zurückwischen bzw. Android-Zurück-Taste: Die Werkstatt geht zu, das Thema bleibt offen
+    await page.goBack();
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page).toHaveURL(/\/geschaeftsfaehigkeit\/#regeln$/);
+    await expect(page.locator('#view-title')).toHaveText('Die Regeln der Geschäftsfähigkeit');
+    // Vorwärts öffnet sie wieder, der Zurück-Knopf schließt sie über denselben Weg
+    await page.goForward();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.haus);
+    await page.locator('#modal-close').tap();
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page).toHaveURL(/#regeln$/);
+    // In die Adresszeile eingegeben: #haus öffnet die Werkstatt, #faelle wechselt den Bereich
+    await page.evaluate(() => { location.hash = '#haus'; });
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.haus);
+    await page.evaluate(() => { location.hash = '#faelle'; });
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page.locator('#view [data-tool="fallakte"]')).toBeVisible();
+    // Per Link geöffnet: „Zurück“ schließt nur und verlässt die Seite nicht
+    await oeffne(page, 'haus');
+    await page.locator('#modal-close').tap();
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(page).toHaveURL(/\/geschaeftsfaehigkeit\/#regeln$/);
+  });
+
+  test('Zuordnen: Antippen der Karte, dann irgendwo ins Fach tippen', async ({ page }) => {
+    await oeffne(page, 'haus');
+    const haus = page.locator('[data-zuordnen="haus-bauen"]');
+    const karte = haus.locator('.zu-karte', { hasText: 'Leon (5)' });
+    await karte.tap();
+    await expect(karte).toHaveAttribute('aria-pressed', 'true');
+    // Unten in den Raum tippen (nicht auf den farbigen Kopf)
+    const fach = haus.locator('.zu-fach[data-fach="unfaehig"]');
+    await fach.scrollIntoViewIfNeeded();
+    const b = await fach.boundingBox();
+    await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height - 6);
+    await expect(fach.locator('.zu-karte', { hasText: 'Leon (5)' })).toBeVisible();
+    await expect(haus.locator('[data-ergebnis]')).toContainText('Geschäftsunfähig');
+    // Eine Karte im Fach antippen wählt sie nur aus, die gewählte landet nicht dort
+    const zweite = haus.locator('.zu-pool .zu-karte').first();
+    await zweite.tap();
+    await fach.locator('.zu-karte').first().tap();
+    await expect(fach.locator('.zu-karte')).toHaveCount(1);
+  });
+
+  test('Wiederholen im Wissenscheck: Zurück führt in den Wissenscheck', async ({ page }) => {
+    await oeffne(page, 'wissenscheck');
+    const a0 = page.locator('[data-wc="wissenscheck"] .wc-a[data-wc-i="0"]');
+    await a0.locator('label', { hasText: 'Mit 7 Jahren' }).tap();
+    await a0.locator('[data-wc-pruefen]').tap();
+    await a0.locator('[data-gehzu="alter"]').tap();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.alter);
+    await expect(page.locator('#modal-close')).toHaveAttribute('aria-label', 'Zurück zu „Wissenscheck“');
+    await page.locator('#modal-close').tap();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.wissenscheck);
+    await expect(a0.locator('[data-gehzu="alter"]')).toBeFocused();
+    await expect(page.locator('#modal-close')).toHaveAttribute('aria-label', 'Zurück');
+    // Auch mit der Zurück-Geste und Esc derselbe Weg
+    await a0.locator('[data-gehzu="alter"]').tap();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.alter);
+    await page.goBack();
+    await expect(page.locator('#modal-title')).toHaveText(WERKSTAETTEN.wissenscheck);
+  });
 });
 
 test.describe('ohne Lernraum', () => {

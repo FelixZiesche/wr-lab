@@ -81,7 +81,7 @@ export function createWerkstatt(cfg){
   function openModal(title,html,init){
     // Wird ein Fenster im Fenster geöffnet (z. B. Lernraum), bleibt die Rücksprungstelle die ursprüngliche
     if(modal.hidden){lastFocus=document.activeElement;lastTool=lastFocus&&lastFocus.closest?lastFocus.closest('[data-tool]')?.dataset.tool||null:null}
-    offenesTool=null;
+    offenesTool=null;$('#modal-close').setAttribute('aria-label','Zurück');
     mTitle.innerHTML=title; mBody.innerHTML=html; $('.pane').inert=true; modal.hidden=false;
     document.body.style.overflow='hidden';
     modal.scrollTop=0;
@@ -97,11 +97,16 @@ export function createWerkstatt(cfg){
     const z=lastFocus&&lastFocus!==document.body&&document.body.contains(lastFocus)?lastFocus:lastTool?$(`#view [data-tool="${CSS.escape(lastTool)}"]`):null;
     if(z)z.focus();
   }
+  // Browserverlauf: Jede geöffnete Werkstatt ist ein eigener Schritt (history.state = {werkstatt, von}). „Zurück“ im Browser,
+  // die Android-Zurück-Taste und das Zurückwischen schließen deshalb die Werkstatt statt das Thema zu verlassen.
+  // Zurück-Knopf und Esc gehen denselben Weg (history.back()). Ohne eigenen Schritt (Werkstatt per Link oder eingetippter
+  // Adresse geöffnet) schließen sie einfach, sonst verließe history.back() die Seite.
+  const zurueck=()=>{if(history.state&&history.state.werkstatt)history.back();else closeModal()};
   modal.addEventListener('scroll',()=>modal.classList.toggle('scrolled',modal.scrollTop>4));
-  $('#modal-close').addEventListener('click',()=>closeModal());
+  $('#modal-close').addEventListener('click',zurueck);
   // Esc schließt das Werkstatt-Fenster, aber nicht während der Pause („Schau nach vorn“).
   // Das Abstimmungsfenster fängt Esc selbst ab (lernraum.js).
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden&&$('#lr-pause').hidden)closeModal()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden&&$('#lr-pause').hidden)zurueck()});
 
   function erkHTML(tool){
     return `<div class="erk" data-erk="${tool}">
@@ -170,16 +175,35 @@ export function createWerkstatt(cfg){
     try{history.replaceState(null,'','#'+curView)}catch(e){}
     raum.sendeOrt(aktuellerOrt());
   }
-  function openTool(id,ohneSperre){
+  /** Öffnet eine Werkstatt. art: 'neu' (Standard) legt einen Schritt im Browserverlauf an, 'verlauf' nicht (Zurück/Vor,
+   *  eingetippte Adresse, Neuladen), 'geholt' (die Lehrkraft holt alle) legt einen Schritt an, aber ohne Herkunft. */
+  function openTool(id,ohneSperre,art='neu'){
     if(!ohneSperre&&raum.gesperrt(id)){zeigeHinweis('Deine Lehrkraft hat diese Werkstatt noch nicht freigegeben.');return}
     const own=DEST.find(d=>d.tool===id);if(own)return go(own.id);
     const t=TOOLS.find(x=>x.id===id);if(!t)return;
-    const dest=destOfTool(id);if(dest!==curView){curView=dest;renderNav();renderView()}
+    const vorher=offenesTool;
+    // Aus einer offenen Werkstatt heraus (z. B. „Wiederholen“ im Wissenscheck) bleibt der Bereich dahinter derselbe,
+    // „Zurück“ führt dann in die vorige Werkstatt
+    if(modal.hidden){const dest=destOfTool(id);if(dest!==curView){curView=dest;renderNav();renderView();if(art!=='verlauf')try{history.replaceState(null,'','#'+dest)}catch(e){}}}
+    const von=art==='verlauf'?(history.state&&history.state.werkstatt===id?history.state.von:null):art==='neu'&&vorher&&vorher!==id?vorher:null;
+    if(art!=='verlauf'&&vorher!==id)try{history.pushState({werkstatt:id,von},'','#'+id)}catch(e){}
     const html=imTool(t.id,()=>t.html());
     openModal(esc(t.title),lehrerpanelHTML(t)+html,root=>{t.init(root);bindAufgaben(root)});
     if(!lastTool)lastTool=id; // z. B. direkt über die Adresse geöffnet: beim Schließen auf die Karte
     offenesTool=id;raum.sendeOrt(id);
-    try{history.replaceState(null,'','#'+id)}catch(e){}
+    const vt=von&&TOOLS.find(x=>x.id===von);if(vt)$('#modal-close').setAttribute('aria-label',`Zurück zu „${vt.title}“`);
+    // Zurück aus einer Werkstatt, die per „Wiederholen“ geöffnet wurde: Fokus wieder auf diesen Knopf
+    const k=art==='verlauf'&&vorher&&$(`[data-gehzu="${CSS.escape(vorher)}"]`,mBody);
+    if(k){k.focus({preventScroll:true});k.scrollIntoView({block:'center'})}
+  }
+  /** Zeigt, was die Adresse verlangt (Zurück/Vor im Browser, eingetippte Adresse). Tut nichts, wenn es schon zu sehen ist.
+   *  popstate und hashchange kommen oft beide: Der zweite Aufruf findet alles erledigt vor, deshalb kein doppeltes Zeichnen. */
+  function route(){
+    const h=(location.hash||'').slice(1);
+    if(TOOLS.find(t=>t.id===h)&&!DEST.find(d=>d.tool===h)){if(modal.hidden||offenesTool!==h)openTool(h,false,'verlauf');return}
+    const d=DEST.find(x=>x.id===h||x.tool===h);if(!d)return;
+    if(!modal.hidden)closeModal();
+    if(d.id!==curView)go(d.id);
   }
 
   /* ---------- Lernraum ---------- */
@@ -228,7 +252,7 @@ export function createWerkstatt(cfg){
     nurLk();
   }
   /** Springt zu einem Bereich oder einer Werkstatt; hinweis: Schüler wurden von der Lehrkraft geholt. */
-  function gehZu(id,hinweis){if(DEST.find(d=>d.id===id&&!d.tool))go(id);else openTool(id,true);if(hinweis)zeigeHinweis('Deine Lehrkraft hat alle hierher geholt.')}
+  function gehZu(id,hinweis){if(DEST.find(d=>d.id===id&&!d.tool))go(id);else openTool(id,true,hinweis?'geholt':'neu');if(hinweis)zeigeHinweis('Deine Lehrkraft hat alle hierher geholt.')}
 
   /* ---------- Start ---------- */
   function start(){
@@ -248,12 +272,16 @@ export function createWerkstatt(cfg){
     document.addEventListener('click',e=>{const b=e.target.closest('[data-gehzu]');if(!b)return;e.preventDefault();const id=b.dataset.gehzu;if(DEST.find(d=>d.id===id&&!d.tool))go(id);else openTool(id)});
     const raumCode=h=>{const m=/^raum=([A-Za-z0-9]+)/.exec(h);return m?normCode(m[1]):''};
     const own=h=>cfg.hash?cfg.hash(h):null;
-    window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1),c=raumCode(h);if(c){go('start');raum.oeffneDialog(c);return}const d=own(h);if(d)go(d)});
-    const h0=(location.hash||'').slice(1),d0=own(h0);
+    window.addEventListener('popstate',route);
+    window.addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1),c=raumCode(h);if(c){go('start');raum.oeffneDialog(c);return}const d=own(h);if(d)go(d);else route()});
+    const h0=(location.hash||'').slice(1),d0=own(h0),s0=history.state;
     if(raumCode(h0)){go('start');raum.oeffneDialog(raumCode(h0))}
     else if(d0)go(d0);
     else if(DEST.find(d=>d.id===h0))go(h0);
-    else if(h0&&TOOLS.find(t=>t.id===h0)){go(destOfTool(h0));openTool(h0)}
+    else if(h0&&TOOLS.find(t=>t.id===h0)&&!DEST.find(d=>d.tool===h0)){
+      // Per Link geöffnet: kein eigener Schritt im Verlauf. Neu geladen: Der Schritt von vorher bleibt (mit Herkunft).
+      go(destOfTool(h0));try{history.replaceState(s0&&s0.werkstatt===h0?s0:null,'','#'+h0)}catch(e){}openTool(h0,false,'verlauf')}
+    else if(h0&&DEST.find(d=>d.tool===h0))go(DEST.find(d=>d.tool===h0).id);
     else go('start');
   }
 

@@ -395,7 +395,7 @@ init(){}});
 /* ---------- Startseite und Wissen ---------- */
 function startHTML(){
   return `<section class="banner"><img src="${FOTO.galerie.src}" alt="${esc(FOTO.galerie.alt)}"><span class="credit">${nachweis('galerie')}</span>
-    <div class="banner-text"><p class="eyebrow">Klasse 10 · Bürgerliches Recht</p><h2 style="font-size:clamp(1.5rem,3.6vw,2.25rem);line-height:1.2">Ich bin 15 – welche Verträge darf ich eigentlich schon allein abschließen?</h2></div></section>
+    <div class="banner-text"><p class="eyebrow">Klasse 10 · Bürgerliches Recht</p><h2>Ich bin 15 – welche Verträge darf ich eigentlich schon allein abschließen?</h2></div></section>
   <section class="gf-start">
     <div class="stack"><p class="body-l">Döner, Handyvertrag, V-Bucks, Klarna: Jeden Tag schließt du Verträge, oft ohne es zu merken. Aber gelten sie auch? In dieser Lernwerkstatt testest du zuerst dein Bauchgefühl, lernst dann die Regeln des BGB kennen und löst echte Fälle – allein, zu zweit oder live mit der ganzen Klasse als Gericht.</p>
       <div class="cta"><button class="fab" type="button" data-gf-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-dest="mission"><span class="ms" aria-hidden="true">pets</span>Mission Zwergspitz</button></div></div>

@@ -100,3 +100,25 @@ test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async (
   await expect(page.locator('html')).toHaveClass(/big/);
   await expect(page.locator('#ms-count')).toHaveText('2/16');
 });
+
+test.describe('Handy (390 px)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test('Diagramme: Schrift auf dem Handy mindestens 12 px groß', async ({ page }) => {
+    // Gerenderte Größe = Schriftgröße im SVG × Maßstab (auch bei gedrehtem Text)
+    const kleinste = sel => page.locator(sel).evaluate(el => Math.min(...[...el.querySelectorAll('svg text')].map(t => {
+      const m = t.getScreenCTM(); return parseFloat(getComputedStyle(t).fontSize) * Math.hypot(m.a, m.b);
+    })));
+    for (const [id, sel] of [['umwelt', '#th-svg'], ['preis', '#pr-thermo'], ['phillips', '#ph-svg'], ['politik', '#ps-radar']]) {
+      await page.goto('about:blank');
+      await page.goto(`${SECHSECK}#${id}`);
+      await expect(page.locator(`${sel} svg`)).toBeVisible();
+      expect(await kleinste(sel), sel).toBeGreaterThanOrEqual(11.9);
+    }
+    await page.goto('about:blank');
+    await page.goto(SECHSECK);
+    expect(await kleinste('#hero-hex'), 'Sechseck auf der Startseite').toBeGreaterThanOrEqual(11.9);
+    // Der Titel oben passt ganz hinein
+    const h1 = await page.locator('#view-title').evaluate(h => h.dataset.kurz);
+    expect(h1).toBe('Sechseck');
+  });
+});
