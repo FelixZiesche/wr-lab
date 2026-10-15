@@ -18,7 +18,7 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WR_LAB }}
