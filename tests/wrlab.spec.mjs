@@ -9,6 +9,11 @@ test('Startseite zeigt die Themen als Karten mit Foto und Bildnachweis', async (
   await expect(karte.locator('img')).toHaveJSProperty('complete', true);
   expect(await karte.locator('img').evaluate(i => i.naturalWidth)).toBeGreaterThan(0);
   await expect(karte.locator('figcaption')).toHaveText('Foto: Lukas D. / Unsplash');
+  // Fußzeile: CC-BY-Foto mit Link zur Datei und zur Lizenz
+  const fotos = page.locator('#fotos');
+  await expect(fotos).toContainText('Fotos: Andreas Praefcke / Wikimedia Commons, CC BY 3.0 · Lukas D. / Unsplash');
+  await expect(fotos.getByRole('link', { name: 'Andreas Praefcke / Wikimedia Commons' })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Jena_Goethe-Galerie_2010_1.jpg');
+  await expect(fotos.getByRole('link', { name: 'CC BY 3.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');
   await karte.click();
   await expect(page).toHaveURL(/\/sechseck\/(#start)?$/);
   await expect(page.locator('#view-title')).toHaveText('Lernwerkstatt Magisches Sechseck');

@@ -24,4 +24,11 @@ document.getElementById('themen').innerHTML = STUFEN.map(k => {
 </section>`;
 }).join('');
 
-document.getElementById('fotos').textContent = 'Fotos: ' + THEMEN.map(t => t.foto).join(' · ');
+// Bildnachweise; bei CC-Lizenzen mit Link zur Datei und zur Lizenz (in der Karte nur Text, weil die Karte selbst ein Link ist)
+const nachweis = t => {
+  if (!t.fotoLink) return esc(t.foto);
+  const [wer, lizenz] = t.foto.split(', ');
+  const link = (href, text) => `<a href="${esc(href)}" rel="noopener" target="_blank">${esc(text)}</a>`;
+  return lizenz && t.lizenzLink ? `${link(t.fotoLink, wer)}, ${link(t.lizenzLink, lizenz)}` : link(t.fotoLink, t.foto);
+};
+document.getElementById('fotos').innerHTML = 'Fotos: ' + THEMEN.map(nachweis).join(' · ');

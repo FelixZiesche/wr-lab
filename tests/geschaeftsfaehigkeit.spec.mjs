@@ -225,7 +225,7 @@ test.describe('ohne Lernraum', () => {
     // Steckbrief mit Foto und Bildnachweis
     await expect(akte.locator('.akte-fakten')).toContainText('Gaming-PC');
     await expect(akte.locator('.akte-bild figcaption')).toContainText('Wikimedia Commons');
-    // Fall 1: Franz ist 30 – aber dauerhaft geisteskrank
+    // Fall 1: Franz ist 30 – kann aber wegen einer dauerhaften krankhaften Störung seinen Willen nicht frei bilden
     await akte.locator('[data-sid="person"][data-j="2"]').click();
     await expect(akte.locator('.navi-schritt .fb.amb')).toContainText('§ 104 Nr. 2 BGB');
     await expect(akte.locator('[data-akte-loesung]')).toBeEmpty();
@@ -401,6 +401,10 @@ test.describe('ohne Lernraum', () => {
     await fall.locator('[data-abst-neu]').click();
     await expect(fall.locator('[data-abst-urteil]')).toBeVisible();
     await expect(page.locator('[data-abst="gericht-simson"] .gf-fig figcaption')).toContainText('CC BY-SA 4.0');
+    // Alle sechs Gerichtsfälle haben ein Foto, der Jobwechsel spielt von Café zu Café in Jena
+    await expect(page.locator('[data-abst^="gericht-"] .gf-fig')).toHaveCount(6);
+    await expect(page.locator('[data-abst="gericht-job"] .gf-fig figcaption')).toContainText('CC BY 4.0');
+    await expect(page.locator('[data-abst="gericht-job"]')).toContainText('als Aushilfe in einem Café in Jena');
   });
 });
 
@@ -413,7 +417,7 @@ test('Lernraum: Live-Abstimmung mit zwei Schülern, Wand und Lehrerpanel', async
   const code = (await lk.locator('.lr-code').textContent()).trim();
   expect((await readDoc(`rooms/${code}`)).fields.topic.stringValue).toBe('geschaeftsfaehigkeit');
   // Das Dashboard listet die Abstimmungen
-  await expect(lk.locator('#lr-abst')).toContainText('Die Wohnung: Ist die Schenkung wirksam?');
+  await expect(lk.locator('#lr-abst')).toContainText('Die Wohnung: Ist die Übertragung der Wohnung auf Lina wirksam?');
 
   const beitreten = async nick => {
     const s = await device(browser, { viewport: { width: 390, height: 844 } });

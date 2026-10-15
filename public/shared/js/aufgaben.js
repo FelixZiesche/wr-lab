@@ -10,7 +10,7 @@
 //                                                                        kurz = Name des Fachs in Lösungen (wenn t HTML enthält), info = Erklärung hinter dem Hilfeknopf
 //   lueckentext({id, titel, saetze:['Text mit [Lösung|Alternative] …']})
 //   test({id, titel, fragen:[{f, o:[…], r, e}]})                       r = Index der richtigen Option, e = Erklärung
-//   wissenscheck({id, titel, thema, stufe, aufgaben:[…]})              ein Wissenscheck pro Thema, siehe unten
+//   wissenscheck({id, titel, thema, stufe, aufgaben:[…], tipps})       ein Wissenscheck pro Thema, siehe unten
 //   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, auch als Klassenrunde, siehe unten
 //   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
 //   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
@@ -190,7 +190,9 @@ function bindTest(box){
    Abschluss eines Themas: Aufgaben in drei Stufen (Anforderungsbereiche I–III), Erwartungshorizont erst nach der
    eigenen Antwort, Feedback ohne KI (feedback.js), Auswertung pro Stufe. Im Lernraum gehen die Punkte (keine Texte)
    an die Lehrkraft; mit einem AIS.chat-Link der Lehrkraft gibt es bei offenen Aufgaben den Knopf „KI-Coach“.
-   aufgaben: [{afb: 1|2|3, art, f: Frage, material?, p?: Punkte, werkstatt?: id zum Wiederholen, e?: Erklärung}]
+   aufgaben: [{afb: 1|2|3, art, f: Frage, material?, p?: Punkte, werkstatt?: id zum Wiederholen, e?: Erklärung, id?}]
+     id?: fester Name der Aufgabe (eindeutig im Wissenscheck). Ohne id wird die Antwort unter einem Schlüssel aus Art, Frage,
+          Optionen und Lösung gespeichert; mit id übersteht sie auch eine Korrektur der Frage.
      wahl:          o:[…], r: Index,      fehler?: {Index: 'Warum diese Antwort nicht stimmt'}
      mehrfach:      o:[…], r:[Indizes],   fehler?: {Index: '…'}
      richtigfalsch: r: true|false
@@ -198,10 +200,15 @@ function bindTest(box){
      reihe:         schritte:[… in richtiger Reihenfolge]
      zuordnen:      faecher:[{id, t}], karten:[{t, f, werkstatt?}]
      offen:         op: Operator (siehe feedback.js), erwartung:[{t, w, tipp}], muster?, anfaenge?:[…]
-   Punkte: p, sonst bei offenen Aufgaben die Zahl der erwarteten Punkte, sonst die Stufe (I = 1, II = 2, III = 3). */
+   Punkte: p, sonst bei offenen Aufgaben die Zahl der erwarteten Punkte, sonst die Stufe (I = 1, II = 2, III = 3).
+   tipps?: {1: '…', 2: '…', 3: '…'}  Tipp des Themas für die schwächste Stufe in der Auswertung, sonst ein allgemeiner Tipp. */
 const STUFEN={1:{name:'Grundlagen',afb:'Anforderungsbereich I',was:'Wissen wiedergeben: nennen, beschreiben, zuordnen.'},
   2:{name:'Anwenden',afb:'Anforderungsbereich II',was:'Zusammenhänge erklären, rechnen und auf neue Fälle übertragen.'},
   3:{name:'Beurteilen',afb:'Anforderungsbereich III',was:'Aussagen und Maßnahmen prüfen und begründet urteilen.'}};
+// Allgemeine Tipps für die Auswertung, wenn das Thema keine eigenen hat (def.tipps)
+const TIPP_STANDARD={1:'Wiederhole die Merksätze in „Mein Wissen“ und schlag Fachbegriffe im Glossar nach.',
+  2:'Beim Anwenden hilft es, Schritt für Schritt vorzugehen: Was ist gegeben? Welche Regel oder welcher Fachbegriff passt? Was folgt daraus?',
+  3:'Beim Beurteilen hilft das Schema: Kriterien nennen, Pro und Contra abwägen, begründet urteilen.'};
 const ARTEN={wahl:['radio_button_checked','Auswahl'],mehrfach:['check_box','Mehrfachauswahl'],richtigfalsch:['rule','Richtig oder falsch'],
   zahl:['calculate','Rechnen'],reihe:['format_list_numbered','Reihenfolge'],zuordnen:['category','Zuordnen'],offen:['edit_note','Offene Aufgabe']};
 const CHECKS=new Map(), ERGEBNIS=new Map();
@@ -303,8 +310,36 @@ function bewerte(a,s){
     case 'offen':return halb((s.h||[]).length/a.erwartung.length);
   }
 }
-// Für den Lernraum: pro Aufgabe ein Zeichen, „-“ = offen, „0“–„9“ = Zehntel der Punkte, „a“ = volle Punkte
-function ergebnisCode(def,st){return def.aufgaben.map((a,i)=>{const s=st.a[i];return s&&s.f?'0123456789a'[Math.round((s.p||0)/punkteVon(a)*10)]:'-'}).join('')}
+// Für den Lernraum: pro Aufgabe ein Zeichen in der aktuellen Reihenfolge, „-“ = offen, „0“–„9“ = Zehntel der Punkte, „a“ = volle Punkte
+function ergebnisCode(A,s){return A.map((a,i)=>{const x=s(i);return x&&x.f?'0123456789a'[Math.max(0,Math.min(10,Math.round((x.p||0)/punkteVon(a)*10)))]:'-'}).join('')}
+// Gespeichert wird pro Aufgabe unter einem Schlüssel aus ihrem Inhalt (oder ihrer festen id): Neue Aufgaben oder eine
+// geänderte Frage lassen die Antworten der anderen Aufgaben stehen. Gleiche Aufgaben bekommen „~2“, „~3“ … angehängt.
+const inhalt=a=>[a.art,a.f,a.o,a.r,a.schritte,a.karten&&a.karten.map(k=>k.t),a.erwartung&&a.erwartung.length];
+const imBereich=(j,n)=>Number.isInteger(j)&&j>=0&&j<n;
+function passt(a,s){const w=s.w;if(w==null||w==='')return !s.h||s.h.every(j=>imBereich(j,(a.erwartung||[]).length));
+  switch(a.art){
+    case 'wahl':return imBereich(w,a.o.length);
+    case 'mehrfach':return Array.isArray(w)&&w.every(j=>imBereich(j,a.o.length));
+    case 'richtigfalsch':return typeof w==='boolean';
+    case 'reihe':return Array.isArray(w)&&w.length===a.schritte.length&&new Set(w).size===w.length&&w.every(j=>imBereich(j,w.length));
+    case 'zuordnen':return typeof w==='object'&&Object.entries(w).every(([j,f])=>imBereich(+j,a.karten.length)&&a.faecher.some(x=>x.id===f));
+    case 'offen':return typeof w==='string'&&(!s.h||s.h.every(j=>imBereich(j,a.erwartung.length)));
+    default:return true;
+  }
+}
+function aufgabenSchluessel(A){const n={};return A.map(a=>{const k=a.id?'id:'+a.id:String(streuwert(JSON.stringify(inhalt(a))));n[k]=(n[k]||0)+1;return n[k]>1?`${k}~${n[k]}`:k})}
+/** Stand laden. Alter Stand ({v: Fingerabdruck des ganzen Blatts, a: {Index: …}}): einmalig übernehmen, wenn er zum
+ *  aktuellen Blatt passt, sonst lassen sich die Antworten keiner Aufgabe mehr zuordnen. Antworten zu Aufgaben, die es nicht
+ *  mehr gibt, fallen weg. */
+function wcLaden(roh,A,K){
+  const st={v:2,k:{},tab:roh&&roh.tab!=null?roh.tab:1};if(!roh)return st;
+  if(roh.k)K.forEach(k=>{if(roh.k[k])st.k[k]=roh.k[k]});
+  else if(roh.a&&roh.v===streuwert(JSON.stringify(A.map(inhalt))))K.forEach((k,i)=>{if(roh.a[i])st.k[k]=roh.a[i]});
+  // Passt eine Antwort nicht mehr zur Aufgabe (z. B. feste id, aber andere Schritte oder Fächer), ist die Aufgabe wieder offen.
+  // Sonst die Punkte aus der Antwort neu berechnen, falls sich Punktzahl oder Toleranz geändert haben.
+  K.forEach((k,i)=>{const s=st.k[k];if(!s)return;if(!passt(A[i],s))delete st.k[k];else if(s.f)s.p=bewerte(A[i],s)});
+  return st;
+}
 raum.on(art=>{
   if(art==='start'||art==='verbunden')ERGEBNIS.forEach(code=>raum.sendeErgebnis(code));
   if(art==='raum'||art==='start'||art==='ende'||art==='verbunden')$$('[data-wc-ki]').forEach(b=>{b.hidden=!(raum.istSchueler()&&raum.kiLink())||b.closest('.wc-a').dataset.fertig==='1'});
@@ -312,18 +347,18 @@ raum.on(art=>{
 
 function bindWissenscheck(box){
   const id=box.dataset.wc,def=CHECKS.get(id);if(!def)return;
-  // Ändern sich Aufgaben oder Antwortmöglichkeiten, passen gespeicherte Antworten nicht mehr: dann neu beginnen
-  const A=def.aufgaben,fp=streuwert(JSON.stringify(A.map(a=>[a.art,a.f,a.o,a.r,a.schritte,a.karten&&a.karten.map(k=>k.t),a.erwartung&&a.erwartung.length])));
-  let st=store(key('wc',id));if(!st||st.v!==fp)st={v:fp,a:{},tab:1};
-  const zu=i=>st.a[i]||(st.a[i]={});
-  const sichern=()=>{store(key('wc',id),st);const code=ergebnisCode(def,st);ERGEBNIS.set(id,code);raum.sendeErgebnis(code);kopf()};
+  // Antworten pro Aufgabe (Schlüssel K[i]), damit Änderungen an einer Aufgabe die anderen nicht löschen
+  const A=def.aufgaben,K=aufgabenSchluessel(A);
+  let st=wcLaden(store(key('wc',id)),A,K);
+  const ant=i=>st.k[K[i]],zu=i=>st.k[K[i]]||(st.k[K[i]]={});
+  const sichern=()=>{store(key('wc',id),st);const code=ergebnisCode(A,ant);ERGEBNIS.set(id,code);raum.sendeErgebnis(code);kopf()};
   const werkstattKnopf=wid=>wid?`<button class="btn text small" type="button" data-gehzu="${esc(wid)}"><span class="ms">replay</span>Wiederholen: ${esc(raum.titel(wid))}</button>`:'';
 
   /* Kopf und Stufen */
   function kopf(){
     let p=0,max=0;
-    [1,2,3].forEach(k=>{const l=A.map((a,i)=>({a,i})).filter(x=>x.a.afb===k);$(`[data-wc-n="${k}"]`,box).textContent=`${l.filter(x=>st.a[x.i]&&st.a[x.i].f).length}/${l.length}`});
-    A.forEach((a,i)=>{max+=punkteVon(a);if(st.a[i]&&st.a[i].f)p+=st.a[i].p||0});
+    [1,2,3].forEach(k=>{const l=A.map((a,i)=>({a,i})).filter(x=>x.a.afb===k);$(`[data-wc-n="${k}"]`,box).textContent=`${l.filter(x=>ant(x.i)&&ant(x.i).f).length}/${l.length}`});
+    A.forEach((a,i)=>{max+=punkteVon(a);if(ant(i)&&ant(i).f)p+=ant(i).p||0});
     $('[data-wc-gesamt]',box).textContent=`${fmtP(p)} von ${max} Punkten`;
     if(st.tab===0)auswertung();
   }
@@ -338,12 +373,12 @@ function bindWissenscheck(box){
 
   function auswertung(){
     const el=$('[data-wc-stufe="0"]',box);
-    const stufe=k=>{let p=0,max=0,n=0,anz=0;A.forEach((a,i)=>{if(a.afb!==k)return;anz++;max+=punkteVon(a);const s=st.a[i];if(s&&s.f){n++;p+=s.p||0}});return {p,max,n,anz}};
+    const stufe=k=>{let p=0,max=0,n=0,anz=0;A.forEach((a,i)=>{if(a.afb!==k)return;anz++;max+=punkteVon(a);const s=ant(i);if(s&&s.f){n++;p+=s.p||0}});return {p,max,n,anz}};
     const S=[1,2,3].map(stufe),p=S.reduce((x,s)=>x+s.p,0),max=S.reduce((x,s)=>x+s.max,0),n=S.reduce((x,s)=>x+s.n,0),pct=max?Math.round(p/max*100):0;
-    const wdh=[...new Set(A.flatMap((a,i)=>{const s=st.a[i];if(!s||!s.f||(s.p||0)>=punkteVon(a))return [];
+    const wdh=[...new Set(A.flatMap((a,i)=>{const s=ant(i);if(!s||!s.f||(s.p||0)>=punkteVon(a))return [];
       if(a.art==='zuordnen'){const w=s.w||{},f=a.karten.filter((k,j)=>w[j]!==k.f&&k.werkstatt).map(k=>k.werkstatt);if(f.length)return f}return a.werkstatt?[a.werkstatt]:[]}))];
-    const schwach=S.map((s,k)=>({k:k+1,q:s.n?s.p/Math.max(1,A.reduce((x,a,i)=>x+(a.afb===k+1&&st.a[i]&&st.a[i].f?punkteVon(a):0),0)):1})).filter((x,k)=>S[k].n).sort((x,y)=>x.q-y.q)[0];
-    const TIPP={1:'Wiederhole die Merksätze in „Mein Wissen“ und schlag Fachbegriffe im Glossar nach.',2:'Beim Anwenden hilft es, zuerst die Formel oder die Wirkungskette aufzuschreiben.',3:'Beim Beurteilen hilft das Schema: Kriterien nennen, Pro und Contra abwägen, begründet urteilen.'};
+    const schwach=S.map((s,k)=>({k:k+1,q:s.n?s.p/Math.max(1,A.reduce((x,a,i)=>x+(a.afb===k+1&&ant(i)&&ant(i).f?punkteVon(a):0),0)):1})).filter((x,k)=>S[k].n).sort((x,y)=>x.q-y.q)[0];
+    const TIPP={...TIPP_STANDARD,...(def.tipps||{})};
     el.innerHTML=`<div class="panel stack"><h3 class="title-l">Deine Auswertung</h3>
       ${[1,2,3].map(k=>{const s=S[k-1];return `<div class="wc-erg"><div class="row" style="justify-content:space-between"><span class="title-s">${STUFEN[k].name} <span class="small muted">(${STUFEN[k].afb})</span></span><span class="small num">${fmtP(s.p)} von ${s.max} Punkten · ${s.n}/${s.anz} bearbeitet</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${s.max?Math.round(s.p/s.max*100):0}%"></span></div></div>`}).join('')}
       <p class="title-m num">Gesamt: ${fmtP(p)} von ${max} Punkten (${pct} %)</p>
@@ -354,7 +389,7 @@ function bindWissenscheck(box){
       <span class="fb amb" data-wc-neu-q hidden>Alle Antworten löschen? <button class="btn small primary" type="button" data-wc-neu-y>Neu starten</button> <button class="btn small text" type="button" data-wc-neu-n>Abbrechen</button></span></div></div>`;
     $('[data-wc-neu]',el).addEventListener('click',()=>{$('[data-wc-neu-q]',el).hidden=false});
     $('[data-wc-neu-n]',el).addEventListener('click',()=>{$('[data-wc-neu-q]',el).hidden=true});
-    $('[data-wc-neu-y]',el).addEventListener('click',()=>{st={v:fp,a:{},tab:1};$$('.wc-a',box).forEach(art=>zeichne(+art.dataset.wcI,true));sichern();zeigeStufe(1,true)});
+    $('[data-wc-neu-y]',el).addEventListener('click',()=>{st={v:2,k:{},tab:1};$$('.wc-a',box).forEach(art=>zeichne(+art.dataset.wcI,true));sichern();zeigeStufe(1,true)});
   }
 
   /* Einzelne Aufgaben */
@@ -395,7 +430,7 @@ function bindWissenscheck(box){
         status.textContent='';hw.hidden=true;pruefen();
       });
       zeichner.set(i,neu=>{
-        const s=st.a[i]||{};if(neu)ta.value=s.w||'';
+        const s=ant(i)||{};if(neu)ta.value=s.w||'';
         art.dataset.fertig=s.f?'1':'';sperren(!!s.f);$('[data-wc-fertig]',art).hidden=!!s.f;$('[data-wc-hinweis]',art).hidden=!!s.f;
         $('[data-wc-ki]',art).hidden=!!s.f||!(raum.istSchueler()&&raum.kiLink());
         if(neu)hw.hidden=true;
@@ -421,7 +456,7 @@ function bindWissenscheck(box){
       else if(a.art==='zahl')s.w=$('input',art).value;
       else if(a.art==='zuordnen'){s.w={};$$('select',art).forEach(x=>{if(x.value)s.w[x.dataset.k]=x.value})}
       store(key('wc',id),st);bereit()};
-    const bereit=()=>{const s=st.a[i]||{};pr.disabled=!!s.f||(a.art==='mehrfach'?!(s.w||[]).length:a.art==='zuordnen'?Object.keys(s.w||{}).length<a.karten.length:a.art==='reihe'?false:s.w===undefined||s.w==='')};
+    const bereit=()=>{const s=ant(i)||{};pr.disabled=!!s.f||(a.art==='mehrfach'?!(s.w||[]).length:a.art==='zuordnen'?Object.keys(s.w||{}).length<a.karten.length:a.art==='reihe'?false:s.w===undefined||s.w==='')};
     art.addEventListener('change',e=>{if(!e.target.closest('[data-wc-fb]'))lies()});
     if(a.art==='zahl'){const inp=$('input',art);inp.addEventListener('input',lies);inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!pr.disabled)pruefen()})}
     pr.addEventListener('click',pruefen);
@@ -429,7 +464,7 @@ function bindWissenscheck(box){
     // Reihenfolge: Liste mit Pfeilen
     const reihe=()=>{const s=zu(i);if(!s.w)s.w=mischen(a.schritte.length,streuwert(a.f));return s.w};
     const zeichneReihe=()=>{
-      const ol=$('.wc-reihe',art),w=reihe(),fertig=!!(st.a[i]&&st.a[i].f);
+      const ol=$('.wc-reihe',art),w=reihe(),fertig=!!(ant(i)&&ant(i).f);
       ol.innerHTML=w.map((j,pos)=>`<li class="wc-schritt${fertig?(pos===j?' right':' wrong'):''}"><span>${a.schritte[j]}</span>${fertig?'':`<span class="wc-pfeile"><button class="icon-btn" type="button" data-hoch="${pos}" aria-label="„${esc(plain(a.schritte[j]))}“ nach oben"${pos===0?' disabled':''}><span class="ms">arrow_upward</span></button><button class="icon-btn" type="button" data-runter="${pos}" aria-label="„${esc(plain(a.schritte[j]))}“ nach unten"${pos===w.length-1?' disabled':''}><span class="ms">arrow_downward</span></button></span>`}</li>`).join('');
     };
     if(a.art==='reihe')$('.wc-reihe',art).addEventListener('click',e=>{
@@ -439,7 +474,7 @@ function bindWissenscheck(box){
       ($(`[data-${dir}="${ziel}"]:not(:disabled)`,art)||$(`[data-${dir==='hoch'?'runter':'hoch'}="${ziel}"]`,art))?.focus()});
 
     zeichner.set(i,neu=>{
-      const s=st.a[i]||{};
+      const s=ant(i)||{};
       if(neu){ // Eingaben aus dem Speicher übernehmen
         if(a.art==='wahl'||a.art==='richtigfalsch'||a.art==='mehrfach')$$('input',art).forEach(x=>{const v=a.art==='richtigfalsch'?x.value==='1':+x.value;x.checked=a.art==='mehrfach'?(s.w||[]).includes(v):s.w===v});
         if(a.art==='zahl')$('input',art).value=s.w||'';

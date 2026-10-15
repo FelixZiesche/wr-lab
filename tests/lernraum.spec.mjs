@@ -87,6 +87,54 @@ test('Lernraum: beitreten, Ort sehen, Antwort an die Wand, Lehrerpanel nur für 
   await s.context().close();
 });
 
+test('Mein Wissen: „Alle anzeigen“ nur für die Lehrkraft im Lernraum, auch im Beamer-Modus, ohne zu speichern', async ({ page: lk, browser }) => {
+  test.setTimeout(120_000);
+  const alle = page => page.locator('#ws-all');
+  // Ohne Lernraum: kein Knopf, alle Merksätze noch gesperrt
+  await lk.goto(SECHSECK);
+  await lk.locator('#btn-wissen').click();
+  await expect(lk.locator('#ws .ms-item').first()).toBeVisible();
+  await expect(alle(lk)).toBeHidden();
+  const n = await lk.locator('#ws .ms-item').count();
+  await expect(lk.locator('#ws .ms-item.locked')).toHaveCount(n);
+
+  // Lehrkraft mit offenem Lernraum: Knopf ohne Klammerzusatz, deckt alles auf, speichert aber nichts
+  const code = await raumOeffnen(lk);
+  await lk.locator('#modal-close').click();
+  await lk.locator('#btn-wissen').click();
+  await expect(alle(lk)).toBeVisible();
+  await expect(alle(lk)).toHaveText('Alle anzeigen');
+  await alle(lk).click();
+  await expect(alle(lk)).toHaveAttribute('aria-pressed', 'true');
+  await expect(lk.locator('#ws .ms-item.locked')).toHaveCount(0);
+  await expect(lk.locator('#ms-count')).toHaveText(`0/${n}`);
+  expect(await lk.evaluate(() => JSON.parse(localStorage.getItem('ms6-wissen') || '[]'))).toEqual([]);
+  // Wieder geöffnet: nur die entdeckten Merksätze
+  await lk.locator('#modal-close').click();
+  await lk.locator('#btn-wissen').click();
+  await expect(lk.locator('#ws .ms-item.locked')).toHaveCount(n);
+
+  // Beamer-Modus: Der Knopf bleibt, denn dort zeigt die Lehrkraft der Klasse alle Merksätze
+  await lk.locator('#modal-close').click();
+  await knopf(lk).click();
+  await lk.locator('#lr-beamer').click();
+  await expect(lk.locator('#lr-beamer')).toHaveAttribute('aria-pressed', 'true');
+  await lk.locator('#modal-close').click();
+  await lk.locator('#btn-wissen').click();
+  await expect(alle(lk)).toBeVisible();
+
+  // Schüler im selben Raum sehen den Knopf nicht
+  const s = await beitreten(browser, code, 'Lotte');
+  await s.locator('#btn-wissen').click();
+  await expect(s.locator('#ws .ms-item').first()).toBeVisible();
+  await expect(alle(s)).toHaveCount(1);
+  await expect(alle(s)).toBeHidden();
+  await expect(s.locator('#ws .ms-item.locked')).toHaveCount(n);
+
+  expect(s.errors).toEqual([]);
+  await s.context().close();
+});
+
 test('Lernraum: anhalten, alle holen, Werkstätten sperren, drucken, beenden', async ({ page: lk, browser }) => {
   test.setTimeout(120_000);
   await lk.addInitScript(() => { window.print = () => { window.__gedruckt = (window.__gedruckt || 0) + 1; }; });

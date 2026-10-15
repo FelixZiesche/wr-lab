@@ -156,6 +156,71 @@ test.describe('ohne Lernraum', () => {
     await expect(aufgabe(page, 0)).toBeVisible();
     await expect(aufgabe(page, 0).locator('input:checked')).toHaveCount(0);
   });
+
+  test('Speicherung pro Aufgabe: neue Aufgabe oder geänderte Frage löschen die anderen Antworten nicht, alter Stand wird übernommen', async ({ page }) => {
+    const SCHLUESSEL = 'ms6-wc-wissenscheck';
+    let umbauen = false;
+    // Dieselbe Seite mit geändertem Wissenscheck: neue Aufgabe vorn, Frage der ersten Auswahlaufgabe geändert
+    await page.route('**/sechseck/wissenscheck.js', async route => {
+      const res = await route.fetch();
+      let body = await res.text();
+      if (umbauen) body += `\n{const i=WISSENSCHECK.aufgaben.findIndex(a=>a.afb===1&&a.art==='wahl');WISSENSCHECK.aufgaben[i].f+=' (geändert)';
+WISSENSCHECK.aufgaben.unshift({afb:1,art:'richtigfalsch',f:'Diese Aufgabe ist neu.',r:true,e:'Neu ergänzt.'});}`;
+      await route.fulfill({ response: res, body });
+    });
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    const wc = page.locator('[data-wc="wissenscheck"]');
+    // Die ersten beiden Auswahlaufgaben der Grundlagen: die erste richtig, die zweite falsch beantworten
+    const info = await page.evaluate(async () => {
+      const { WISSENSCHECK: W } = await import('/sechseck/wissenscheck.js');
+      const idx = W.aufgaben.map((a, i) => ({ a, i })).filter(x => x.a.afb === 1 && x.a.art === 'wahl').slice(0, 2);
+      return { n: W.aufgaben.length, n1: W.aufgaben.filter(a => a.afb === 1).length, max: W.aufgaben.reduce((s, a) => s + (a.p ?? (a.art === 'offen' ? a.erwartung.length : a.afb)), 0),
+        auf: idx.map(x => ({ i: x.i, r: x.a.r, falsch: x.a.r === 0 ? 1 : 0, p: x.a.p ?? 1 })) };
+    });
+    const [e1, e2] = info.auf;
+    await aufgabe(page, e1.i).locator(`input[value="${e1.r}"]`).check();
+    await aufgabe(page, e1.i).locator('[data-wc-pruefen]').click();
+    await aufgabe(page, e2.i).locator(`input[value="${e2.falsch}"]`).check();
+    await aufgabe(page, e2.i).locator('[data-wc-pruefen]').click();
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`${e1.p} von ${info.max} Punkten`);
+
+    // Neu ausgeliefert mit geändertem Blatt: Alles rückt um eine Position, die geänderte Frage ist offen, die andere bleibt
+    umbauen = true;
+    await page.goto('about:blank');
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    await expect(wc.locator('.wc-a')).toHaveCount(info.n + 1);
+    await expect(aufgabe(page, 0)).toContainText('Diese Aufgabe ist neu.');
+    await expect(aufgabe(page, e1.i + 1)).toContainText('(geändert)');
+    await expect(aufgabe(page, e1.i + 1).locator('input:checked')).toHaveCount(0);
+    await expect(aufgabe(page, e1.i + 1).locator('.fb')).toHaveCount(0);
+    await expect(aufgabe(page, e2.i + 1).locator(`input[value="${e2.falsch}"]`)).toBeChecked();
+    await expect(aufgabe(page, e2.i + 1).locator('.fb')).toContainText('Nicht ganz.');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`0 von ${info.max + 1} Punkten`);
+    await expect(wc.locator('[data-wc-n="1"]')).toHaveText(`1/${info.n1 + 1}`);
+
+    // Alter Stand (Antworten nach Position, Fingerabdruck über das ganze Blatt): passt er zum Blatt, wird er übernommen
+    umbauen = false;
+    const alt = await page.evaluate(async ({ SCHLUESSEL, e1 }) => {
+      const { WISSENSCHECK: W } = await import('/sechseck/wissenscheck.js?alt');
+      const streuwert = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+      const fp = streuwert(JSON.stringify(W.aufgaben.map(a => [a.art, a.f, a.o, a.r, a.schritte, a.karten && a.karten.map(k => k.t), a.erwartung && a.erwartung.length])));
+      localStorage.setItem(SCHLUESSEL, JSON.stringify({ v: fp, a: { [e1.i]: { w: e1.r, f: true, p: e1.p } }, tab: 1 }));
+      return fp;
+    }, { SCHLUESSEL, e1 });
+    await page.goto('about:blank');
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    await expect(aufgabe(page, e1.i).locator('.fb')).toContainText('Richtig.');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`${e1.p} von ${info.max} Punkten`);
+    const neu = await page.evaluate(k => JSON.parse(localStorage.getItem(k)), SCHLUESSEL);
+    expect(neu.a).toBeUndefined();
+    expect(Object.values(neu.k).filter(x => x.f)).toEqual([{ w: e1.r, f: true, p: e1.p }]);
+
+    // Passt der alte Fingerabdruck nicht mehr, lassen sich die Antworten keiner Aufgabe zuordnen: Sie fallen weg
+    await page.evaluate(({ SCHLUESSEL, e1, alt }) => localStorage.setItem(SCHLUESSEL, JSON.stringify({ v: alt + 1, a: { [e1.i]: { w: e1.r, f: true, p: e1.p } }, tab: 1 })), { SCHLUESSEL, e1, alt });
+    await page.reload();
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`0 von ${info.max} Punkten`);
+    await expect(aufgabe(page, e1.i).locator('input:checked')).toHaveCount(0);
+  });
 });
 
 test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.chat-Link', async ({ page: lk, browser }) => {
@@ -277,7 +342,10 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
         if (a.art === 'wahl' && a.fehler && a.fehler[a.r]) fehler.push(`${n}: Fehlertext an der richtigen Antwort`);
         if (a.art === 'zuordnen' && a.karten.some(k => !a.faecher.some(f => f.id === k.f))) fehler.push(`${n}: Karte ohne passendes Fach`);
         if (['wahl', 'mehrfach', 'richtigfalsch', 'zahl', 'reihe', 'zuordnen'].includes(a.art) && !a.e) fehler.push(`${n}: Erklärung e fehlt`);
+        if (a.id !== undefined && (!/^[a-z0-9-]{1,40}$/.test(a.id) || W.aufgaben.some((b, j) => j !== i && b.id === a.id))) fehler.push(`${n}: id ungültig oder doppelt`);
       });
+      // Tipps für die Auswertung: nur für die Stufen 1 bis 3
+      Object.entries(W.tipps || {}).forEach(([k, v]) => { if (!['1', '2', '3'].includes(k) || typeof v !== 'string' || !v) fehler.push(`${t.id}: Tipp ${k} ungültig`); });
       out.push({ id: t.id, n: W.aufgaben.length, stufen: [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).length), formate: new Set(W.aufgaben.map(a => a.art)).size, fehler });
     }
     return out;

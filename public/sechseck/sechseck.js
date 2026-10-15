@@ -4,6 +4,7 @@ import { $, $$, fmt, sgn, clamp, esc, store } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
 import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls } from '../shared/js/aufgaben.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
+import { raum } from '../shared/js/lernraum.js';
 import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, START, GOAL_IMG } from './daten.js';
 import { SPIEL, PHOTOS } from './leben.js';
 import { HINWEISE, WAND, IMPULS } from './wand.js';
@@ -22,7 +23,7 @@ const MS={
   verteilung:['Die Lorenzkurve zeigt, welcher Anteil der Bevölkerung welchen Anteil am Einkommen hat. Der Gini-Koeffizient fasst das zusammen: 0 = alle gleich, 1 = einer hat alles. Der Staat verteilt über Steuern und Transfers um (Sekundärverteilung).'],
   umwelt:['Umweltschutz ist seit 1994 Staatsziel (Art. 20a GG). Deutschland will die Treibhausgase bis 2030 um 65 % gegenüber 1990 senken und 2045 klimaneutral sein. Ein CO₂-Preis macht externe Kosten sichtbar, verteuert aber fossile Energie.'],
   beziehungen:['Zwischen den Zielen bestehen Zielharmonie (Förderung des einen fördert das andere), Zielkonflikt (Förderung des einen gefährdet das andere) oder Zielneutralität. Viele Beziehungen sind ambivalent: Sie hängen von Zeitraum und Ursache ab.'],
-  phillips:['Die Phillips-Kurve beschreibt einen Zielkonflikt zwischen Preisniveaustabilität und Beschäftigung. Bei Angebotsschocks (Ölkrise 1973, Energiekrise 2022) steigen Inflation und Arbeitslosigkeit gleichzeitig: Stagflation.'],
+  phillips:['Die Phillips-Kurve beschreibt einen Zielkonflikt zwischen Preisniveaustabilität und Beschäftigung. Bei Angebotsschocks (Ölkrise 1973/74, Energiekrise 2022/23) können Inflation und Arbeitslosigkeit gleichzeitig steigen: Stagflation. In Deutschland zeigte sich das 2023: Inflation 5,9 %, BIP −1,0 %, mehr Arbeitslose.'],
   politik:['Jede wirtschaftspolitische Maßnahme hat Haupt- und Nebenwirkungen. Wirtschaftspolitik bedeutet daher, Ziele zu gewichten und Prioritäten zu setzen – das ist eine politische Wertentscheidung.'],
   leben:['Wirtschaftspolitische Entscheidungen treffen Menschen sehr unterschiedlich: Was dem Sechseck insgesamt hilft, kann für einzelne Gruppen teuer sein. Zielkonflikte sind deshalb immer auch Interessenkonflikte zwischen Menschen.'],
   check:['Ob ein Ziel „erreicht“ ist, hängt von der Messlatte ab. Zielmarken wie 2 % Inflation oder −65 % Treibhausgase sind politische Setzungen, die man begründen und kritisieren kann.'],
@@ -48,7 +49,7 @@ const GLOSS=[
   ['Kerninflation','Inflationsrate ohne die schwankungsanfälligen Bereiche Energie und Nahrungsmittel.'],
   ['Konjunktur','Schwankungen der wirtschaftlichen Aktivität um den langfristigen Wachstumstrend.'],
   ['Leistungsbilanz','Erfasst Waren- und Dienstleistungsverkehr sowie Primär- und Sekundäreinkommen mit dem Ausland.'],
-  ['Leitzins','Zinssatz, zu dem sich Banken bei der Zentralbank Geld leihen oder anlegen. Die EZB hob ihn im September 2026 an; der Einlagenzins liegt bei 2,50 %.'],
+  ['Leitzins','Zinssatz, zu dem sich Banken bei der Zentralbank Geld leihen oder anlegen. Die EZB hob ihn im Juni und im September 2026 um je 0,25 Prozentpunkte an. Der Einlagenzins liegt seit September 2026 bei 2,50 %.'],
   ['Lorenzkurve','Grafik, die kumulierte Bevölkerungsanteile den kumulierten Einkommens- oder Vermögensanteilen gegenüberstellt.'],
   ['Magisches Viereck','Die vier Ziele des § 1 StabG von 1967.'],
   ['Magisches Sechseck','Viereck erweitert um gerechte Verteilung und Umweltschutz.'],
@@ -69,7 +70,7 @@ const GLOSS=[
 ];
 
 /* ---------- Kapitel und Bereiche ---------- */
-const CH={1:['Kapitel 1 – Grundlagen','Einstieg für alle'],2:['Kapitel 2 – Die sechs Ziele messen','Ideal als Gruppenpuzzle: eine Werkstatt pro Expertengruppe'],3:['Kapitel 3 – Zielbeziehungen','Harmonie, Konflikt, Neutralität'],4:['Kapitel 4 – Wirtschaftspolitik','Entscheiden und bewerten'],5:['Kapitel 5 – Planspiel','Allein oder als ganze Klasse'],6:['Kapitel 6 – Sichern','Wiederholung und Abiturvorbereitung']};
+const CH={1:['Kapitel 1 – Grundlagen','Einstieg für alle'],2:['Kapitel 2 – Die sechs Ziele messen','Sechs Werkstätten, eine pro Ziel'],3:['Kapitel 3 – Zielbeziehungen','Harmonie, Konflikt, Neutralität'],4:['Kapitel 4 – Wirtschaftspolitik','Entscheiden und bewerten'],5:['Kapitel 5 – Planspiel','Allein oder als ganze Klasse'],6:['Kapitel 6 – Sichern','Wiederholung und Abiturvorbereitung']};
 const DEST=[
   {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Magisches Sechseck',kurz:'Magisches Sechseck',render:startHTML},
   {id:'ziele',icon:'hexagon',label:'Ziele',title:'Die sechs Ziele messen',ch:[2],desc:'Sechs Werkstätten: Warenkorb, Arbeitsmarkt, Konjunktur, Leistungsbilanz, Lorenzkurve, Klima'},
@@ -149,6 +150,23 @@ function openSteckbrief(k){
 }
 
 /* 1 Grundlagen */
+// Zuordnung Indikator → Ziel: Erklärung der Ziele hinter dem Hilfeknopf, Erklärung jeder Karte nach dem Prüfen
+const ZIEL_INFO={
+  P:'<p><b>Stabilität des Preisniveaus:</b> Die Preise sollen insgesamt nur langsam und gleichmäßig steigen. Die EZB strebt 2 % im Jahr an.</p>',
+  B:'<p><b>Hoher Beschäftigungsstand:</b> Möglichst alle, die arbeiten wollen, sollen eine Stelle finden.</p>',
+  W:'<p><b>Stetiges und angemessenes Wachstum:</b> Die Wirtschaft soll ohne starke Schwankungen wachsen und ihre Möglichkeiten ausschöpfen.</p>',
+  A:'<p><b>Außenwirtschaftliches Gleichgewicht:</b> Was Deutschland vom Ausland einnimmt und dorthin zahlt, soll ungefähr ausgeglichen sein.</p>',
+  U:'<p><b>Schutz der natürlichen Lebensgrundlagen:</b> Klima, Luft, Wasser und Böden sollen auch für künftige Generationen erhalten bleiben (Art. 20a GG).</p>',
+  V:'<p><b>Gerechte Einkommens- und Vermögensverteilung:</b> Einkommen und Vermögen sollen nicht zu ungleich verteilt sein (Sozialstaatsprinzip).</p>'};
+const INDIKATOREN=[
+  {t:'Verbraucherpreisindex',f:'P',e:'Er misst, wie sich die Preise eines festen Warenkorbs verändern. Die Veränderung zum Vorjahr ist die Inflationsrate.'},
+  {t:'Arbeitslosenquote',f:'B',e:'Anteil der registrierten Arbeitslosen an allen zivilen Erwerbspersonen – der wichtigste Indikator für die Beschäftigung.'},
+  {t:'Veränderungsrate des realen BIP',f:'W',e:'Das reale BIP ist um Preissteigerungen bereinigt. Seine Veränderung zum Vorjahr ist das Wirtschaftswachstum.'},
+  {t:'Leistungsbilanzsaldo in % des BIP',f:'A',e:'Er zeigt, ob Deutschland mehr aus dem Ausland einnimmt, als es dorthin zahlt. Ziel ist ein annähernd ausgeglichener Saldo.'},
+  {t:'Gini-Koeffizient',f:'V',e:'Er misst, wie ungleich Einkommen oder Vermögen verteilt sind: 0 heißt alle gleich, 1 heißt eine Person hat alles.'},
+  {t:'Treibhausgasemissionen in CO₂-Äquivalenten',f:'U',e:'Sie zeigen, ob Deutschland seine Klimaziele erreicht: −65 % bis 2030 gegenüber 1990.'},
+  {t:'Unterbeschäftigung',f:'B',e:'Sie zählt auch Menschen in Weiterbildung oder Maßnahmen mit, die nicht als arbeitslos gelten. So zeigt sie die Lage am Arbeitsmarkt vollständiger.'},
+  {t:'Armutsgefährdungsquote',f:'V',e:'Anteil der Menschen mit weniger als 60 % des mittleren Einkommens (2025: 16,1 %). Sie zeigt die Verteilung am unteren Rand.'}];
 tool({id:'grundlagen',hinweise:HINWEISE.grundlagen,ch:1,goals:ORDER,title:'Sechseck-Baukasten',sub:'Vom magischen Viereck (1967) zum Sechseck: Ziele, Gesetze, Indikatoren, Akteure',
 html(){return `
 <p class="task"><b>Auftrag:</b> Startet beim Viereck von 1967 und erweitert es zum Sechseck. Klickt jede Ecke an und lest den Steckbrief. Ordnet anschließend die Indikatoren den Zielen zu.</p>
@@ -157,7 +175,8 @@ html(){return `
   <button class="btn small primary" id="gl-toggle" type="button">Zum Sechseck erweitern</button></div><div id="gl-svg"></div></div>
   <div class="stack">
     <div class="quote"><b>§ 1 Stabilitäts- und Wachstumsgesetz (1967):</b> „Bund und Länder haben bei ihren wirtschafts- und finanzpolitischen Maßnahmen die Erfordernisse des gesamtwirtschaftlichen Gleichgewichts zu beachten. Die Maßnahmen sind so zu treffen, daß sie im Rahmen der marktwirtschaftlichen Ordnung gleichzeitig zur Stabilität des Preisniveaus, zu einem hohen Beschäftigungsstand und außenwirtschaftlichem Gleichgewicht bei stetigem und angemessenem Wirtschaftswachstum beitragen.“</div>
-    <div id="gl-ext" class="quote" hidden><b>Erweiterung:</b> Das Sozialstaatsprinzip (Art. 20 Abs. 1 GG) begründet das Ziel einer gerechten Einkommens- und Vermögensverteilung. Seit 1994 schützt der Staat nach Art. 20a GG „auch in Verantwortung für die künftigen Generationen die natürlichen Lebensgrundlagen“. Beide Ziele stehen nicht im StabG, gelten aber als gleichrangige Ergänzung.</div>
+    <p class="small muted">Anlass für das Gesetz vom 8. Juni 1967 war die erste Rezession der Bundesrepublik 1966/67.</p>
+    <div id="gl-ext" class="quote" hidden><b>Erweiterung:</b> Das Sozialstaatsprinzip (Art. 20 Abs. 1 GG) begründet das Ziel einer gerechten Einkommens- und Vermögensverteilung. Seit 1994 schützt der Staat nach Art. 20a GG „auch in Verantwortung für die künftigen Generationen die natürlichen Lebensgrundlagen“. Beide Ziele stehen nicht im StabG. Viele erweitern das Viereck heute um sie zum Sechseck. Ob sie gleichrangig neben den vier Zielen stehen sollten, ist umstritten.</div>
     <div id="gl-sb"></div>
   </div>
 </div>
@@ -171,8 +190,7 @@ html(){return `
     <dt>EU</dt><dd>Handelspolitik, Emissionshandel, Wettbewerbsrecht, Fiskalregeln</dd>
     <dt>Beratung</dt><dd>Sachverständigenrat (Jahresgutachten), Forschungsinstitute (Gemeinschaftsdiagnose)</dd></dl></div>
 </div>
-<div class="panel"><h3>Zuordnung: Welcher Indikator misst welches Ziel?</h3><div id="gl-match"></div>
-<div class="row" style="margin-top:10px"><button class="btn primary" id="gl-check" type="button">Prüfen</button><span id="gl-res" class="small"></span></div></div>
+${zuordnen({id:'gl-indikatoren',frage:'Welcher Indikator misst welches Ziel?',faecher:ORDER.map(k=>({id:k,t:G[k].short,info:ZIEL_INFO[k]})),karten:INDIKATOREN})}
 ${schreibfeld(WAND.grundlagen)}
 ${impuls(IMPULS.grundlagen)}
 ${erkHTML('grundlagen')}`},
@@ -201,9 +219,6 @@ init(root){
   };
   $('#gl-toggle',root).addEventListener('click',()=>{six=!six;if(!six&&['U','V'].includes(sel))sel='P';draw()});
   draw();
-  const IND=[['Verbraucherpreisindex','P'],['Arbeitslosenquote','B'],['Veränderungsrate des realen BIP','W'],['Leistungsbilanzsaldo in % des BIP','A'],['Gini-Koeffizient','V'],['Treibhausgasemissionen in CO₂-Äquivalenten','U'],['Unterbeschäftigung','B'],['Armutsgefährdungsquote','V']];
-  $('#gl-match',root).innerHTML=IND.map(([n],i)=>`<div class="case"><span>${n}</span><select id="gl-s${i}" aria-label="Ziel für ${n}"><option value="">– Ziel wählen –</option>${ORDER.map(k=>`<option value="${k}">${G[k].short}</option>`).join('')}</select></div>`).join('');
-  $('#gl-check',root).addEventListener('click',()=>{let ok=0;IND.forEach(([,k],i)=>{const s=$('#gl-s'+i,root);const r=s.value===k;if(r)ok++;s.style.borderColor=s.value?(r?'var(--ok)':'var(--bad)'):'var(--line)'});$('#gl-res',root).textContent=`${ok} von ${IND.length} richtig${ok===IND.length?' – stark!':' – rot markierte noch einmal prüfen.'}`});
   bindErk(root);
 }});
 
@@ -211,7 +226,7 @@ init(root){
 const BASKET=[
   {n:'Döner in Jena',q:4,p0:7.50,p1:8.00},
   {n:'Deutschlandticket (Monat)',q:1,p0:58.00,p1:63.00},
-  {n:'Tankfüllung Roller/Auto, 10 l Super E10',q:2,p0:17.20,p1:19.60},
+  {n:'Tankfüllung Roller/Auto, 10 l Super E10',q:2,p0:16.70,p1:22.70},
   {n:'Streaming-Abo',q:1,p0:6.99,p1:7.49},
   {n:'Kinoticket (Erfurt)',q:1,p0:11.00,p1:11.50},
   {n:'Matcha-Latte im Café',q:4,p0:4.90,p1:5.50},
@@ -226,13 +241,15 @@ html(){return `
 <div class="grid2 wide-left">
   <div class="panel"><h3>Unser Warenkorb <span class="small muted">(Beispielpreise – ersetzt sie durch eure!)</span></h3>
   <div class="tbl-wrap"><table><thead><tr><th>Gut</th><th class="r">Menge/Monat</th><th class="r">Preis 2025 (€)</th><th class="r">Preis 2026 (€)</th><th class="r">Änderung</th></tr></thead><tbody id="pr-body"></tbody></table></div>
+  <p class="small muted" style="margin-top:6px">Tankfüllung: Super E10 im Monatsmittel September 2025 und September 2026 (ADAC). Seit dem 1. Oktober 2026 macht der Tankrabatt den Liter um bis zu 17 Cent billiger.</p>
   <div class="row" style="margin-top:8px"><button class="btn small" id="pr-add" type="button"><span class="ms">add</span>Eigenes Gut</button><button class="btn small" id="pr-reset" type="button"><span class="ms">refresh</span>Beispielwerte laden</button></div></div>
   <div class="stack">
     <div class="panel"><p class="eyebrow">Euer Preisindex (2025 = 100)</p><div class="big-num" id="pr-idx">–</div>
     <p>Persönliche Inflationsrate: <b id="pr-rate" class="num">–</b></p>
     <p class="small muted" id="pr-cost"></p></div>
     <div class="panel chart"><h3>Inflations-Thermometer</h3><div id="pr-thermo"></div>
-    <p class="small muted">Offiziell: 3,3 % (Sept. 2026, vorläufig), Energie +14,9 %, Nahrungsmittel +0,4 %, Kerninflation 2,4 %.</p></div>
+    <p class="small muted">Offiziell: 3,3 % (Sept. 2026), Energie +14,9 %, davon Kraftstoffe +37,1 % und Heizöl +74,9 %, Strom −5,5 %; Nahrungsmittel +0,4 %, Kerninflation 2,4 %.</p>
+    <p class="small muted">Thüringen: 3,4 % (Sept. 2026); Sprit +37 %, Heizöl +53 %. Ohne Sprit und Heizöl wären es nur 2,0 %.</p></div>
   </div>
 </div>
 <div class="panel chart"><h3>Wer treibt euren Index? Beitrag der einzelnen Güter (Prozentpunkte)</h3><div id="pr-contrib"></div></div>
@@ -247,7 +264,7 @@ html(){return `
     <p>1.000 € unter der Matratze sind dann noch <b id="kk-r" class="num"></b> heutige Euro wert.</p>
     <p class="small muted">Faustregel 72: Bei einer Inflation von x % halbiert sich die Kaufkraft nach etwa 72 ÷ x Jahren.</p></div>
 </div>
-<div class="panel"><h3>Hintergrund: So misst das Statistische Bundesamt</h3><p>Rund 300.000 Preise für etwa 650 Güterarten gehen monatlich in den Verbraucherpreisindex ein. Jedes Gut hat ein Gewicht nach seinem Anteil an den Ausgaben aller Haushalte (Wägungsschema, Basisjahr 2020) – Wohnen und Energie zählen am meisten. Weil jeder anders konsumiert, weicht die persönliche Inflation von der amtlichen ab: Wer viel tankt und heizt, spürt 2026 die Energiepreise stärker. Das Bundesamt bietet dafür einen <a href="https://www.destatis.de/DE/Service/InflationsRechner/inflationsrechner.html" target="_blank" rel="noopener">persönlichen Inflationsrechner</a>.</p>
+<div class="panel"><h3>Hintergrund: So misst das Statistische Bundesamt</h3><p>Rund 300.000 Preise für etwa 650 Güterarten gehen monatlich in den Verbraucherpreisindex ein. Jedes Gut hat ein Gewicht nach seinem Anteil an den Ausgaben aller Haushalte (Wägungsschema, Basisjahr 2020) – Wohnen und Energie zählen am meisten. Weil jeder anders konsumiert, weicht die persönliche Inflation von der amtlichen ab: Wer viel tankt oder mit Heizöl heizt, spürt 2026 die Energiepreise stärker. Strom und Gas sind dagegen etwas billiger als 2025. Das Bundesamt bietet dafür einen <a href="https://www.destatis.de/DE/Service/InflationsRechner/inflationsrechner.html" target="_blank" rel="noopener">persönlichen Inflationsrechner</a>.</p>
 <p style="margin-top:8px"><b>Begriffe:</b> Inflation (Preisniveau steigt) · Deflation (Preisniveau sinkt) · Disinflation (Preise steigen langsamer) · Kerninflation (ohne Energie und Nahrungsmittel) · Stagflation (Inflation bei Stagnation).</p></div>
 ${schreibfeld(WAND.preis)}
 ${impuls(IMPULS.preis)}
@@ -307,44 +324,48 @@ function thermo(rate){
 }
 
 /* 3 Beschäftigung */
+// Fälle zur Arbeitslosigkeit: Erklärung der Arten hinter dem Hilfeknopf, Erklärung jedes Falls nach dem Prüfen
+const ARTEN_AL=[
+  {id:'friktionell',t:'Friktionell',info:'<p><b>Sucharbeitslosigkeit</b> beim Wechsel zwischen zwei Stellen. Sie dauert meist nur kurz und lässt sich kaum vermeiden, weil Suchen und Bewerben Zeit brauchen.</p>'},
+  {id:'saisonal',t:'Saisonal',info:'<p>Arbeitslosigkeit, die von der <b>Jahreszeit</b> abhängt, zum Beispiel vom Wetter auf dem Bau oder vom Tourismus. Sie kommt jedes Jahr wieder und verschwindet von selbst.</p>'},
+  {id:'konjunkturell',t:'Konjunkturell',info:'<p>Folge einer <b>allgemein schwachen Nachfrage im Abschwung</b>. Viele Branchen sind gleichzeitig betroffen. Zieht die Wirtschaft wieder an, entstehen neue Stellen.</p>'},
+  {id:'strukturell',t:'Strukturell',info:'<p>Folge eines <b>dauerhaften Wandels</b> von Branchen, Regionen oder Anforderungen an die Qualifikation. Stellen und Arbeitslose passen nicht zusammen (Mismatch). Sie ist am hartnäckigsten.</p>'}];
 const CASES=[
-  ['Lena hat ihr BWL-Studium in Jena beendet und schickt seit fünf Wochen Bewerbungen. Passende Stellen gibt es genug.','friktionell'],
-  ['Ein Dachdecker aus Apolda ist im Januar ohne Arbeit, weil bei Frost nicht gebaut werden kann.','saisonal'],
-  ['Ein Autozulieferer in Thüringen stellt Teile für Verbrennungsmotoren her. Durch die E-Mobilität fällt die Produktion dauerhaft weg.','strukturell'],
-  ['Wegen einer weltweiten Rezession brechen die Aufträge eines Maschinenbauers ein, 80 Beschäftigte werden entlassen.','konjunkturell'],
-  ['Ein Eisverkäufer am Erfurter Domplatz ist im Winter arbeitslos.','saisonal'],
-  ['Eine Sachbearbeiterin verliert ihre Stelle, weil eine KI-Software die Rechnungsprüfung übernimmt; für die neuen IT-Jobs fehlt ihr die Qualifikation.','strukturell'],
-  ['Ein Koch kündigt in Weimar, um in Leipzig zu arbeiten. Die neue Stelle beginnt erst in sechs Wochen.','friktionell'],
-  ['Die Energiepreise steigen stark, die Nachfrage nach Konsumgütern sinkt im ganzen Land, Händler bauen Personal ab.','konjunkturell']
+  {t:'Lena (24) hat ihr BWL-Studium in Jena beendet und schickt seit fünf Wochen Bewerbungen. Passende Stellen gibt es genug.',f:'friktionell',e:'Stellen sind da, Lena braucht nur Zeit für die Suche.'},
+  {t:'Marco (38), Dachdecker aus Apolda, ist im Januar ohne Arbeit, weil bei Frost nicht gebaut werden kann.',f:'saisonal',e:'Das Wetter bremst den Bau nur im Winter. Im Frühjahr gibt es wieder Arbeit.'},
+  {t:'Uwe (55) fertigt bei einem Autozulieferer in Eisenach Teile für Verbrennungsmotoren. Weil immer mehr E-Autos gebaut werden, fällt seine Stelle dauerhaft weg.',f:'strukturell',e:'Die Branche wandelt sich dauerhaft. Uwes Stelle kommt auch im nächsten Aufschwung nicht zurück.'},
+  {t:'Kevin (31) arbeitet bei einem Maschinenbauer in Gotha. Wegen einer weltweiten Rezession brechen die Aufträge ein, er und 79 Kollegen werden entlassen.',f:'konjunkturell',e:'Ursache ist die schwache Nachfrage im Abschwung. Zieht die Konjunktur wieder an, braucht der Betrieb wieder Leute.'},
+  {t:'Jana (27) arbeitet im Sommer in einer Eisdiele am Erfurter Domplatz. Im Winter schließt die Eisdiele, und Jana ist arbeitslos.',f:'saisonal',e:'Die Arbeit hängt an der Jahreszeit: Eis wird vor allem im Sommer gekauft.'},
+  {t:'Petra (52), Sachbearbeiterin in Gera, verliert ihre Stelle, weil eine KI-Software die Rechnungsprüfung übernimmt. Für die neuen IT-Jobs fehlt ihr die Qualifikation.',f:'strukturell',e:'Technischer Wandel: Ihre Qualifikation passt nicht mehr zu den offenen Stellen (Mismatch). Helfen würde eine Umschulung.'},
+  {t:'Tom (33), Koch in Weimar, kündigt, um in Leipzig zu arbeiten. Die neue Stelle beginnt erst in sechs Wochen.',f:'friktionell',e:'Eine kurze Lücke beim Wechsel zwischen zwei Stellen.'},
+  {t:'Sandra (41) arbeitet in einem Modegeschäft in Jena. Weil im ganzen Land die Leute wegen hoher Preise sparen, baut der Laden Personal ab, und sie wird entlassen.',f:'konjunkturell',e:'Die Nachfrage sinkt überall gleichzeitig. Das ist ein Abschwung und kein dauerhafter Wandel der Branche.'}
 ];
-const CAUSE={friktionell:'Sucharbeitslosigkeit beim Stellenwechsel; kurz und kaum vermeidbar.',saisonal:'Abhängig von der Jahreszeit (Wetter, Tourismus).',konjunkturell:'Folge einer allgemein schwachen Nachfrage im Abschwung.',strukturell:'Dauerhafter Wandel von Branchen, Regionen oder Qualifikationsanforderungen (Mismatch).'};
 tool({id:'beschaeftigung',hinweise:HINWEISE.beschaeftigung,ch:2,goals:['B'],title:'Arbeitsmarkt-Werkstatt',sub:'Arbeitslosenquote berechnen, Arten der Arbeitslosigkeit erkennen, Thüringen vergleichen',
 html(){return `
 <p class="task"><b>Auftrag:</b> Berechnet die Arbeitslosenquote für Deutschland und Thüringen. Ordnet danach acht Fälle den Arten der Arbeitslosigkeit zu und überlegt, welche Politik jeweils helfen würde.</p>
 <div class="grid2">
   <div class="panel"><h3>Quoten-Rechner</h3>
-   <div class="row" style="margin-bottom:8px"><button class="btn small" data-preset="de" type="button">Deutschland, Sept. 2026</button><button class="btn small" data-preset="th" type="button">Thüringen, Juli 2026</button><button class="btn small" data-preset="vb" type="button">Vollbeschäftigung?</button></div>
+   <div class="row" style="margin-bottom:8px"><button class="btn small" data-preset="de" type="button">Deutschland, Sept. 2026</button><button class="btn small" data-preset="th" type="button">Thüringen, Sept. 2026</button><button class="btn small" data-preset="vb" type="button">Vollbeschäftigung?</button></div>
    <div class="ctrl"><label for="al-a">Registrierte Arbeitslose (Tsd.) <output id="al-ao"></output></label><input type="range" id="al-a" min="20" max="5000" step="1" value="2994"></div>
-   <div class="ctrl"><label for="al-e">Erwerbstätige (Tsd., zivil, Bezugsgröße) <output id="al-eo"></output></label><input type="range" id="al-e" min="500" max="48000" step="10" value="43790"></div>
+   <div class="ctrl"><label for="al-e">Erwerbstätige (Tsd., zivil, Bezugsgröße) <output id="al-eo"></output></label><input type="range" id="al-e" min="500" max="48000" step="1" value="43790"></div>
    <p style="margin-top:6px">Arbeitslosenquote = <span class="mono small">Arbeitslose ÷ (Erwerbstätige + Arbeitslose) × 100</span></p>
    <div class="big-num" id="al-q">–</div><div id="al-g" class="chart"></div></div>
   <div class="panel"><h3>Mehr als eine Zahl</h3><dl class="kv">
-   <dt>Registriert</dt><dd>2,994 Mio. Arbeitslose (Sept. 2026), 40.000 mehr als vor einem Jahr</dd>
-   <dt>Unterbeschäftigung</dt><dd>3,615 Mio. – zählt auch Menschen in Weiterbildung, Maßnahmen oder kurzfristiger Arbeitsunfähigkeit mit</dd>
-   <dt>Kurzarbeit</dt><dd>rund 118.000 Beschäftigte erhielten Kurzarbeitergeld</dd>
+   <dt>Registriert</dt><dd>knapp 3,0 Mio. Arbeitslose (Sept. 2026), 40.000 mehr als vor einem Jahr</dd>
+   <dt>Unterbeschäftigung</dt><dd>3,6 Mio. – zählt auch Menschen in Weiterbildung, Maßnahmen oder kurzfristiger Arbeitsunfähigkeit mit</dd>
+   <dt>Kurzarbeit</dt><dd>rund 118.000 Beschäftigte erhielten im Juli 2026 konjunkturelles Kurzarbeitergeld (neuere Zahlen gibt es noch nicht)</dd>
    <dt>Offene Stellen</dt><dd>660.000 gemeldet – gleichzeitig Fachkräftemangel und Arbeitslosigkeit</dd>
    <dt>ILO-Konzept</dt><dd>Die international vergleichbare Erwerbslosenquote liegt deutlich niedriger, weil sie u. a. Menschen mit Minijob nicht als erwerbslos zählt</dd>
-   <dt>Thüringen</dt><dd>6,5 % (Juli 2026), 71.152 Arbeitslose; gut jeder Dritte ist langzeitarbeitslos, gut jeder Dritte über 50</dd></dl>
+   <dt>Thüringen</dt><dd>6,3 % (Sept. 2026), rund 69.000 Arbeitslose; gut jeder Dritte ist langzeitarbeitslos, gut jeder Dritte ist 50 oder älter</dd></dl>
    <p class="small muted" style="margin-top:8px">BA-Chefin Andrea Nahles im September 2026: Die wirtschaftliche Verbesserung kommt am Arbeitsmarkt noch nicht an.</p></div>
 </div>
-<div class="panel"><h3>Fall-Sortierung: Welche Art von Arbeitslosigkeit?</h3><div id="al-cases"></div>
-<div class="row" style="margin-top:10px"><button class="btn primary" id="al-check" type="button">Prüfen</button><span class="small" id="al-res"></span></div>
-<div class="grid3" style="margin-top:10px">${Object.entries(CAUSE).map(([k,v])=>`<div class="fb neu"><b>${k[0].toUpperCase()+k.slice(1)}</b><br><span class="small">${v}</span></div>`).join('')}</div></div>
+${zuordnen({id:'al-arten',frage:'Welche Art von Arbeitslosigkeit liegt vor? Was die vier Arten bedeuten, verrät das Fragezeichen an jedem Fach.',faecher:ARTEN_AL,karten:CASES})}
 ${schreibfeld(WAND.beschaeftigung)}
 ${impuls(IMPULS.beschaeftigung)}
 ${erkHTML('beschaeftigung')}`},
 init(root){
-  const PR={de:[2994,43790],th:[71,1024],vb:[1300,44500]};
+  // Thüringen: 69.052 Arbeitslose bei 6,3 % (BA, Sept. 2026); Erwerbstätige daraus abgeleitet
+  const PR={de:[2994,43790],th:[69,1027],vb:[1300,44500]};
   const upd=()=>{const a=+$('#al-a',root).value,e=+$('#al-e',root).value;const q=a/(a+e)*100;
     $('#al-ao',root).textContent=fmt(a,0);$('#al-eo',root).textContent=fmt(e,0);$('#al-q',root).textContent=fmt(q,1)+' %';
     const W=520,H=60,x0=16,x1=W-16,mx=15,sx=v=>x0+clamp(v,0,mx)/mx*(x1-x0);
@@ -356,14 +377,12 @@ init(root){
   $$('[data-preset]',root).forEach(b=>b.addEventListener('click',()=>{const [a,e]=PR[b.dataset.preset];
     const sa=$('#al-a',root),se=$('#al-e',root);if(b.dataset.preset==='th'){sa.min=5;se.min=200}sa.value=a;se.value=e;upd()}));
   ['#al-a','#al-e'].forEach(s=>$(s,root).addEventListener('input',upd));upd();
-  const TYPES=['friktionell','saisonal','konjunkturell','strukturell'];
-  $('#al-cases',root).innerHTML=CASES.map(([t],i)=>`<div class="case"><span>${i+1}. ${t}</span><select id="al-c${i}" aria-label="Art der Arbeitslosigkeit, Fall ${i+1}"><option value="">– Art wählen –</option>${TYPES.map(x=>`<option>${x}</option>`).join('')}</select></div>`).join('');
-  $('#al-check',root).addEventListener('click',()=>{let ok=0;CASES.forEach(([,k],i)=>{const s=$('#al-c'+i,root);const r=s.value===k;if(r)ok++;s.style.borderColor=s.value?(r?'var(--ok)':'var(--bad)'):'var(--line)'});$('#al-res',root).textContent=`${ok} von ${CASES.length} richtig.`});
   bindErk(root);
 }});
 
 /* 4 Wachstum */
-const BIP=[['2019',1.0],['2020',-4.1],['2023',-0.9],['2024',-0.5],['2025',0.2],['2026*',1.3],['2027*',1.1]];
+// Reales BIP, preisbereinigt (Destatis nach der Überarbeitung im Juli/August 2026), * Prognose Gemeinschaftsdiagnose Herbst 2026
+const BIP=[['2019',1.1],['2020',-4.0],['2021',4.0],['2022',1.9],['2023',-1.0],['2024',0.0],['2025',0.2],['2026*',1.3],['2027*',1.1]];
 const PHASES={
   auf:{n:'Aufschwung (Expansion)',d:'Aufträge und Produktion ziehen an, die Kapazitäten werden besser ausgelastet. Unternehmen investieren wieder, Arbeitslosigkeit sinkt verzögert.',t:['steigend','beginnt zu sinken','noch moderat','niedrig, langsam steigend','optimistisch']},
   boom:{n:'Hochkonjunktur (Boom)',d:'Kapazitäten voll ausgelastet, Fachkräfte knapp, Löhne und Preise steigen kräftig. Die Zentralbank erhöht die Zinsen, um eine Überhitzung zu verhindern.',t:['sehr hoch, kaum steigerbar','niedrig','stark steigend','hoch','euphorisch, erste Sorgen']},
@@ -382,7 +401,7 @@ html(){return `
   <p class="small muted" id="kz-de-t" hidden style="margin-top:8px">Einschätzung: Die Gemeinschaftsdiagnose (Sept. 2026) spricht von einem „Aufschwung mit Strukturproblemen“: Exporte und Industrie ziehen an (auch durch den weltweiten KI-Boom), Konsum und Investitionen bleiben schwach, der Energiepreisschock durch den Iran-Krieg bremst. Der Arbeitsmarkt folgt verzögert.</p></div>
 </div>
 <div class="grid2">
-  <div class="panel chart"><h3>Reales BIP-Wachstum Deutschland (%)</h3><div id="bip-bars"></div><p class="small muted">* Prognose Gemeinschaftsdiagnose Herbst 2026. 2020: Corona-Einbruch.</p></div>
+  <div class="panel chart"><h3>Reales BIP-Wachstum Deutschland (%)</h3><div id="bip-bars"></div><p class="small muted">* Prognose Gemeinschaftsdiagnose Herbst 2026. 2020: Corona-Einbruch, 2023: Rezession, 2024: Stagnation. Werte nach der Überarbeitung durch Destatis im Juli 2026.</p></div>
   <div class="panel"><h3>Nominal oder real?</h3>
    <div class="ctrl"><label for="bn-n">Nominales BIP-Wachstum <output id="bn-no"></output></label><input type="range" id="bn-n" min="-4" max="12" step="0.1" value="3.8"></div>
    <div class="ctrl"><label for="bn-p">Preissteigerung (BIP-Deflator) <output id="bn-po"></output></label><input type="range" id="bn-p" min="-2" max="10" step="0.1" value="2.5"></div>
@@ -416,12 +435,13 @@ init(root){
   const sl=$('#kz-t',root);sl.addEventListener('input',()=>{draw(+sl.value);$('#kz-de-t',root).hidden=true});draw(+sl.value);
   $('#kz-de',root).addEventListener('click',()=>{sl.value=53;draw(53);$('#kz-de-t',root).hidden=false});
   // Balken
-  const W=520,H=230,x0=40,x1=W-10,yz=130,sc=18;let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reales BIP-Wachstum Deutschland">`;
-  [-4,-2,0,2].forEach(v=>{const y=yz-v*sc;s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="s-line"/><text x="${x0-6}" y="${y+4}" text-anchor="end" class="t-mu" font-size="11">${v}</text>`});
+  // Werte negativer Balken stehen über der Nulllinie, damit sie nicht mit den Jahreszahlen kollidieren
+  const W=520,H=230,x0=40,x1=W-10,yz=128,sc=18;let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reales BIP-Wachstum Deutschland 2019 bis 2027">`;
+  [-4,-2,0,2,4].forEach(v=>{const y=yz-v*sc;s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="s-line"/><text x="${x0-6}" y="${y+4}" text-anchor="end" class="t-mu" font-size="11">${v}</text>`});
   const bw=(x1-x0)/BIP.length;
   BIP.forEach(([j,v],i)=>{const x=x0+i*bw+bw*0.18,w=bw*0.64,y=v>=0?yz-v*sc:yz;const pr=j.includes('*');
     s+=`<rect x="${x}" y="${y}" width="${w}" height="${Math.max(1,Math.abs(v)*sc)}" rx="3" fill="var(--g-W)" ${pr?'fill-opacity=".45" stroke="var(--g-W)" stroke-dasharray="4 3"':''}/>
-    <text x="${x+w/2}" y="${v>=0?y-5:y+Math.abs(v)*sc+14}" text-anchor="middle" class="t-fg num" font-size="11.5" font-weight="700">${sgn(v)}</text>
+    <text x="${x+w/2}" y="${v>=0?y-5:yz-5}" text-anchor="middle" class="t-fg num" font-size="11.5" font-weight="700">${v?sgn(v):'0,0'}</text>
     <text x="${x+w/2}" y="${H-6}" text-anchor="middle" class="t-mu" font-size="11">${j}</text>`});
   $('#bip-bars',root).innerHTML=s+'</svg>';
   const bn=()=>{const n=+$('#bn-n',root).value,p=+$('#bn-p',root).value,b=+$('#bn-b',root).value;const r=((1+n/100)/(1+p/100)-1)*100,k=((1+r/100)/(1+b/100)-1)*100;
@@ -436,13 +456,14 @@ html(){return `
 <p class="task"><b>Auftrag:</b> Stellt die vier Teilbilanzen ein und beobachtet, wohin die Waage kippt. Prüft, ob die EU-Frühwarnschwelle überschritten wird. Testet dann, wie ein stärkerer oder schwächerer Euro auf Export und Import wirkt.</p>
 <div class="grid2 wide-left">
   <div class="panel chart"><h3>Die Waage</h3><div id="lb-svg"></div>
-   <div class="row"><button class="btn small" data-lb="de" type="button">Deutschland 2025 (Näherung)</button><button class="btn small" data-lb="null" type="button">Ausgeglichen</button><button class="btn small" data-lb="def" type="button">Defizitland</button></div></div>
+   <div class="row"><button class="btn small" data-lb="de" type="button">Deutschland 2025 (Bundesbank)</button><button class="btn small" data-lb="null" type="button">Ausgeglichen</button><button class="btn small" data-lb="def" type="button">Defizitland</button></div></div>
   <div class="panel stack"><h3>Teilbilanzen (Saldo, Mrd. €)</h3>
    <div class="ctrl"><label for="lb-w">Warenhandel (Export − Import) <output id="lb-wo"></output></label><input type="range" id="lb-w" min="-200" max="350" step="1"></div>
    <div class="ctrl"><label for="lb-d">Dienstleistungen (z. B. Reisen, Software-Lizenzen) <output id="lb-do"></output></label><input type="range" id="lb-d" min="-150" max="100" step="1"></div>
    <div class="ctrl"><label for="lb-p">Primäreinkommen (Zinsen, Dividenden aus dem Ausland) <output id="lb-po"></output></label><input type="range" id="lb-p" min="-100" max="200" step="1"></div>
    <div class="ctrl"><label for="lb-s">Sekundäreinkommen (Überweisungen, EU-Beiträge) <output id="lb-so"></output></label><input type="range" id="lb-s" min="-120" max="40" step="1"></div>
-   <p>Saldo: <b id="lb-sum" class="num"></b> = <b id="lb-pct" class="num"></b> des BIP <span class="small muted">(BIP ≈ 4.550 Mrd. €)</span></p><div id="lb-fb" class="fb"></div></div>
+   <p>Saldo: <b id="lb-sum" class="num"></b> = <b id="lb-pct" class="num"></b> des BIP <span class="small muted">(BIP 2025 ≈ 4.530 Mrd. €)</span></p><div id="lb-fb" class="fb"></div>
+   <p class="small muted">Die Waage zeigt nur die Salden der vier Teilbilanzen. Tatsächlich nahm Deutschland 2025 rund 2.346 Mrd. € aus dem Ausland ein und zahlte rund 2.146 Mrd. € dorthin (Bundesbank).</p></div>
 </div>
 <div class="grid2">
   <div class="panel"><h3>Wechselkurs-Labor</h3>
@@ -458,16 +479,17 @@ ${schreibfeld(WAND.aussen)}
 ${impuls(IMPULS.aussen)}
 ${erkHTML('aussen')}`},
 init(root){
-  const PRE={de:[196,-56,122,-62],null:[40,-20,20,-40],def:[-120,-10,-15,-35]};
+  // Deutschland 2025: Salden in Mrd. € (Bundesbank, Zahlungsbilanzstatistik, Stand 13.10.2026)
+  const PRE={de:[186,-76,161,-70],null:[40,-20,20,-40],def:[-120,-10,-15,-35]};
   const ids=['w','d','p','s'];
   const set=a=>{ids.forEach((k,i)=>$('#lb-'+k,root).value=a[i]);upd()};
   const upd=()=>{
     const v=ids.map(k=>+$('#lb-'+k,root).value);ids.forEach((k,i)=>$('#lb-'+k+'o',root).textContent=sgn(v[i],0));
-    const sum=v.reduce((a,b)=>a+b,0),pct=sum/4550*100;
+    const sum=v.reduce((a,b)=>a+b,0),pct=sum/4530*100;
     $('#lb-sum',root).textContent=sgn(sum,0)+' Mrd. €';$('#lb-pct',root).textContent=sgn(pct,1)+' %';
     const fb=$('#lb-fb',root);
-    if(pct>6){fb.className='fb bad';fb.textContent='Über +6 %: Die EU-Kommission würde ein übermäßiges Ungleichgewicht prüfen (Überschuss).'}
-    else if(pct<-4){fb.className='fb bad';fb.textContent='Unter −4 %: Das Land lebt über seine Verhältnisse und verschuldet sich im Ausland.'}
+    if(pct>6){fb.className='fb bad';fb.textContent='Über +6 %: Liegt auch der Durchschnitt der letzten drei Jahre so hoch, prüft die EU-Kommission ein übermäßiges Ungleichgewicht (Überschuss).'}
+    else if(pct<-4){fb.className='fb bad';fb.textContent='Unter −4 %: Das Land lebt über seine Verhältnisse und verschuldet sich im Ausland. Liegt auch der Dreijahresdurchschnitt so tief, prüft die EU-Kommission ein Ungleichgewicht.'}
     else if(Math.abs(pct)<=1){fb.className='fb ok';fb.textContent='Nahezu ausgeglichen – das Ziel ist erreicht.'}
     else{fb.className='fb amb';fb.textContent=pct>0?'Überschuss innerhalb der EU-Schwelle, aber deutlich vom Gleichgewicht entfernt.':'Defizit innerhalb der EU-Schwelle.'}
     const W=520,H=240,cx=260,cy=110,ang=clamp(-pct*3.2,-24,24),rad=ang*Math.PI/180,L=180;
@@ -479,8 +501,8 @@ init(root){
       <path d="M${x-52},${y+50} Q${x},${y+82} ${x+52},${y+50} Z" fill="${col}" fill-opacity=".85"/>
       <text x="${x}" y="${y+46}" text-anchor="middle" class="t-fg" font-size="12" font-weight="700">${lab}</text><text x="${x}" y="${y+68}" text-anchor="middle" class="t-fg" font-size="12" font-weight="700">${val}</text>`;
     const inflow=v.filter(x=>x>0).reduce((a,b)=>a+b,0),outflow=-v.filter(x=>x<0).reduce((a,b)=>a+b,0);
-    // Zuflüsse (Einnahmen) schwerer → Seite sinkt: links Einnahmen
-    s+=pan(lx,ly,'Einnahmen',fmt(inflow,0),'var(--md-ok-container)')+pan(rx,ry,'Ausgaben',fmt(outflow,0),'var(--md-error-container)');
+    // Links die Summe der positiven Salden, rechts die der negativen (keine Einnahmen und Ausgaben, nur Salden)
+    s+=pan(lx,ly,'Plus-Salden',fmt(inflow,0),'var(--md-ok-container)')+pan(rx,ry,'Minus-Salden',fmt(outflow,0),'var(--md-error-container)');
     s+=`<text x="${cx}" y="22" text-anchor="middle" class="t-fg" font-size="14" font-weight="700">${pct>0.05?'Überschuss':pct<-0.05?'Defizit':'ausgeglichen'}</text>`;
     $('#lb-svg',root).innerHTML=s+'</svg>';
   };
@@ -508,6 +530,7 @@ html(){return `
    <p class="small muted" id="lz-name"></p>
    ${[1,2,3,4,5].map(i=>`<div class="ctrl"><label for="lz${i}">${['Ärmstes','Zweites','Mittleres','Viertes','Reichstes'][i-1]} Fünftel <output id="lz${i}o"></output></label><input type="range" id="lz${i}" min="0" max="100" step="0.5"></div>`).join('')}
    <p class="small" id="lz-sum"></p>
+   <p class="fb amb small" id="lz-sort" hidden>Achtung: Das „ärmste“ Fünftel hat jetzt nicht mehr am wenigsten. Für die Lorenzkurve und den Gini werden die Gruppen neu geordnet, vom kleinsten zum größten Anteil.</p>
    <div><p class="eyebrow">Gini-Koeffizient</p><div class="big-num" id="lz-g"></div><p class="small muted">0 = völlige Gleichheit · 1 = eine Person hat alles. Mit nur fünf Gruppen wird der Gini leicht unterschätzt.</p></div></div>
 </div>
 <div class="grid2">
@@ -532,12 +555,14 @@ init(root){
     const t=cur.reduce((a,b)=>a+b,0)||1;
     [1,2,3,4,5].forEach(i=>{$('#lz'+i,root).value=cur[i-1];$('#lz'+i+'o',root).textContent=fmt(cur[i-1]/t*100,1)+' %'});
     $('#lz-sum',root).textContent=Math.abs(t-100)>0.6?`Summe der Regler: ${fmt(t,1)} – die Werkstatt rechnet automatisch auf 100 % um.`:'Summe: 100 %';
-    const g=gini(cur);$('#lz-g',root).textContent=fmt(g,2);
+    // Eine Lorenzkurve ist immer von arm nach reich sortiert: Regler bleiben, gerechnet und gezeichnet wird sortiert
+    const srt=cur.slice().sort((a,b)=>a-b),neu=cur.some((v,i)=>v!==srt[i]);$('#lz-sort',root).hidden=!neu;
+    const g=gini(srt);$('#lz-g',root).textContent=fmt(g,2);
     const W=420,H=400,x0=56,y0=350,S=300,X=v=>x0+v*S,Y=v=>y0-v*S;
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Lorenzkurve, Gini ${fmt(g,2)}">`;
     [0,.2,.4,.6,.8,1].forEach(v=>{s+=`<line x1="${X(v)}" y1="${Y(0)}" x2="${X(v)}" y2="${Y(1)}" class="s-line"/><line x1="${X(0)}" y1="${Y(v)}" x2="${X(1)}" y2="${Y(v)}" class="s-line"/>
       <text x="${X(v)}" y="${y0+16}" text-anchor="middle" class="t-mu" font-size="11">${v*100}%</text><text x="${x0-6}" y="${Y(v)+4}" text-anchor="end" class="t-mu" font-size="11">${v*100}%</text>`});
-    let pts=[[0,0]],c=0;cur.forEach((v,i)=>{c+=v/t;pts.push([(i+1)*0.2,c])});
+    let pts=[[0,0]],c=0;srt.forEach((v,i)=>{c+=v/t;pts.push([(i+1)*0.2,c])});
     const ps=pts.map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ');
     s+=`<polygon points="${X(0)},${Y(0)} ${X(1)},${Y(1)} ${pts.slice().reverse().map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ')}" fill="var(--g-V)" fill-opacity=".22"/>`;
     s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" class="s-fg" stroke-width="1.5" stroke-dasharray="6 4"/>`;
@@ -570,7 +595,7 @@ html(){return `
   <div class="panel"><h3>CO₂-Preis-Rechner</h3>
    <div class="ctrl"><label for="co-p">CO₂-Preis pro Tonne <output id="co-po"></output></label><input type="range" id="co-p" min="0" max="250" step="5" value="60"></div>
    <div class="tbl-wrap"><table><thead><tr><th>Produkt</th><th class="r">Aufschlag</th></tr></thead><tbody id="co-tab"></tbody></table></div>
-   <p class="small muted">Werte ohne Mehrwertsteuer. Nationaler CO₂-Preis für Verkehr und Wärme 2026: Preiskorridor 55 bis 65 €/t, danach Übergang in den EU-Emissionshandel.</p></div>
+   <p class="small muted">Werte ohne Mehrwertsteuer. Nationaler CO₂-Preis für Verkehr und Wärme 2026: Preiskorridor 55 bis 65 €/t. Für 2027 plant die Bundesregierung denselben Korridor (Gesetzentwurf, Stand Oktober 2026). Ab 2028 gilt der EU-Emissionshandel für Gebäude und Verkehr (ETS2), dann bildet sich der Preis am Markt.</p></div>
   <div class="panel"><h3>Warum ist Umwelt ein wirtschaftspolitisches Ziel?</h3>
    <p>Wer CO₂ ausstößt, verursacht Schäden, für die er nicht bezahlt: <b>externe Kosten</b>. Der Markt produziert dann „zu billig“ und zu viel. Ein CO₂-Preis oder Emissionshandel (Obergrenze plus handelbare Zertifikate) rechnet diese Kosten ein.</p>
    <p style="margin-top:6px"><b>Entkopplung:</b> Seit 1990 ist die deutsche Wirtschaftsleistung real um rund die Hälfte gewachsen, die Emissionen sind um 48 % gesunken. Wachstum und Umweltschutz schließen sich also nicht zwingend aus – reicht das Tempo aber?</p>
@@ -599,7 +624,7 @@ init(root){
     $('#th-svg',root).innerHTML=s+'</svg>';
     const v30=Math.max(0,649-red*5),zero=red>0?2025+Math.ceil(649/red):null,fb=$('#th-fb',root);
     fb.className='fb '+(v30<=438?'ok':'bad');
-    fb.innerHTML=`2030 lägen die Emissionen bei <b>${fmt(v30,0)} Mio. t</b> (${sgn((v30/1251-1)*100,0)} % ggü. 1990). ${v30<=438?'Ziel 2030 erreicht.':`Ziel um ${fmt(v30-438,0)} Mio. t verfehlt.`} ${zero&&zero<=2100?`Klimaneutral wäre Deutschland ${zero<=2045?'bereits ':''}im Jahr ${zero}.`:'Klimaneutralität rückt in weite Ferne.'} <span class="muted">Zum Vergleich: 2019 bis 2025 sanken die Emissionen im Schnitt um rund 25 Mio. t pro Jahr.</span>`;
+    fb.innerHTML=`2030 lägen die Emissionen bei <b>${fmt(v30,0)} Mio. t</b> (${sgn((v30/1251-1)*100,0)} % ggü. 1990). ${v30<=438?'Ziel 2030 erreicht.':`Ziel um ${fmt(v30-438,0)} Mio. t verfehlt.`} ${zero&&zero<=2100?`Klimaneutral wäre Deutschland ${zero<=2045?'bereits ':''}im Jahr ${zero}.`:'Klimaneutralität rückt in weite Ferne.'} <span class="muted">Zum Vergleich: 2019 bis 2025 sanken die Emissionen im Schnitt um rund 25 Mio. t pro Jahr, 2025 kaum noch. Das Umweltbundesamt erwartet mit der heutigen Politik bis 2030 nur −62,6 %, zum Ziel fehlen rund 30 Mio. t (Projektion März 2026).</span>`;
   };
   $('#th-r',root).addEventListener('input',draw);draw();
   const co=()=>{const p=+$('#co-p',root).value;$('#co-po',root).textContent=fmt(p,0)+' €';
@@ -633,7 +658,7 @@ tool({id:'beziehungen',hinweise:HINWEISE.beziehungen,ch:3,goals:ORDER,title:'Zie
 html(){return `
 <p class="task"><b>Auftrag:</b> Wählt zwei Ziele aus. Entscheidet zuerst selbst, wie sie zusammenhängen, und deckt dann die Lösung auf. Ziel: alle 15 Beziehungen im Sechseck aufklären.</p>
 <div class="grid2 wide-left">
-  <div class="panel chart"><div class="row" style="justify-content:space-between"><h3>Beziehungsnetz <span class="small muted" id="zb-cnt"></span></h3><button class="btn small" id="zb-all" type="button">Alle aufdecken (Lehrkraft)</button></div>
+  <div class="panel chart"><div class="row" style="justify-content:space-between"><h3>Beziehungsnetz <span class="small muted" id="zb-cnt"></span></h3><button class="btn small" id="zb-all" type="button" aria-pressed="false" data-nur-lk hidden>Alle aufdecken</button></div>
   <div id="zb-svg"></div>
   <div class="legend"><span><i style="background:var(--ok)"></i>Harmonie</span><span><i style="background:var(--bad)"></i>Konflikt</span><span><i style="background:var(--amb)"></i>ambivalent</span><span><i style="background:var(--neu)"></i>neutral</span></div></div>
   <div class="panel stack" id="zb-panel"><p class="muted">Klickt im Sechseck zwei Ecken nacheinander an.</p></div>
@@ -647,19 +672,21 @@ ${schreibfeld(WAND.beziehungen)}
 ${impuls(IMPULS.beziehungen)}
 ${erkHTML('beziehungen')}`},
 init(root){
-  let pick=[], seen=new Set(store('ms6-rel')||[]), guess=null;
+  // seen: selbst aufgeklärte Paare (gespeichert); alle: „Alle aufdecken“ der Lehrkraft, nur angezeigt, nie gespeichert
+  let pick=[], seen=new Set(store('ms6-rel')||[]), guess=null, alleAuf=false;
+  const alle=()=>alleAuf&&raum.istLehrkraft(), offen=key=>seen.has(key)||alle();
   const draw=()=>{
     const W=520,H=400,cx=260,cy=200,r=136,p=hexPts(cx,cy,r);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beziehungsnetz der sechs Ziele">`;
     s+=`<polygon points="${ptsStr(p)}" fill="none" class="s-line" stroke-width="1.5"/>`;
-    Object.keys(REL).forEach(key=>{const [a,b]=key.split('-');const ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);const on=seen.has(key);
+    Object.keys(REL).forEach(key=>{const [a,b]=key.split('-');const ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);const on=offen(key);
       s+=`<line x1="${p[ia][0]}" y1="${p[ia][1]}" x2="${p[ib][0]}" y2="${p[ib][1]}" stroke="${on?RELC[REL[key][0]][1]:'var(--line)'}" stroke-width="${on?4:1.5}" ${on?'':'stroke-dasharray="3 5"'} stroke-linecap="round"/>`});
     ORDER.forEach((k,i)=>{const [x,y]=p[i];const lp=hexPts(cx,cy,r+30)[i];const a=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');const sel=pick.includes(k);
       s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-pressed="${sel}" aria-label="${G[k].short} auswählen"><circle class="dot" cx="${x}" cy="${y}" r="${sel?21:16}" fill="${gc(k)}" stroke="${sel?'var(--fg)':'var(--surface)'}" stroke-width="3"/>
       <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="13" font-weight="700">${k}</text>
       <text x="${lp[0]}" y="${lp[1]+(i===0?-4:i===3?14:5)}" text-anchor="${a}" fill="${gc(k)}" font-size="14" font-weight="700">${G[k].short}</text></g>`});
     $('#zb-svg',root).innerHTML=s+'</svg>';
-    $('#zb-cnt',root).textContent=`(${seen.size}/15 aufgeklärt)`;
+    $('#zb-cnt',root).textContent=alle()?'(alle aufgedeckt)':`(${seen.size}/15 aufgeklärt)`;
     $$('.hexcorner',root).forEach(g=>{const f=()=>clickK(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})});
   };
   const panel=$('#zb-panel',root);
@@ -670,18 +697,24 @@ init(root){
     const key=relKey(pick[0],pick[1]);
     panel.innerHTML=`<h3>${hexDot(pick[0])} ${G[pick[0]].short} <span class="ms sm">sync_alt</span> ${hexDot(pick[1])} ${G[pick[1]].short}</h3>
       <p>Eure Vermutung:</p><div class="choice" id="zb-ch">${Object.entries(RELC).map(([c,v])=>`<button type="button" data-c="${c}">${v[2]}</button>`).join('')}</div>
-      <button class="btn primary" id="zb-rev" type="button" ${seen.has(key)?'':'disabled'}>Lösung aufdecken</button><div id="zb-sol"></div>`;
+      <button class="btn primary" id="zb-rev" type="button" ${offen(key)?'':'disabled'}>Lösung aufdecken</button><div id="zb-sol"></div>`;
     $$('#zb-ch button',panel).forEach(b=>b.addEventListener('click',()=>{guess=b.dataset.c;$$('#zb-ch button',panel).forEach(x=>x.classList.toggle('sel',x===b));$('#zb-rev',panel).disabled=false}));
-    $('#zb-rev',panel).addEventListener('click',()=>reveal(key));
-    if(seen.has(key))reveal(key);
+    $('#zb-rev',panel).addEventListener('click',()=>reveal(key,true));
+    if(offen(key))reveal(key,seen.has(key));
   };
-  const reveal=key=>{
-    const [c,lab,txt]=REL[key];seen.add(key);store('ms6-rel',[...seen]);
+  const reveal=(key,merken)=>{
+    const [c,lab,txt]=REL[key];if(merken){seen.add(key);store('ms6-rel',[...seen])}
     $$('#zb-ch button',panel).forEach(x=>{if(x.dataset.c===c)x.classList.add('right');else if(x.dataset.c===guess)x.classList.add('wrong')});
     $('#zb-sol',panel).innerHTML=`<div class="fb ${RELC[c][0]}" style="margin-top:8px"><b>${lab}</b>${guess?(guess===c?' – richtig vermutet!':' – andere Einschätzung als eure. Habt ihr gute Gründe?'):''}<br>${txt}</div>`;
     $('#zb-rev',panel).hidden=true;draw();
   };
-  $('#zb-all',root).addEventListener('click',()=>{Object.keys(REL).forEach(k=>seen.add(k));store('ms6-rel',[...seen]);draw()});
+  $('#zb-all',root).addEventListener('click',e=>{alleAuf=!alleAuf;warAlle=alle();e.currentTarget.setAttribute('aria-pressed',String(alleAuf));draw()});
+  // Endet der Lernraum oder wechselt die Rolle, verschwinden die nur aufgedeckten Beziehungen wieder.
+  // Neu gezeichnet wird nur bei einem Wechsel, sonst verlöre die Tastatur bei jedem Lernraum-Ereignis den Fokus.
+  let warAlle=alle();
+  const netz=$('#zb-svg',root),stop=raum.on(()=>{if(!document.body.contains(netz))return stop();
+    if(alleAuf&&!raum.istLehrkraft()){alleAuf=false;$('#zb-all',root).setAttribute('aria-pressed','false')}
+    if(alle()!==warAlle){warAlle=alle();draw()}});
   draw();bindErk(root);
 }});
 
@@ -713,14 +746,16 @@ init(root){
     s+=`<line x1="${x0}" y1="${sy(2)}" x2="${x1}" y2="${sy(2)}" stroke="var(--ok)" stroke-dasharray="6 4"/><text x="${x1}" y="${sy(2)-5}" text-anchor="end" fill="var(--ok)" font-size="11">EZB-Ziel 2 %</text>`;
     if(theo){let d='';for(let u=4.6;u<=7;u+=0.05){const pi=0.9+ 3.2/(u-3.6)-0.4;d+=(d?'L':'M')+sx(u).toFixed(1)+','+sy(clamp(pi,0,8)).toFixed(1)}s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="2.5"/><text x="${sx(4.62)}" y="${sy(3.9)}" fill="var(--g-W)" font-size="11.5" font-weight="700">theoretische Phillips-Kurve</text>`}
     s+=`<polyline points="${PH.map(([,u,p])=>sx(u)+','+sy(p)).join(' ')}" fill="none" class="s-mu" stroke-width="1.2" stroke-dasharray="2 3"/>`;
-    PH.forEach(([y,u,p],i)=>{const st=stag&&(y===2022||y===2023);s+=`<g class="hexcorner" tabindex="0" role="button" data-i="${i}" aria-label="${y}: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %"><circle cx="${sx(u)}" cy="${sy(p)}" r="${st?9:6.5}" fill="${st?'var(--bad)':'var(--g-P)'}" stroke="var(--surface)" stroke-width="2"/>
-      <text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg" font-size="11">${y}</text></g>`});
-    if(stag)s+=`<text x="${sx(5.5)+40}" y="${sy(6.9)+4}" fill="var(--bad)" font-size="12" font-weight="700">Energiepreisschock</text>`;
+    PH.forEach(([y,u,p],i)=>{const st=stag&&y===2023,sch=stag&&y===2022;s+=`<g class="hexcorner" tabindex="0" role="button" data-i="${i}" aria-label="${y}: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %${st?', Stagflation':sch?', Angebotsschock':''}"><circle cx="${sx(u)}" cy="${sy(p)}" r="${st||sch?9:6.5}" fill="${st?'var(--bad)':sch?'var(--amb)':'var(--g-P)'}" stroke="var(--surface)" stroke-width="2"/>
+      ${st||sch?'':`<text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg" font-size="11">${y}</text>`}</g>`}); // markierte Jahre stehen in der Beschriftung
+    if(stag)s+=`<text x="${sx(5.3)+16}" y="${sy(6.9)-24}" class="t-fg" font-size="12" font-weight="700">2022: Angebotsschock</text><text x="${sx(5.3)+16}" y="${sy(6.9)-10}" class="t-mu" font-size="11">Preise steigen, Arbeitsmarkt noch stark</text>
+      <text x="${sx(5.7)+16}" y="${sy(5.9)+10}" fill="var(--bad)" font-size="12" font-weight="700">2023: Stagflation</text><text x="${sx(5.7)+16}" y="${sy(5.9)+24}" class="t-mu" font-size="11">BIP −1,0 %, mehr Arbeitslose</text>`;
     $('#ph-svg',root).innerHTML=s+'</svg>';
-    $$('#ph-svg .hexcorner',root).forEach(g=>{const f=()=>{const [y,u,p]=PH[+g.dataset.i];$('#ph-info',root).innerHTML=`<b>${y}</b>: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %. ${{2020:'Corona: Nachfrageeinbruch, Mehrwertsteuersenkung.',2021:'Nachholeffekte, CO₂-Preis eingeführt, Mehrwertsteuer wieder normal.',2022:'Russlands Krieg gegen die Ukraine: Energiepreisschock.',2023:'Inflation bleibt hoch, Wirtschaft schrumpft.',2019:'Höchststand der Beschäftigung, niedrige Inflation – widerspricht dem Zielkonflikt.',2017:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2018:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2025:'Arbeitslosigkeit steigt bei moderater Inflation.'}[y]||''}`};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'){f()}})});
+    $$('#ph-svg .hexcorner',root).forEach(g=>{const f=()=>{const [y,u,p]=PH[+g.dataset.i];$('#ph-info',root).innerHTML=`<b>${y}</b>: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %. ${{2020:'Corona: Nachfrageeinbruch, Mehrwertsteuersenkung.',2021:'Nachholeffekte, CO₂-Preis eingeführt, Mehrwertsteuer wieder normal.',2022:'Russlands Krieg gegen die Ukraine: Energiepreisschock. Die Preise steigen stark, aber die Arbeitslosigkeit sinkt noch, und die Wirtschaft wächst (+1,9 %).',2023:'Inflation bleibt hoch, die Wirtschaft schrumpft (−1,0 %), die Arbeitslosigkeit steigt: Stagflation.',2019:'Höchststand der Beschäftigung, niedrige Inflation – widerspricht dem Zielkonflikt.',2017:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2018:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2025:'Arbeitslosigkeit steigt bei moderater Inflation.'}[y]||''}`};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'){f()}})});
   };
   $('#ph-theo',root).addEventListener('click',e=>{theo=!theo;e.currentTarget.setAttribute('aria-pressed',theo);draw()});
-  $('#ph-stag',root).addEventListener('click',e=>{stag=!stag;e.currentTarget.setAttribute('aria-pressed',stag);draw()});
+  $('#ph-stag',root).addEventListener('click',e=>{stag=!stag;e.currentTarget.setAttribute('aria-pressed',stag);draw();
+    if(stag)$('#ph-info',root).innerHTML='<b>2022</b> war ein Angebotsschock: Die Preise stiegen stark, die Arbeitslosigkeit sank aber noch, und die Wirtschaft wuchs. <b>2023</b> kam beides zusammen: Inflation 5,9 %, BIP −1,0 %, die Arbeitslosenquote stieg auf 5,7 %. Das ist Stagflation.'});
   draw();bindErk(root);
 }});
 
@@ -731,7 +766,7 @@ const MEAS=[
   {id:'steuer',a:'Bundesregierung',n:'Einkommensteuer für alle senken',e:{P:-1,B:1,W:1,A:1,V:-1,U:-1},d:2,c:'Mehr Netto → Konsum ↑ → Wachstum. Absolut profitieren Besserverdienende stärker. Mehr Konsum → mehr Ressourcenverbrauch. Steuereinnahmen fehlen.'},
   {id:'co2',a:'Bundesregierung',n:'CO₂-Preis deutlich erhöhen, Einnahmen als Klimageld pro Kopf zurück',e:{P:-1,B:0,W:-1,A:0,V:1,U:2},d:0,c:'Fossile Energie teurer → weniger Emissionen, aber höhere Preise. Klimageld entlastet sparsame, oft ärmere Haushalte.'},
   {id:'mindest',a:'Mindestlohnkommission',n:'Mindestlohn kräftig erhöhen',e:{P:-1,B:-1,W:0,A:0,V:2,U:0},d:0,c:'Geringverdiener ↑ → Verteilung besser. Höhere Lohnkosten → Preise ↑; Gefahr von Jobabbau in Niedriglohnbranchen (empirisch umstritten).'},
-  {id:'reich',a:'Bundesregierung',n:'Spitzensteuersatz erhöhen, Vermögensteuer einführen',e:{P:0,B:0,W:-1,A:0,V:2,U:0},d:-1,c:'Umverteilung von oben nach unten, Mehreinnahmen. Kritiker: weniger Investitionen und Kapitalflucht.'},
+  {id:'reich',a:'Bundesregierung',n:'Spitzensteuersatz erhöhen, Vermögensteuer wieder erheben',e:{P:0,B:0,W:-1,A:0,V:2,U:0},d:-1,c:'Umverteilung von oben nach unten, Mehreinnahmen. Kritiker: weniger Investitionen und Kapitalflucht. Die Vermögensteuer wird seit 1997 nicht mehr erhoben, nachdem das Bundesverfassungsgericht 1995 die ungleiche Bewertung von Vermögen beanstandet hatte.'},
   {id:'export',a:'Bundesregierung',n:'Industriestrompreis subventionieren, Exporte fördern',e:{P:0,B:1,W:1,A:-1,V:0,U:-1},d:1,c:'Energieintensive Industrie bleibt wettbewerbsfähig → Jobs. Exporte ↑ → Überschuss wächst. Billiger Strom senkt Sparanreize.'},
   {id:'sparen',a:'Bundesregierung',n:'Sparprogramm: Ausgaben kürzen (Schuldenbremse)',e:{P:1,B:-1,W:-1,A:-1,V:-1,U:-1},d:-2,c:'Staatsnachfrage ↓ → weniger Preisdruck, aber Aufträge und Jobs gehen verloren. Kürzungen treffen oft Sozial- und Klimaprogramme. Weniger Importe → Überschuss ↑.'},
   {id:'bremse',a:'Bundesregierung',n:'Energiepreisbremse für Strom und Gas',e:{P:1,B:0,W:1,A:0,V:1,U:-1},d:2,c:'Gemessene Preise sinken sofort, Haushalte werden entlastet. Sparanreiz sinkt → mehr Verbrauch. Sehr teuer für den Staat.'},
@@ -783,9 +818,9 @@ init(root){
 
 /* 11 Deutschland-Check */
 const YEARS={
-  '2019':{P:1.4,B:5.0,W:1.0,A:8,V:0.295,U:36,thg:'≈ 800',lb:'≈ 8'},
-  '2020':{P:0.5,B:5.9,W:-4.1,A:7,V:0.295,U:41,thg:'≈ 730',lb:'≈ 7'},
-  '2023':{P:5.9,B:5.7,W:-0.9,A:6,V:0.295,U:46,thg:'674',lb:'≈ 6'},
+  '2019':{P:1.4,B:5.0,W:1.1,A:7.8,V:0.295,U:36,thg:'≈ 800',lb:'≈ 7,8'},
+  '2020':{P:0.5,B:5.9,W:-4.0,A:6.3,V:0.295,U:41,thg:'≈ 730',lb:'≈ 6,3'},
+  '2023':{P:5.9,B:5.7,W:-1.0,A:5.5,V:0.295,U:46,thg:'674',lb:'≈ 5,5'},
   '2025':{P:2.2,B:6.3,W:0.2,A:4.4,V:0.295,U:48.2,thg:'649',lb:'4,4'},
   '2026*':{P:2.8,B:6.4,W:1.3,A:4.7,V:0.295,U:48.2,thg:'649 (Stand 2025)',lb:'4,7'}
 };
@@ -805,11 +840,11 @@ html(){return `
 <div class="grid2">
   <div class="panel chart"><div id="ck-radar"></div><div class="legend" id="ck-leg"></div></div>
   <div class="panel"><div class="tbl-wrap"><table><thead><tr><th>Ziel</th><th>Indikator <span id="ck-ya"></span></th><th class="r">Punkte</th><th class="r" id="ck-yb"></th></tr></thead><tbody id="ck-tab"></tbody></table></div>
-  <p class="small muted" style="margin-top:8px">* 2026: Prognose der Gemeinschaftsdiagnose (Herbst 2026). Werte gerundet; Leistungsbilanz der früheren Jahre nach späteren Revisionen nur ungefähr. Gini-Koeffizient seit Jahren nahezu unverändert.</p></div>
+  <p class="small muted" style="margin-top:8px">* 2026: Prognose der Gemeinschaftsdiagnose (Herbst 2026). Werte gerundet. BIP nach der Überarbeitung durch Destatis (Juli 2026), Leistungsbilanz nach der Bundesbank (Stand Oktober 2026). Gini-Koeffizient seit Jahren nahezu unverändert.</p></div>
 </div>
 <div class="panel"><h3>Die Messlatte (normative Setzung!)</h3><div class="tbl-wrap"><table><tbody>${ORDER.map(k=>`<tr><td>${hexDot(k)} ${G[k].short}</td><td class="mono small">${SCORE[k].rule}</td></tr>`).join('')}</tbody></table></div>
 <p class="small" style="margin-top:8px">Diskussionsfragen: Ist ein Leistungsbilanzüberschuss genauso schlecht wie ein Defizit? Warum 1,75 % Wachstum – und nicht 0 %? Wie misst man „gerechte“ Verteilung mit einer Zahl?</p>
-<p class="small" style="margin-top:6px"><b>Regional:</b> Thüringen hatte im Juli 2026 eine Arbeitslosenquote von 6,5 % – etwas mehr als der Bundesdurchschnitt.</p></div>
+<p class="small" style="margin-top:6px"><b>Regional:</b> Thüringen lag im September 2026 mit einer Arbeitslosenquote von 6,3 % knapp unter dem Bundesdurchschnitt (6,4 %).</p></div>
 ${schreibfeld(WAND.check)}
 ${impuls(IMPULS.check)}
 ${erkHTML('check')}`},
@@ -843,7 +878,7 @@ ${zuordnen({id:'sichern-schlagzeilen',frage:'Welches Ziel steht in der Schlagzei
   karten:[{t:'Döner in Jena kostet jetzt 8 Euro',f:'P'},{t:'Autozulieferer in Eisenach meldet Kurzarbeit an',f:'B'},{t:'Thüringer Landkreise bauen Solarparks aus',f:'U'},
     {t:'Deutsche Wirtschaft wächst nur um 0,2 Prozent',f:'W'},{t:'Jeder Sechste in Deutschland gilt als armutsgefährdet',f:'V'},{t:'US-Zölle: Deutsche Exporte brechen ein',f:'A'},
     {t:'EZB erhöht den Leitzins wegen hoher Inflation',f:'P'},{t:'Pflegeheime in Erfurt finden keine Fachkräfte',f:'B'},{t:'Exportüberschuss erreicht neuen Rekord',f:'A'},
-    {t:'Dürresommer: Thüringer Wälder leiden',f:'U'},{t:'Gemeinschaftsdiagnose: Die Wirtschaft schrumpft das zweite Jahr in Folge',f:'W'},{t:'Das reichste Zehntel besitzt mehr als die Hälfte des Vermögens',f:'V'}]})}
+    {t:'Dürresommer: Thüringer Wälder leiden',f:'U'},{t:'Gemeinschaftsdiagnose: Aufschwung mit Strukturproblemen',f:'W'},{t:'Das reichste Zehntel besitzt mehr als die Hälfte des Vermögens',f:'V'}]})}
 ${kurztest({id:'sichern-test',titel:'Kurztest: vier Fragen',fragen:[
   {f:'Seit wann ist der Schutz der natürlichen Lebensgrundlagen ein Staatsziel im Grundgesetz?',o:['1967','1994','2021'],r:1,e:'Art. 20a GG gilt seit 1994. 2021 hat das Bundesverfassungsgericht ihn mit dem Klimabeschluss gestärkt.'},
   {f:'Die EZB erhöht den Leitzins, um die Inflation zu bremsen. Welches Ziel gerät dadurch eher unter Druck?',o:['Wachstum','Umwelt','Außenwirtschaft'],r:0,e:'Höhere Zinsen machen Kredite teurer. Konsum und Investitionen sinken – die Wirtschaft wächst langsamer.'},
@@ -867,6 +902,7 @@ tool({id:'leben',hinweise:HINWEISE.leben,ch:5,goals:ORDER,title:'Planspiel Sechs
 html(){return `
 <div id="lb-app" class="stack"></div>
 ${schreibfeld(WAND.leben)}
+${impuls(IMPULS.leben)}
 ${erkHTML('leben')}`},
 init(root){
   mountPlanspiel($('#lb-app',root),SPIEL);
@@ -880,19 +916,27 @@ function startHTML(){
   <section class="hero"><div class="hero-hex" id="hero-hex" aria-label="Das magische Sechseck – Ecken antippen für Steckbriefe">${heroHex()}</div>
     <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Werkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
     <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
+    <p class="small muted">Fotos: ${ORDER.map(k=>esc(GOAL_IMG[k].credit)).join(', ')} / Unsplash</p>
     <p class="hint">Ecke im Sechseck oder Kennzahl antippen: Steckbrief bzw. passende Werkstatt öffnet sich.</p>
     <div class="cta"><button class="fab" type="button" id="cta-leben"><span class="ms">sports_esports</span>Planspiel starten</button></div></div></section>
   ${chapterHTML(1)}
-  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. „Ziele“ eignet sich für ein Gruppenpuzzle: Sechs Expertengruppen übernehmen je ein Ziel und stellen es danach den anderen vor. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
+  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. In „Ziele“ nimmt sich jede Werkstatt ein Ziel vor und misst es mit echten Zahlen. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
   <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen und Datenstand (gerundet, Oktober 2026)</h3><ul>
-  <li>Destatis: Inflationsrate September 2026 (vorläufig), Jahresinflation 2025, BIP 2025 und Vorjahre, Armutsgefährdung 2025</li>
-  <li>Bundesagentur für Arbeit: Arbeitsmarkt im September 2026; Regionaldirektion Sachsen-Anhalt-Thüringen, Juli 2026</li>
-  <li>Gemeinschaftsdiagnose Herbst 2026 (24.09.2026): Prognosen BIP, Inflation, Arbeitslosenquote, Leistungsbilanz</li>
-  <li>Umweltbundesamt: Treibhausgas-Emissionen in Deutschland (Stand Juli 2026)</li>
-  <li>Gesetzestexte: § 1 StabG, Art. 20 und 20a GG, Art. 127 AEUV, Bundes-Klimaschutzgesetz</li>
+  <li>Destatis: Verbraucherpreise September 2026 (Pressemitteilung Nr. 364 vom 13.10.2026), Jahresinflation 2025, Armutsgefährdung 2025; BIP 2019 bis 2025 und 2. Quartal 2026 nach der Sommerüberarbeitung 2026 (Pressemitteilungen Nr. 269 vom 30.07.2026 und Nr. 303 vom 25.08.2026); Außenhandel 2024; Baufertigstellungen 2023</li>
+  <li>Thüringer Landesamt für Statistik: Verbraucherpreise in Thüringen im September 2026 (Pressemitteilung 248/2026 vom 05.10.2026)</li>
+  <li>ADAC: Spritpreise im September 2025 und September 2026 (Pressemitteilungen vom 01.10.2025 und 01.10.2026) und nach dem Tankrabatt (07.10.2026)</li>
+  <li>Bundesagentur für Arbeit: Arbeitsmarkt im September 2026 (Presseinfo Nr. 37 vom 30.09.2026), Kurzarbeit Juli 2026 und April 2020; Regionaldirektion Sachsen-Anhalt-Thüringen: Arbeitsmarkt in Thüringen im September 2026 (Presseinfo Nr. 62 vom 30.09.2026)</li>
+  <li>Deutsche Bundesbank: Zahlungsbilanzstatistik, Leistungsbilanz und Teilbilanzen (Stand 13.10.2026); Studie „Private Haushalte und ihre Finanzen“ (Vermögensverteilung)</li>
+  <li>Europäische Zentralbank: Leitzinsen (Einlagensatz 2,25 % ab 17.06.2026, 2,50 % ab 16.09.2026)</li>
+  <li>Gemeinschaftsdiagnose Herbst 2026 „Aufschwung mit Strukturproblemen“ (24.09.2026): Prognosen BIP, Inflation, Arbeitslosenquote, Leistungsbilanz</li>
+  <li>Umweltbundesamt: Treibhausgas-Emissionen in Deutschland 2025; Projektionsdaten 2026 (14.03.2026)</li>
+  <li>Bundesministerium für Ernährung und Landwirtschaft: Erntebericht 2018 (Dürre)</li>
+  <li>Bundesamt für Umwelt (Schweiz): CO₂-Abgabe und Merkblatt zur Rückverteilung 2026 (61,80 Franken pro Person)</li>
+  <li>Gesetzestexte: § 1 StabG (08.06.1967), Art. 20 und 20a GG, Art. 127 AEUV, Bundes-Klimaschutzgesetz; § 2 und § 68 Energiesteuergesetz mit den Tankrabatten 2026 (BGBl. 2026 I Nr. 116 und Nr. 275); § 10 BEHG (CO₂-Preis 2026) und Gesetzentwurf für 2027 (BT-Drucksache 21/7869); § 9 EStG (Entfernungspauschale); Fünfte Mindestlohnanpassungsverordnung und § 8 SGB IV (Minijob-Grenze); §§ 105 und 149 SGB III (Kurzarbeitergeld, Arbeitslosengeld); § 19 SGB II (Grundsicherungsgeld seit 01.07.2026)</li>
   <li>Deutschlandticket: Beschluss der Verkehrsministerkonferenz vom 18.09.2025 (63 € ab Januar 2026); Correctiv-Faktencheck vom 15.01.2026 zum TikTok-Video über 129,99 €</li>
+  <li>Alle Personen im Planspiel und in den Fällen sowie alle Social-Media-Posts sind erfunden (fiktiv).</li>
   <li>Fotos: engin akyurt, Jacob Meissner, Lukas D., Md. Hasanuzzaman Himel, Yosuke Ota, Remy Gieling, Artem Labunsky, Wolfgang Weiser, Karsten Würth, Marcel Strauß – alle über Unsplash (Unsplash-Lizenz)</li></ul>
   <p>Modellwerkzeuge (Simulator, Planspiel, Bewertungsskalen) sind didaktische Vereinfachungen und keine Prognosen. Spielstände und Merksätze werden nur in diesem Browser gespeichert.</p>
   <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}

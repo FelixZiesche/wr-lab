@@ -9,6 +9,10 @@ export const WISSENSCHECK={
   titel:'Wissenscheck: Magisches Sechseck',
   thema:'Magisches Sechseck (Ziele der Wirtschaftspolitik)',
   stufe:11,
+  // Tipp in der Auswertung für die schwächste Stufe (I, II, III)
+  tipps:{1:'Wiederhole die Merksätze in „Mein Wissen“ und schlag Fachbegriffe wie Inflationsrate, Leistungsbilanz oder Gini-Koeffizient im Glossar nach.',
+    2:'Beim Anwenden hilft es, zuerst die Formel (z. B. Arbeitslosenquote, Inflationsrate, Reallohn) oder die Wirkungskette aufzuschreiben: Maßnahme → Wirkung → Ziel.',
+    3:'Beim Beurteilen hilft das Schema: Kriterien nennen (z. B. die betroffenen Ziele), Zielkonflikte und Pro und Contra abwägen, dann begründet urteilen.'},
   aufgaben:[
   /* ---------- Stufe I: Grundlagen ---------- */
   {afb:1,art:'wahl',werkstatt:'grundlagen',f:'Welches Gesetz legte 1967 die vier Ziele des magischen Vierecks fest?',
@@ -50,7 +54,7 @@ export const WISSENSCHECK={
   {afb:1,art:'wahl',werkstatt:'phillips',f:'Was ist Stagflation?',
     o:['Hohe Inflation bei gleichzeitig schwachem Wachstum und steigender Arbeitslosigkeit','Ein Stillstand der Preise','Eine besonders stabile Wachstumsphase','Sinkende Preise im Boom'],r:0,
     fehler:{1:'Stillstand der Preise hieße 0 % Inflation. Mit Stagflation hat das nichts zu tun.',2:'Bei Stagflation stagniert die Wirtschaft, statt stabil zu wachsen.',3:'Im Boom steigen die Preise eher. Sinkende Preise heißen Deflation.'},
-    e:'Stagnation und Inflation zugleich, typisch nach Angebotsschocks wie der Ölkrise 1973 oder der Energiekrise 2022.'},
+    e:'Stagnation und Inflation zugleich, typisch nach Angebotsschocks wie der Ölkrise 1973/74 oder der Energiekrise 2022/23. In Deutschland zeigte sich das 2023: Inflation 5,9 %, BIP −1,0 %, mehr Arbeitslose.'},
   {afb:1,art:'wahl',werkstatt:'phillips',f:'Die Phillips-Kurve beschreibt einen Zielkonflikt zwischen …',
     o:['… Preisniveaustabilität und hohem Beschäftigungsstand','… Wachstum und Umweltschutz','… Verteilung und Außenwirtschaft','… Wachstum und Beschäftigung'],r:0,
     fehler:{1:'Wachstum gegen Umwelt ist ein wichtiger Konflikt, aber nicht der der Phillips-Kurve.',2:'Verteilung und Außenwirtschaft hängen kaum direkt zusammen.',3:'Wachstum und Beschäftigung stehen meist in Harmonie: Wächst die Wirtschaft, entstehen Jobs.'},
@@ -60,7 +64,7 @@ export const WISSENSCHECK={
   {afb:2,art:'zahl',werkstatt:'preis',einheit:'%',tol:0.05,
     f:'Szenario: Ein Warenkorb kostete in Weimar im September 2025 genau 500,00 €. Im September 2026 kostet derselbe Warenkorb 516,50 €. Berechne die Inflationsrate.',r:3.3,
     fehler:[{wert:16.5,text:'16,50 € ist der Preisanstieg in Euro. Teile ihn noch durch den alten Preis und rechne in Prozent um.'},{wert:3.19,text:'Du hast durch den neuen Preis geteilt. Die Basis ist immer der alte Preis aus dem Vorjahr.'}],
-    e:'(516,50 € − 500 €) ÷ 500 € × 100 = 3,3 %. Das entspricht der Inflationsrate in Deutschland im September 2026 (vorläufig, Destatis).'},
+    e:'(516,50 € − 500 €) ÷ 500 € × 100 = 3,3 %. Das entspricht der Inflationsrate in Deutschland im September 2026 (Destatis).'},
   {afb:2,art:'zahl',werkstatt:'preis',einheit:'%',tol:0.1,
     material:'<b>Faktencheck:</b> Im Januar 2026 verbreitete sich auf TikTok ein Video, nach dem das Deutschlandticket bald 129,99 € kosten sollte. Correctiv hat geprüft: Dafür gibt es weder einen Beschluss noch Pläne.',
     f:'Das Deutschlandticket startete im Mai 2023 mit 49 € im Monat. Seit Januar 2026 kostet es 63 €. Um wie viel Prozent ist der Preis seit dem Start gestiegen? Runde auf eine Nachkommastelle.',r:28.6,
@@ -120,7 +124,7 @@ export const WISSENSCHECK={
   /* ---------- Stufe III: Beurteilen ---------- */
   {afb:3,art:'wahl',werkstatt:'politik',f:'Ein Politiker sagt: „Wir senken die Arbeitslosigkeit, egal was es kostet.“ Welcher Einwand ist aus Sicht des magischen Sechsecks am stärksten?',
     o:['Maßnahmen gegen Arbeitslosigkeit können andere Ziele gefährden, etwa stabile Preise oder solide Staatsfinanzen. Man muss abwägen.','Arbeitslosigkeit ist kein Ziel des Sechsecks.','Gegen Arbeitslosigkeit kann der Staat nichts tun.','In Thüringen gibt es kaum noch Arbeitslose.'],r:0,
-    fehler:{1:'Doch: Ein hoher Beschäftigungsstand ist eines der vier Ziele des StabG.',2:'Der Staat hat viele Mittel, etwa Investitionen, Weiterbildung oder Kurzarbeitergeld.',3:'Thüringen lag im Juli 2026 bei 6,5 %. Das ist weit von null entfernt.'},
+    fehler:{1:'Doch: Ein hoher Beschäftigungsstand ist eines der vier Ziele des StabG.',2:'Der Staat hat viele Mittel, etwa Investitionen, Weiterbildung oder Kurzarbeitergeld.',3:'Thüringen lag im September 2026 bei 6,3 %. Das ist weit von null entfernt.'},
     e:'„Egal was es kostet“ blendet Zielkonflikte aus. Ein gutes Urteil wägt Haupt- und Nebenwirkungen ab.'},
   {afb:3,art:'mehrfach',werkstatt:'aussen',f:'These: „Deutschland sollte seinen Leistungsbilanzüberschuss verringern.“ Welche Argumente sprechen <b>für</b> diese These?',
     o:['Hohe Überschüsse machen abhängig von der Nachfrage im Ausland.','Überschüsse können Handelskonflikte und Zölle auslösen.','Exporte sichern viele Arbeitsplätze in der Industrie.','Im Ausland angelegte Ersparnisse können an Wert verlieren.','Ein Überschuss bedeutet, dass der Staat Schulden abbaut.'],r:[0,1,3],

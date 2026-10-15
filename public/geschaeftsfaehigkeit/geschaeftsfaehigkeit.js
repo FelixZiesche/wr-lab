@@ -12,13 +12,13 @@ import { WISSENSCHECK } from './wissenscheck.js';
 const MS={
   bauchgefuehl:['Verträge schließen wir ständig: beim Döner, im App-Store, im Handyshop. Ob sie gelten, entscheidet nicht das Bauchgefühl, sondern das Gesetz – vor allem das Alter, die Zustimmung der Eltern und die Art der Bezahlung.'],
   alter:['Rechtsfähig ist jeder Mensch ab der Geburt (§ 1 BGB): Er kann Rechte und Pflichten haben. Geschäftsfähig wird man in Stufen: unter 7 Jahren geschäftsunfähig, von 7 bis 17 beschränkt geschäftsfähig, ab 18 voll geschäftsfähig (§ 2 BGB).'],
-  haus:['Geschäftsunfähig sind Kinder unter 7 und dauerhaft geisteskranke Menschen (§ 104 BGB). Ihre Willenserklärungen sind nichtig (§ 105 BGB).',
-    'Beschränkt Geschäftsfähige brauchen die Zustimmung der Eltern: vorher als Einwilligung (§ 107 BGB) oder nachträglich als Genehmigung (§ 108 BGB). Ohne Zustimmung geht es nur in drei Ausnahmen: lediglich rechtlicher Vorteil (§ 107), Taschengeld (§ 110) und erlaubter Job (§ 113).'],
+  haus:['Geschäftsunfähig sind Kinder unter 7 und Menschen, die wegen einer dauerhaften krankhaften Störung der Geistestätigkeit ihren Willen nicht frei bilden können (§ 104 BGB). Ihre Willenserklärungen sind nichtig (§ 105 BGB).',
+    'Beschränkt Geschäftsfähige brauchen die Zustimmung der Eltern: vorher als Einwilligung (§ 107 BGB) oder nachträglich als Genehmigung (§ 108 BGB). Ohne Zustimmung geht es nur in drei wichtigen Ausnahmen: lediglich rechtlicher Vorteil (§ 107), Taschengeld (§ 110) und erlaubter Job (§ 113).'],
   navi:['Fälle zur Geschäftsfähigkeit prüft man in fester Reihenfolge: Alter – lediglich rechtlicher Vorteil – Einwilligung – Taschengeld – Job – Genehmigung. Greift keine Ausnahme, ist der Vertrag schwebend unwirksam, bis die Eltern genehmigen oder verweigern.'],
   fallakte:['Nichtig heißt: von Anfang an ohne Wirkung. Schwebend unwirksam heißt: Der Vertrag wartet auf die Genehmigung der Eltern. Verweigern sie, ist er endgültig unwirksam. Wird der Minderjährige vorher volljährig, entscheidet er selbst (§ 108 Abs. 3 BGB).'],
   gericht:['Lediglich rechtlicher Vorteil heißt: Man bekommt etwas und übernimmt keine rechtlichen Pflichten. Wirtschaftlich günstig reicht nicht – einen zinslosen Kredit muss man zurückzahlen, mit einer vermieteten Wohnung übernimmt man die Pflichten als Vermieter.'],
   taschengeld:['Der Taschengeldparagraf (§ 110 BGB) greift nur, wenn drei Dinge stimmen: Das Geld wurde zur freien Verfügung oder für genau diesen Zweck überlassen, der ganze Preis ist bezahlt, und die Eltern haben den Kauf nicht verboten. Was man mit dem Gewinn aus einem Taschengeld-Kauf kauft, deckt § 110 nicht automatisch.'],
-  online:['§ 110 BGB gilt erst, wenn mit eigenem Geld vollständig bezahlt ist. Bei Raten und „Jetzt kaufen, später bezahlen“ also erst mit der letzten Zahlung, künftige Abo-Monate brauchen die Zustimmung der Eltern. Käufe mit dem Geld oder der Kreditkarte der Eltern deckt § 110 nie.'],
+  online:['§ 110 BGB greift erst, wenn vollständig mit überlassenem Geld bezahlt ist, etwa mit Taschengeld. Bei Raten und „Jetzt kaufen, später bezahlen“ also erst mit der letzten Zahlung, künftige Abo-Monate brauchen die Zustimmung der Eltern. Zahlen Minderjährige ohne Erlaubnis mit Geld oder Kreditkarte der Eltern, etwa über gespeicherte Zahlungsdaten, hilft § 110 nicht.'],
   job:['Erlauben die Eltern einen Job, dürfen Minderjährige alle Geschäfte rund um diesen Job allein erledigen: Arbeitsvertrag, Kündigung, Lohnkonto (§ 113 BGB). Was sie vom Lohn kaufen, regelt § 110 BGB.'],
   zwergspitz:['Gegen das ausdrückliche Nein der Eltern hilft auch eigenes Geld nicht. Ein Tier bringt Folgekosten und Pflichten. Sicher ans Ziel führen nur die Einwilligung der Eltern oder das Warten bis zum 18. Geburtstag.'],
   sichern:['Die Geschäftsfähigkeit schützt Kinder und Jugendliche vor Verträgen, deren Folgen sie noch nicht überblicken. Je älter man wird, desto mehr darf man allein – und desto mehr Verantwortung trägt man.']
@@ -28,14 +28,14 @@ const MS={
 const GLOSS=[
   ['Arbeitsmündigkeit','§ 113 BGB: Erlauben die Eltern einen Job, darf der Minderjährige die Geschäfte rund um diesen Job allein erledigen, etwa Arbeitsvertrag und Kündigung.'],
   ['Beschränkt geschäftsfähig','Minderjährige von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern.'],
-  ['Betreuung','Das Betreuungsgericht bestellt für Volljährige, die ihre Angelegenheiten nicht selbst regeln können, einen Betreuer (§ 1814 BGB).'],
+  ['Betreuung','Das Betreuungsgericht bestellt für Volljährige, die ihre Angelegenheiten wegen einer Krankheit oder Behinderung nicht selbst regeln können, einen Betreuer (§ 1814 BGB). Eine Betreuung allein macht nicht geschäftsunfähig.'],
   ['BGB','Bürgerliches Gesetzbuch. Es regelt seit 1900 die Rechtsbeziehungen zwischen Privatpersonen, zum Beispiel Kaufverträge.'],
   ['Einwilligung','Vorherige Zustimmung der Eltern (§§ 107, 183 BGB).'],
   ['Endgültig unwirksam','Die Eltern haben die Genehmigung verweigert. Ware und Geld gehen zurück.'],
   ['Familiengericht','Abteilung beim Amtsgericht. Es muss bestimmte Geschäfte der Eltern für ihre Kinder genehmigen, zum Beispiel einen Kredit (§ 1643 BGB).'],
   ['Genehmigung','Nachträgliche Zustimmung der Eltern (§§ 108, 184 BGB).'],
   ['Geschäftsfähigkeit','Fähigkeit, selbst wirksam Rechtsgeschäfte abzuschließen, zum Beispiel einen Kaufvertrag.'],
-  ['Geschäftsunfähig','Kinder unter 7 Jahren und Menschen mit einer dauerhaften krankhaften Störung der Geistestätigkeit (§ 104 BGB).'],
+  ['Geschäftsunfähig','Kinder unter 7 Jahren und Menschen, die wegen einer dauerhaften krankhaften Störung der Geistestätigkeit ihren Willen nicht frei bilden können (§ 104 BGB).'],
   ['Gesetzlicher Vertreter','Bei Minderjährigen in der Regel die Eltern, bei betreuten Volljährigen der Betreuer.'],
   ['Lediglich rechtlicher Vorteil','Man bekommt etwas, ohne rechtliche Pflichten zu übernehmen, zum Beispiel ein Geschenk (§ 107 BGB).'],
   ['Nichtig','Von Anfang an ohne jede Wirkung (§ 105 BGB).'],
@@ -113,7 +113,7 @@ const FIGUR=[[2,'child_care'],[6,'toys'],[12,'backpack'],[17,'skateboarding'],[1
 const RAETSEL=[
   {f:'Ab welchem Alter bist du beschränkt geschäftsfähig?',r:7,e:'Mit dem 7. Geburtstag (§ 106 BGB). Vorher ist alles, was du allein abschließt, nichtig.'},
   {f:'Ab welchem Alter darfst du in Thüringen bei der Kommunalwahl wählen?',r:16,e:'Ab 16 wählst du in Thüringen den Gemeinderat und den Bürgermeister mit, außerdem das Europäische Parlament. Für Landtag und Bundestag musst du 18 sein.'},
-  {f:'Ab welchem Alter kannst du für eine Straftat bestraft werden?',r:14,e:'Ab 14 bist du strafmündig (§ 19 StGB). Bis 17 gilt das Jugendstrafrecht.'},
+  {f:'Ab welchem Alter kannst du für eine Straftat bestraft werden?',r:14,e:'Ab 14 bist du strafmündig (§ 19 StGB). Bis 17 gilt das Jugendstrafrecht, bis 20 kann es noch angewendet werden (§ 105 JGG).'},
   {f:'Ab welchem Alter darfst du einen Handyvertrag ganz allein abschließen?',r:18,e:'Erst mit 18 bist du voll geschäftsfähig (§ 2 BGB). Vorher brauchst du die Zustimmung deiner Eltern.'}];
 tool({id:'alter',ch:2,farben:['rot','gelb','gruen'],hinweise:HINWEISE.alter,title:'Vom Baby zum Vertragsprofi',sub:'Am Altersschieber erleben, was du in welchem Alter darfst – und vier Altersrätsel lösen',
 html(){return `<p class="task"><b>Auftrag:</b> Schieb das Alter von 0 bis 21 Jahre. Beobachte, wann sich die Farbe ändert und welche Altersgrenzen du erreichst. Löse dann die Altersrätsel: Stell das richtige Alter am Schieber ein.</p>
@@ -174,18 +174,18 @@ html(){return `<p class="task"><b>Auftrag:</b> Richte das Haus der Geschäftsfä
 ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Haus der Geschäftsfähigkeit?',
   faecher:[
     {id:'unfaehig',t:'Geschäfts&shy;unfähig<span class="zu-sub">unter 7 Jahren</span>',kurz:'Geschäftsunfähig (unter 7 Jahren)',
-      info:'<p>Kinder unter 7 Jahren und Menschen, die dauerhaft geisteskrank sind (§ 104 BGB). Was sie selbst erklären, ist <b>nichtig</b>, also von Anfang an ohne Wirkung (§ 105 BGB).</p><p>Für sie handeln die Eltern oder ein Betreuer.</p>'},
+      info:'<p>Kinder unter 7 Jahren und Menschen, die wegen einer dauerhaften krankhaften Störung der Geistestätigkeit ihren Willen nicht frei bilden können (§ 104 BGB). Eine Krankheit oder eine Betreuung allein reicht dafür nicht. Was sie selbst erklären, ist <b>nichtig</b>, also von Anfang an ohne Wirkung (§ 105 BGB).</p><p>Für sie handeln die Eltern oder ein Betreuer.</p>'},
     {id:'beschraenkt',t:'Beschränkt geschäfts&shy;fähig<span class="zu-sub">7 bis 17 Jahre</span>',kurz:'Beschränkt geschäftsfähig (7 bis 17 Jahre)',
       info:'<p>Alle von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern: vorher als <b>Einwilligung</b> (§ 107 BGB) oder hinterher als <b>Genehmigung</b> (§ 108 BGB).</p><p>Fehlt die Zustimmung noch, ist der Vertrag <b>schwebend unwirksam</b>: Er wartet auf die Entscheidung der Eltern.</p>'},
     {id:'voll',t:'Voll geschäfts&shy;fähig<span class="zu-sub">ab 18 Jahren</span>',kurz:'Voll geschäftsfähig (ab 18 Jahren)',
       info:'<p>Ab dem 18. Geburtstag ist man volljährig (§ 2 BGB) und darf jeden Vertrag allein abschließen, egal ob mit 18 oder mit 80.</p><p>Dafür trägt man auch die volle Verantwortung, zum Beispiel für Schulden.</p>'},
     {id:'ausnahme',t:'Ausnahmen<span class="zu-sub">Minderjährige, ohne Zustimmung der Eltern wirksam</span>',kurz:'Ausnahmen ohne Zustimmung der Eltern',
-      info:'<p>Eigentlich brauchen Minderjährige ab 7 die Zustimmung der Eltern. In drei Fällen klappt es aber ohne sie:</p><ul><li><b>Nur ein rechtlicher Vorteil:</b> Man bekommt etwas und muss nichts dafür tun, zum Beispiel ein Geschenk (§ 107 BGB).</li><li><b>Taschengeld:</b> Man bezahlt sofort und vollständig mit seinem Taschengeld (§ 110 BGB).</li><li><b>Erlaubter Job:</b> Alles rund um einen Job, den die Eltern erlaubt haben, etwa die Kündigung (§ 113 BGB).</li></ul><p>Hierher gehören also nur Fälle mit Minderjährigen, bei denen es ohne Eltern klappt.</p>'},
+      info:'<p>Eigentlich brauchen Minderjährige ab 7 die Zustimmung der Eltern. In drei wichtigen Fällen klappt es aber ohne sie:</p><ul><li><b>Nur ein rechtlicher Vorteil:</b> Man bekommt etwas und muss nichts dafür tun, zum Beispiel ein Geschenk (§ 107 BGB).</li><li><b>Taschengeld:</b> Man bezahlt vollständig mit seinem Taschengeld – bei Raten erst mit der letzten Rate (§ 110 BGB).</li><li><b>Erlaubter Job:</b> Alles rund um einen Job, den die Eltern erlaubt haben, etwa die Kündigung (§ 113 BGB).</li></ul><p>Hierher gehören also nur Fälle mit Minderjährigen, bei denen es ohne Eltern klappt.</p>'},
     {id:'basis',t:'Fundament: Rechtsfähigkeit<span class="zu-sub">ab der Geburt</span>',kurz:'Fundament: Rechtsfähigkeit (ab der Geburt)',
       info:'<p>Rechtsfähig ist jeder Mensch ab der Geburt (§ 1 BGB). Das heißt: Man kann Rechte und Pflichten haben, zum Beispiel ein Handy besitzen, ein Haus erben oder Eigentümer eines Hundes sein.</p><p>Selbst Verträge schließen kann man damit noch nicht, dafür braucht man die Geschäftsfähigkeit. Deshalb ist die Rechtsfähigkeit das Fundament, auf dem das ganze Haus steht.</p>'}],
   karten:[
     {t:'Leon (5) tauscht auf dem Spielplatz seine Pokémon-Karten gegen ein Spielzeugauto.',f:'unfaehig',e:'Unter 7 ist man geschäftsunfähig (§ 104 Nr. 1 BGB), der Tausch ist nichtig (§ 105 BGB).'},
-    {t:'Franz (30) ist dauerhaft geisteskrank und bestellt sich einen Gaming-PC.',f:'unfaehig',e:'§ 104 Nr. 2 BGB: Wer dauerhaft an einer krankhaften Störung der Geistestätigkeit leidet, ist geschäftsunfähig – egal wie alt. Die Bestellung ist nichtig.'},
+    {t:'Franz (30) kann wegen einer dauerhaften krankhaften Störung der Geistestätigkeit seinen Willen nicht frei bilden und bestellt sich einen Gaming-PC.',f:'unfaehig',e:'§ 104 Nr. 2 BGB: Wer wegen einer dauerhaften krankhaften Störung der Geistestätigkeit seinen Willen nicht frei bilden kann, ist geschäftsunfähig – egal wie alt. Die Bestellung ist nichtig.'},
     {t:'Lukas (12) schließt einen Handyvertrag ab. Seine Eltern haben vorher zugestimmt.',f:'beschraenkt',e:'Mit 12 ist Lukas beschränkt geschäftsfähig (§ 106 BGB). Mit der Einwilligung der Eltern ist der Vertrag wirksam (§ 107 BGB). Das ist die Regel, keine Ausnahme.'},
     {t:'Paula (16) bestellt Kopfhörer auf Rechnung. Ihre Eltern wissen nichts davon.',f:'beschraenkt',e:'Paula ist beschränkt geschäftsfähig. Auf Rechnung heißt: noch nicht bezahlt, also hilft § 110 nicht. Der Vertrag ist schwebend unwirksam, bis die Eltern genehmigen oder verweigern (§ 108 Abs. 1 BGB).'},
     {t:'Ben (15) kauft ohne zu fragen einen E-Scooter. Seine Eltern genehmigen den Kauf hinterher.',f:'beschraenkt',e:'Die Genehmigung ist die nachträgliche Zustimmung der Eltern (§ 108 Abs. 1 BGB). Erst durch sie wird Bens Vertrag wirksam.'},
@@ -203,7 +203,7 @@ ${lueckentext({id:'haus-luecken',titel:'Hefteintrag: Stufen der Geschäftsfähig
   '<b>Ausnahmen:</b> Ein 14-Jähriger, der Geld geschenkt bekommt, braucht keine Zustimmung, weil er durch das Geld nur einen [rechtlichen Vorteil|lediglich rechtlichen Vorteil] erlangt und keine Verpflichtungen eingeht.',
   'Nach § 110 BGB ist ein Vertrag ohne Zustimmung wirksam, wenn der Minderjährige vollständig mit Geld bezahlt, das ihm [zur freien Verfügung|zu freier Verfügung] oder für diesen Zweck überlassen wurde. Deshalb heißt § 110 auch [Taschengeldparagraf|Taschengeldparagraph].',
   'Erlauben die Eltern einen Job, kann der Minderjährige alle Geschäfte rund um dieses [Arbeitsverhältnis|Dienst- oder Arbeitsverhältnis|Dienst- und Arbeitsverhältnis] allein abschließen, etwa den Arbeitsvertrag oder die Kündigung (§ 113 BGB). Was er vom Lohn kauft, regelt dagegen § [110] BGB.',
-  'Mit Eintritt der [Volljährigkeit] sind Personen voll geschäftsfähig. Geschäftsunfähig sind nach § 104 BGB außerdem Personen im Zustand einer nicht nur vorübergehenden krankhaften Störung der [Geistestätigkeit].',
+  'Mit Eintritt der [Volljährigkeit] sind Personen voll geschäftsfähig. Geschäftsunfähig sind nach § 104 BGB außerdem Personen in einem nicht nur vorübergehenden Zustand krankhafter Störung der [Geistestätigkeit], der die freie Willensbestimmung ausschließt.',
   'Rechtsfähig ist jeder Mensch nach § 1 BGB ab der Vollendung der [Geburt].']})}
 <details class="hilfe"><summary><span class="ms sm">menu_book</span>Gesetzestexte §§ 1, 2, 104–110 und 113 BGB nachlesen</summary>
   <dl class="glossary">${[1,2,104,105,106,107,108,110,113].map(n=>`<dt>${GESETZ[n].p} – ${GESETZ[n].titel}</dt><dd>${GESETZ[n].t}</dd>`).join('')}</dl></details>
@@ -243,13 +243,13 @@ init(root){bindErk(root)}});
 const URTEIL=['Wirksam','Schwebend unwirksam','Nichtig'];
 const GERICHT=[
   {id:'gericht-simson',titel:'Die Simson',fall:`${fotoHTML('simson')}<p><b>Elias (16)</b> aus Suhl hat 1.800 € Taschengeld gespart. Ohne seine Eltern zu fragen, kauft er eine gebrauchte Simson S51 und bezahlt bar.</p>`,
-    frage:'Ist der Kauf wirksam?',r:1,e:'Das Geld reicht, und Elias zahlt sofort. Mit dem Moped kommen aber Versicherung, Sprit und Unfallrisiko dazu. So weit reicht die Erlaubnis, über das Taschengeld frei zu verfügen, in der Regel nicht. Der Kauf ist schwebend unwirksam, bis die Eltern entscheiden.'},
+    frage:'Ist der Kauf wirksam?',r:1,e:'Das Geld reicht, und Elias zahlt sofort. Mit dem Moped kommen aber Versicherung, Sprit und Unfallrisiko dazu. So weit reicht die Erlaubnis, über das Taschengeld frei zu verfügen, in der Regel nicht: Der Kauf ist schwebend unwirksam, bis die Eltern entscheiden. Man kann es auch anders sehen, denn entscheidend ist, wie weit die Erlaubnis der Eltern reicht. Mit guter Begründung ist auch „wirksam“ vertretbar.'},
   {id:'gericht-konzert',titel:'Das Konzert',fall:`${fotoHTML('messe')}<p><b>Hanna (15)</b> will unbedingt zum Konzert des Rappers Luca Lux (fiktiv) in der Messe Erfurt. An der Abendkasse kauft sie von ihrem Taschengeld ein Ticket für 59 € und bezahlt bar.</p>`,
     frage:'Ist der Kauf wirksam?',r:0,e:'Sofort und vollständig mit Taschengeld bezahlt: Der Taschengeldparagraf (§ 110 BGB) greift. Ob Hanna abends auf das Konzert darf, ist eine andere Frage – das entscheiden die Eltern.'},
   {id:'gericht-wohnung',titel:'Die Wohnung',fall:`${fotoHTML('gotha')}<p>Der Patenonkel schenkt <b>Lina (12)</b> eine vermietete Eigentumswohnung am Neumarkt in Gotha. Die Eltern wissen nichts davon.</p>`,
-    frage:'Ist die Schenkung wirksam?',r:1,e:'Ein Geschenk – aber mit Haken: Mit der Wohnung übernimmt Lina den Mietvertrag und damit Pflichten als Vermieterin, etwa für Reparaturen. Das ist kein lediglich rechtlicher Vorteil. Ohne Zustimmung der Eltern ist die Schenkung schwebend unwirksam.'},
-  {id:'gericht-job',titel:'Der Jobwechsel',fall:'<p><b>Tom (17)</b> darf mit Erlaubnis seiner Eltern bei einem Lieferdienst in Jena jobben. Weil ein Café mehr zahlt, kündigt er und unterschreibt dort einen neuen Arbeitsvertrag – ohne seine Eltern zu fragen.</p>',
-    frage:'Sind Kündigung und neuer Vertrag wirksam?',r:0,e:'Die Erlaubnis für einen Job gilt im Zweifel auch für Jobs derselben Art (§ 113 Abs. 4 BGB). Kündigung und neuer Vertrag sind wirksam.'},
+    frage:'Ist die Übertragung der Wohnung auf Lina wirksam?',r:1,e:'Ein Geschenk – aber mit Haken: Wird Lina Eigentümerin, tritt sie in den Mietvertrag ein (§ 566 BGB) und hat Pflichten als Vermieterin, etwa für Reparaturen. Das ist kein lediglich rechtlicher Vorteil. Ohne Zustimmung der Eltern ist die Übertragung schwebend unwirksam.'},
+  {id:'gericht-job',titel:'Der Jobwechsel',fall:`${fotoHTML('cafe')}<p><b>Tom (17)</b> jobbt mit Erlaubnis seiner Eltern als Aushilfe in einem Café in Jena. Weil ein anderes Café am Holzmarkt mehr zahlt, kündigt er und unterschreibt dort einen neuen Arbeitsvertrag als Aushilfe – ohne seine Eltern zu fragen.</p>`,
+    frage:'Sind Kündigung und neuer Vertrag wirksam?',r:0,e:'Die Kündigung gehört zum erlaubten Job (§ 113 Abs. 1 BGB). Und die Erlaubnis für einen Job gilt im Zweifel auch für Jobs derselben Art (§ 113 Abs. 4 BGB): Aushilfe im Café bleibt Aushilfe im Café. Kündigung und neuer Vertrag sind wirksam.'},
   {id:'gericht-tiktok',titel:'Der TikTok Shop',fall:`${fotoHTML('maus')}<p><b>Noah (15)</b> sieht im TikTok Shop, wie ein Gaming-Streamer (fiktiv) eine Gaming-Maus für 89 € in die Kamera hält. Noah bestellt sie sofort – mit „Jetzt kaufen, später bezahlen“.</p>`,
     frage:'Ist der Kauf wirksam?',r:1,e:'Später bezahlen heißt: Noch ist nichts bezahlt. § 110 BGB greift nicht, der Kauf ist schwebend unwirksam – bis die Eltern entscheiden oder Noah vollständig mit Taschengeld bezahlt hat.'},
   {id:'gericht-konsole',titel:'Die Konsole',fall:`${fotoHTML('switch')}<p><b>Oskar (6)</b> bekommt von seiner Oma eine Nintendo Switch geschenkt und sagt begeistert: „Danke, die nehm ich!“</p>`,
@@ -284,7 +284,7 @@ ${zuordnen({id:'online-zuordnen',frage:'Wirksam, schwebend unwirksam oder nichti
   karten:[
     {t:'Ben (14) löst für V-Bucks eine Guthabenkarte über 25 € ein, die er vom Taschengeld gekauft hat.',f:'wirksam',e:'Sofort und vollständig mit Taschengeld bezahlt (§ 110 BGB).'},
     {t:'Ben (14) kauft V-Bucks für 90 € mit Mamas Kreditkarte, die im Konto gespeichert ist.',f:'schwebend',e:'Nicht sein Geld und keine Einwilligung. Verweigert Mama die Genehmigung, muss der Anbieter das Geld zurückgeben.'},
-    {t:'Lea (16) schließt ein Spotify-Premium-Abo ab und zahlt jeden Monat vom Taschengeld.',f:'schwebend',e:'Ein Abo verpflichtet für die Zukunft, die kommenden Monate sind noch nicht bezahlt. Dafür müssen die Eltern zustimmen.'},
+    {t:'Lea (16) schließt ein Spotify-Premium-Abo ab, das sich jeden Monat automatisch verlängert. Bezahlen will sie die Monate nach und nach vom Taschengeld.',f:'schwebend',e:'Ein Abo verpflichtet für die Zukunft, die kommenden Monate sind noch nicht bezahlt. Dafür müssen die Eltern zustimmen. Schon bezahlte Monate können nach § 110 BGB wirksam sein.'},
     {t:'Jonas (16) bestellt mit Klarna Sneaker für 140 €: „Jetzt kaufen, in 30 Tagen bezahlen“.',f:'schwebend',e:'Später bezahlen heißt: Noch ist nichts bezahlt, § 110 BGB greift nicht. Klarna lässt außerdem erst ab 18 bezahlen.'},
     {t:'Paul (17) schließt im Handyshop allein einen Handyvertrag über 24 Monate ab.',f:'schwebend',e:'Monatliche Pflichten über zwei Jahre: ohne Zustimmung schwebend unwirksam (§ 108 BGB).'},
     {t:'Lina (17) bestellt das Deutschlandticket für 63 € im Monat als Abo.',f:'schwebend',e:'Das Deutschlandticket ist ein Abo, das jeden Monat weiterläuft. § 110 BGB greift nicht.'},
@@ -354,7 +354,7 @@ const KARTE=[
 tool({id:'zwergspitz',ch:4,farben:['gelb','gruen','blau'],hinweise:HINWEISE.zwergspitz,title:'Mission Zwergspitz',sub:'Du willst unbedingt einen Zwergspitz, deine Eltern sagen Nein. Lauf durchs Labyrinth: Welche Wege führen zum Hund?',
 html(){return `<p class="task"><b>Auftrag:</b> Spielt zu zweit. Lauft mit der Figur zu einer Kreuzung, lest, was auf dem Weg passiert, und schätzt zuerst: Führt er zum Hund, in die Sackgasse oder kommt es darauf an? Dann lauft ihn ab. Schafft ihr alle sieben Wege?</p>
 <div class="stack"><p class="headline-s">Szenario: Du bist 15 und hast dich in einen Zwergspitz verliebt.</p>
-  <p class="body-l">Nach dem Welpenfoto im Unterricht willst du sofort einen. Deine Eltern teilen deine Begeisterung nicht: Ein Hund sei viel zu teuer, sagen sie. Sieben Wege führen durch das Heckenlabyrinth – welche enden beim Hund?</p></div>
+  <p class="body-l">Seit du ein Foto von einem Zwergspitz-Welpen gesehen hast, willst du unbedingt einen. Deine Eltern teilen deine Begeisterung nicht: Ein Hund sei viel zu teuer, sagen sie. Sieben Wege führen durch das Heckenlabyrinth – welche enden beim Hund?</p></div>
 ${labyrinth({id:'zwergspitz-lab',titel:'Das Labyrinth zum Zwergspitz',karte:KARTE,wege:WEGE,speicher:'gf-zs',
   namen:{ziel:'Führt zum Hund',sackgasse:'Sackgasse',glueck:'Kommt drauf an'},
   ziel:{bild:{src:FOTO.zwergspitz.src,alt:FOTO.zwergspitz.alt,nachweis:nachweis('zwergspitz')},text:'Der Zwergspitz gehört dir.'},
@@ -377,7 +377,7 @@ ${kurztest({id:'sichern-test',titel:'Kurztest: vier Fragen',fragen:[
   {f:'Die Eltern stimmen einem Kauf zu, nachdem er passiert ist. Wie heißt das?',o:['Einwilligung','Genehmigung','Ermächtigung'],r:1,e:'Vorher: Einwilligung (§ 107 BGB). Nachher: Genehmigung (§ 108 BGB).'},
   {f:'Lena (13) bekommt ein Fahrrad geschenkt. Braucht sie die Zustimmung ihrer Eltern?',o:['Ja, weil sie beschränkt geschäftsfähig ist','Nein, weil sie lediglich einen rechtlichen Vorteil erlangt','Nein, weil sie schon 13 ist'],r:1,e:'Ein Geschenk bringt lediglich einen rechtlichen Vorteil (§ 107 BGB).'},
   {f:'Ein Vertrag ist schwebend unwirksam. Was heißt das?',o:['Er ist für immer ungültig.','Er gilt, bis die Eltern widersprechen.','Er wartet auf die Genehmigung der Eltern.'],r:2,e:'Genehmigen die Eltern, wird er wirksam. Verweigern sie, ist er endgültig unwirksam.'},
-  {f:'Warum hilft § 110 BGB bei einem Ratenkauf zunächst nicht?',o:['Weil erst mit der letzten Rate alles bezahlt ist','Weil Raten verboten sind','Weil § 110 nur für Lebensmittel gilt'],r:0,e:'§ 110 BGB verlangt, dass vollständig mit eigenen Mitteln bezahlt ist. Zahlt man die letzte Rate vom Taschengeld, wird der Kauf doch noch wirksam.'}]})}
+  {f:'Warum hilft § 110 BGB bei einem Ratenkauf zunächst nicht?',o:['Weil erst mit der letzten Rate alles bezahlt ist','Weil Raten verboten sind','Weil § 110 nur für Lebensmittel gilt'],r:0,e:'§ 110 BGB verlangt, dass vollständig mit überlassenen Mitteln bezahlt ist. Zahlt man alle Raten vom Taschengeld, wird der Kauf mit der letzten Rate doch noch wirksam.'}]})}
 ${blitzAufloesung(BAUCH)}
 ${schreibfeld(WAND.sichern)}
 ${impuls(IMPULS.sichern)}
@@ -402,7 +402,7 @@ function startHTML(){
     <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="gf-ziele">
       <li><span class="ms">check_circle</span><span>Rechtsfähigkeit und die drei Stufen der Geschäftsfähigkeit unterscheiden</span></li>
       <li><span class="ms">check_circle</span><span>Einwilligung und Genehmigung, nichtig und schwebend unwirksam auseinanderhalten</span></li>
-      <li><span class="ms">check_circle</span><span>Die drei Ausnahmen kennen: Vorteil, Taschengeld, Job (§§ 107, 110, 113 BGB)</span></li>
+      <li><span class="ms">check_circle</span><span>Die drei wichtigen Ausnahmen kennen: Vorteil, Taschengeld, Job (§§ 107, 110, 113 BGB)</span></li>
       <li><span class="ms">check_circle</span><span>Fälle mit dem Prüfschema lösen und Paragrafen richtig zitieren</span></li></ul></div>
   </section>
   ${chapterHTML(1)}
@@ -410,15 +410,17 @@ function startHTML(){
   <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen (Stand Oktober 2026)</h3><ul>
-  <li>Bürgerliches Gesetzbuch: §§ 1, 2, 104–110, 113, 105a, 566, 828, 833, 1643, 1814, 1854, 2229 BGB (gesetze-im-internet.de)</li>
-  <li>Strafgesetzbuch: § 19 StGB · Fahrerlaubnis-Verordnung: begleitetes Fahren ab 17 · Personalausweisgesetz: Ausweispflicht ab 16</li>
+  <li>Bürgerliches Gesetzbuch: §§ 1, 2, 104–113 (mit 105a), 183, 184, 566, 812, 818, 827–829, 833, 1643, 1814, 1854, 2229 BGB (gesetze-im-internet.de)</li>
+  <li>Mindestlohngesetz: § 22 Abs. 2 MiLoG · Fünfte Mindestlohnanpassungsverordnung: 13,90 € brutto pro Stunde ab Januar 2026</li>
+  <li>Strafgesetzbuch: § 19 StGB · Jugendgerichtsgesetz: § 105 JGG · Fahrerlaubnis-Verordnung: begleitetes Fahren ab 17 · Personalausweisgesetz: Ausweispflicht ab 16</li>
   <li>Thüringer Kommunalwahlgesetz und Europawahlgesetz: Wahlrecht ab 16; Landtags- und Bundestagswahl ab 18</li>
   <li>Bundesgerichtshof: Beschlüsse V ZB 44/04 und V ZB 206/10 zur Schenkung von Wohnungen an Minderjährige</li>
   <li>Deutschlandticket: 63 € im Monat ab Januar 2026 (Beschluss der Verkehrsministerkonferenz vom 18.09.2025) · Klarna: Bezahlen erst ab 18 Jahren</li>
   <li>Fälle nach den Unterrichtsmaterialien der Lehrkraft, nach Thüringen verlegt. Alle Personen und Szenarien sind erfunden.</li>
   <li>Fotos (Wikimedia Commons): ${Object.values(FOTO).filter(f=>f.link).map(f=>`${esc(f.motiv)}: <a href="${f.link}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[0].replace(' / Wikimedia Commons',''))}</a> (<a href="${f.lizenz}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[1])}</a>)`).join(' · ')}</li>
   <li>Illustrationen: Labyrinth, TikTok-LIVE und Energydrink sind eigene Grafiken von WR-Lab. Influencer, Streamer und Rapper in den Fällen sind erfunden (fiktiv).</li>
-  <li>TikTok: Geschenke in LIVEs erst ab 18 (Better Internet for Kids, EU) · Lotterielos-Fall: Reichsgericht, RGZ 74, 234</li></ul>
+  <li>TikTok: Geschenke in LIVEs erst ab 18 (Better Internet for Kids, EU) · Lotterielos-Fall: Reichsgericht, RGZ 74, 234</li>
+  <li>Lootboxen: Belgische Glücksspielkommission (Kansspelcommissie), Untersuchungsbericht zu Lootboxen, April 2018</li></ul>
   <p>Merksätze und Ergebnisse werden nur in diesem Browser gespeichert.</p>
   <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
 function wissenHTML(){const alle=['rot','gelb','gruen','blau'].map(dot).join('');

@@ -148,11 +148,11 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   await s2.locator('#go').click(); // Kalle wartet auf den Beschluss
   await expect(s2.getByText('Warte auf den Beschluss …')).toBeVisible();
   await lk.locator('[data-win="A"]').click();
-  await expect(lk.locator('h3', { hasText: 'Der Bundestag beschließt: Energiepreisbremse' })).toBeVisible();
+  await expect(lk.locator('h3', { hasText: 'Der Bundestag beschließt: Tankrabatt' })).toBeVisible();
   // Kalle springt automatisch zum Ergebnis, Testi nach dem Weitertippen
-  await expect(s2.locator('h3', { hasText: 'Beschluss: Energiepreisbremse' })).toBeVisible();
+  await expect(s2.locator('h3', { hasText: 'Beschluss: Tankrabatt' })).toBeVisible();
   await s1.locator('#go').click();
-  await expect(s1.locator('h3', { hasText: 'Beschluss: Energiepreisbremse' })).toBeVisible();
+  await expect(s1.locator('h3', { hasText: 'Beschluss: Tankrabatt' })).toBeVisible();
 
   // Fachbegriff-Check: Testi richtig, Kalle falsch
   await s1.locator('#go').click();

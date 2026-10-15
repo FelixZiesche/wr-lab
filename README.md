@@ -287,6 +287,7 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Spielkonsolen: InclusiveGameLab, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:InclusiveGameLab_Current_Console_Generation_CC-BY-SA.jpg)
   - Messe Erfurt: Messe Erfurt AG, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Panorama_Messe_Erfurt.jpg)
   - Neumarkt Gotha: Roeland P., [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg)
+  - Café Stilbruch Jena: Sebastian Wallroth, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_2023_002.jpg)
   - Computermäuse: Gpkp, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Computer_mice_%282026%29.jpg)
   - Nintendo Switch: KK IN HK, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Nintendo_Switch.jpg)
   - Eigene Illustrationen: Labyrinth und Spielfigur der Mission Zwergspitz, TikTok-LIVE (Fall „Rosen für den Streamer“) und Energydrink (Fall „Der verbotene Energydrink“)

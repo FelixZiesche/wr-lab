@@ -24,6 +24,8 @@ import { bindAufgaben } from './aufgaben.js';
  * }
  * Werkstätten: tool({id, ch, title, sub, goals, hinweise:[…], html(), init(root)}); hinweise erscheinen nur im Lehrerpanel.
  * Überall auf der Seite öffnet ein Knopf mit data-gehzu="id" die Werkstatt oder den Bereich id.
+ * Elemente mit data-nur-lk (z. B. „Alle aufdecken“) sieht nur die Lehrkraft im offenen Lernraum, auch im Beamer-Modus.
+ * Am besten gleich mit hidden schreiben: <button class="btn small" type="button" id="…" data-nur-lk hidden>…</button>
  */
 export function createWerkstatt(cfg){
   const P=cfg.speicher, DEST=cfg.bereiche, CH=cfg.kapitel, MS=cfg.merksaetze, GLOSS=cfg.glossar||[];
@@ -68,6 +70,9 @@ export function createWerkstatt(cfg){
   function updMs(){$('#ms-count').textContent=`${msGot.size}/${MS_ALL.length}`}
   function resetWissen(){msGot=new Set();saveMs()}
 
+  /** Elemente mit data-nur-lk nur für die Lehrkraft zeigen (beim Öffnen und bei jeder Änderung im Lernraum) */
+  const nurLk=(root=document)=>{const lk=raum.istLehrkraft();$$('[data-nur-lk]',root).forEach(el=>{el.hidden=!lk})};
+
   /* ---------- Modal ---------- */
   const modal=$('#modal'), mBody=$('#modal-body'), mTitle=$('#modal-title');
   let lastFocus=null;
@@ -77,6 +82,7 @@ export function createWerkstatt(cfg){
     document.body.style.overflow='hidden';
     modal.scrollTop=0;
     if(init) init(mBody);
+    nurLk(mBody);
     $('#modal-close').focus();
   }
   function closeModal(silent){modal.hidden=true;document.body.style.overflow='';mBody.innerHTML='';offenesTool=null;raum.sendeOrt(aktuellerOrt());try{history.replaceState(null,'','#'+curView)}catch(e){} if(!silent&&lastFocus&&document.body.contains(lastFocus)) lastFocus.focus()}
@@ -107,11 +113,15 @@ export function createWerkstatt(cfg){
       $('#gs',root).addEventListener('input',e=>r(e.target.value));r('');$('#gs',root).focus()});
   }
   function openWissen(){
-    openModal(esc(cfg.wissenTitel),`<p class="task">Hier sammeln sich die Merksätze, sobald ihr in einer Werkstatt die Erkenntnis aufdeckt. Zusammen ergeben sie euren Hefteintrag.</p><div class="panel" id="ws"></div><div class="row"><button class="btn small" id="ws-all" type="button">Alle anzeigen (Lehrkraft)</button><button class="btn small" id="ws-copy" type="button">Gesammelte Merksätze kopieren</button><span class="small muted" id="ws-msg"></span></div>`,root=>{
-      let all=false;
-      const r=()=>{$('#ws',root).innerHTML=MS_ALL.map((m,i)=>{const got=msGot.has(m.id)||all;const t=TOOLS.find(x=>x.id===m.tool);return `<div class="ms-item ${got?'':'locked'}"><span class="num" style="min-width:1.6em">${i+1}.</span><div>${got?esc(m.text):`noch nicht entdeckt – Werkstatt „${esc(t.title)}“`}</div></div>`}).join('')};
-      r();$('#ws-all',root).addEventListener('click',()=>{all=!all;r()});
-      $('#ws-copy',root).addEventListener('click',()=>{const txt=MS_ALL.filter(m=>msGot.has(m.id)||all).map((m,i)=>`${i+1}. ${m.text}`).join('\n');
+    openModal(esc(cfg.wissenTitel),`<p class="task">Hier sammeln sich die Merksätze, sobald ihr in einer Werkstatt die Erkenntnis aufdeckt. Zusammen ergeben sie euren Hefteintrag.</p><div class="panel" id="ws"></div><div class="row"><button class="btn small" id="ws-all" type="button" aria-pressed="false" data-nur-lk hidden>Alle anzeigen</button><button class="btn small" id="ws-copy" type="button">Gesammelte Merksätze kopieren</button><span class="small muted" id="ws-msg"></span></div>`,root=>{
+      // „Alle anzeigen“ (nur Lehrkraft) zeigt alle Merksätze, ohne sie als entdeckt zu speichern
+      let all=false;const alle=()=>all&&raum.istLehrkraft();
+      const r=()=>{$('#ws',root).innerHTML=MS_ALL.map((m,i)=>{const got=msGot.has(m.id)||alle();const t=TOOLS.find(x=>x.id===m.tool);return `<div class="ms-item ${got?'':'locked'}"><span class="num" style="min-width:1.6em">${i+1}.</span><div>${got?esc(m.text):`noch nicht entdeckt – Werkstatt „${esc(t.title)}“`}</div></div>`}).join('')};
+      const knopf=$('#ws-all',root),aus=()=>{all=false;knopf.setAttribute('aria-pressed','false');r()};
+      r();knopf.addEventListener('click',()=>{all=!all;knopf.setAttribute('aria-pressed',String(all));r()});
+      // Endet die Lehrkraft-Rolle bei offenem Fenster, wieder nur die entdeckten Merksätze zeigen
+      const ab=raum.on(()=>{if(!root.contains(knopf))return ab();if(all&&!raum.istLehrkraft())aus()});
+      $('#ws-copy',root).addEventListener('click',()=>{const txt=MS_ALL.filter(m=>msGot.has(m.id)||alle()).map((m,i)=>`${i+1}. ${m.text}`).join('\n');
         const done=()=>$('#ws-msg',root).textContent='Kopiert.';
         try{navigator.clipboard.writeText(txt).then(done,()=>fallback(txt))}catch(e){fallback(txt)}
         function fallback(t){const ta=document.createElement('textarea');ta.value=t;ta.style.width='100%';ta.rows=8;$('#ws',root).after(ta);ta.select();$('#ws-msg',root).textContent='Text markiert – mit Strg+C kopieren.'}});
@@ -137,6 +147,7 @@ export function createWerkstatt(cfg){
     $$('[data-open]',v).forEach(b=>b.addEventListener('click',()=>b.dataset.open==='glossar'?openGlossar():openWissen()));
     $$('[data-dest]',v).forEach(b=>b.addEventListener('click',()=>go(b.dataset.dest)));
     if(cfg.beimZeigen)cfg.beimZeigen(curView,v);
+    nurLk(v);
   }
   function go(id){
     if(!modal.hidden)closeModal(true);
@@ -190,6 +201,7 @@ export function createWerkstatt(cfg){
     const z=raum.zustand().raum,sperre=raum.istSchueler()&&z?JSON.stringify(z.gesperrt||[]):'[]';
     if(sperre!==sperreAlt){sperreAlt=sperre;const d=DEST.find(x=>x.id===curView);if(!d||!d.tool||raum.gesperrt(d.tool)||zeigtSperre)renderView()}
     if(['start','ende','verbunden','beamer'].includes(art))aktualisiereLehrerpanel();
+    nurLk();
   }
   /** Springt zu einem Bereich oder einer Werkstatt; hinweis: Schüler wurden von der Lehrkraft geholt. */
   function gehZu(id,hinweis){if(DEST.find(d=>d.id===id&&!d.tool))go(id);else openTool(id,true);if(hinweis)zeigeHinweis('Deine Lehrkraft hat alle hierher geholt.')}

@@ -2,26 +2,32 @@
 // HINWEISE und der Erwartungshorizont (erwartung) erscheinen nur im Lehrerpanel auf dem Gerät der Lehrkraft,
 // nie auf der Seite der Schüler.
 
+// Methodenhinweis für die sechs Ziel-Werkstätten in Kapitel 2
+const PUZZLE='Gruppenpuzzle: Kapitel 2 hat sechs Werkstätten, eine pro Ziel. Jede Expertengruppe übernimmt eine davon und stellt ihr Ziel danach den anderen vor.';
+
 export const HINWEISE={
   grundlagen:['Einstieg: Sechseck an die Tafel, Schüler sammeln Vorwissen zu den Ecken, dann Erweiterung live per Klick zeigen.',
-    'Die Wand-Frage zuerst allein schreiben lassen, dann an der Wand vergleichen.'],
-  preis:['Vorab Hausaufgabe: Schüler notieren eine Woche lang Preise ihrer typischen Ausgaben; Vorjahrespreise per Recherche oder Elternbefragung.',
+    'Die Wand-Frage zuerst allein schreiben lassen, dann an der Wand vergleichen.',
+    '„Ziele“ (Kapitel 2) eignet sich für ein Gruppenpuzzle: Sechs Expertengruppen übernehmen je ein Ziel und eine Werkstatt und stellen es danach im Plenum vor.'],
+  preis:[PUZZLE,'Vorab Hausaufgabe: Schüler notieren eine Woche lang Preise ihrer typischen Ausgaben; Vorjahrespreise per Recherche oder Elternbefragung.',
     'Methodische Reserve: Reallohn-Rechner mit der eigenen Ausbildungsvergütung durchspielen.'],
-  beschaeftigung:['Rechenweg an der Tafel festhalten; das Thüringen-Preset zeigt, dass die Bezugsgröße (rund 1,1 Mio. Erwerbspersonen) viel kleiner ist.',
+  beschaeftigung:[PUZZLE,'Rechenweg an der Tafel festhalten; das Thüringen-Preset zeigt, dass die Bezugsgröße (rund 1,1 Mio. Erwerbspersonen) viel kleiner ist.',
     'Lösung zum Gesprächsimpuls: Weiterbildung → strukturell, Konjunkturprogramm und Kurzarbeit → konjunkturell, Jobbörsen → friktionell.',
     'Methodische Reserve: Eigenen Fall aus der Region formulieren und von der Nachbargruppe zuordnen lassen.'],
-  wachstum:['Regler langsam bewegen und Schüler die Phasen vorhersagen lassen, bevor die Tabelle umspringt.',
+  wachstum:[PUZZLE,'Regler langsam bewegen und Schüler die Phasen vorhersagen lassen, bevor die Tabelle umspringt.',
     'Methodische Reserve: Aktuelle Schlagzeilen (z. B. tagesschau.de) einer Konjunkturphase zuordnen.'],
-  aussen:['Vorwissen: Warum heißt es „Gleichgewicht“, obwohl Deutschland stolz auf den „Exportweltmeister“ war?',
+  aussen:[PUZZLE,'Vorwissen: Warum heißt es „Gleichgewicht“, obwohl Deutschland stolz auf den „Exportweltmeister“ war?',
     'Wechselkurs-Labor am Beamer: Die Schüler rufen ihre Vorhersage, bevor der Regler bewegt wird.',
     'Kontroverse: Rollenspiel deutsche Exportwirtschaft gegen US-Handelsbeauftragten.'],
-  verteilung:['Einstieg: 10 Schokoriegel auf 5 Schüler so verteilen, wie es dem Vermögen in Deutschland entspricht (das oberste Fünftel bekommt rund 7).',
+  verteilung:[PUZZLE,'Einstieg: 10 Schokoriegel auf 5 Schüler so verteilen, wie es dem Vermögen in Deutschland entspricht (das oberste Fünftel bekommt rund 7).',
     'Kontroverse: Vermögensteuer, Erbschaftsteuer, höherer Mindestlohn – Pro und Contra.'],
-  umwelt:['Rechenaufgabe: Wie viel Minderung pro Jahr wäre nötig, um 2030 genau 438 Mio. t zu erreichen? (≈ 42 Mio. t pro Jahr – das Dreifache der Minderung der letzten Jahre)',
+  umwelt:[PUZZLE,'Rechenaufgabe: Wie viel Minderung pro Jahr wäre nötig, um 2030 genau 438 Mio. t zu erreichen? (≈ 42 Mio. t pro Jahr – rund 1,7-mal so viel wie im Schnitt 2019 bis 2025 mit rund 25 Mio. t und gut dreimal so viel wie 2023 bis 2025; 2025 sanken die Emissionen kaum.)',
+    'Aktuelle Antwort auf die Leitfrage: Laut Projektion des Umweltbundesamts (14.03.2026) sinken die Emissionen mit der heutigen Politik bis 2030 um 62,6 %. Zum Ziel von −65 % fehlen rund 30 Mio. t.',
     'Methodische Reserve: Eigenen CO₂-Fußabdruck mit dem CO₂-Rechner des Umweltbundesamts schätzen.'],
   beziehungen:['Gruppen erhalten je drei Paare, begründen ihre Einschätzung mit einer Wirkungskette (Pfeildiagramm) und präsentieren.',
     'Wichtig: Es gibt Spielraum! Gut begründete Abweichungen von der Lösung anerkennen – gerade bei ambivalenten Paaren.',
-    'Methodische Reserve: Wirkungskette für ein Paar als Hefteintrag zeichnen.'],
+    'Methodische Reserve: Wirkungskette für ein Paar als Hefteintrag zeichnen.',
+    '„Alle aufdecken“ über dem Beziehungsnetz siehst nur du bei geöffnetem Lernraum, auch im Beamer-Modus. Es zeigt alle 15 Beziehungen zur Sicherung nach den Präsentationen, ohne sie auf dem Gerät als aufgeklärt zu speichern.'],
   phillips:['Vor dem Aufdecken: Die Schüler skizzieren, wie die Punkte liegen müssten, wenn die Theorie stimmt.',
     'Methodische Reserve: Kurzvortrag zur Ölkrise 1973 und den Sonntagsfahrverboten.'],
   politik:['Gruppen vertreten Parteien oder Verbände (Gewerkschaft, Arbeitgeber, Umweltverband, Sozialverband) und wählen Maßnahmen aus ihrer Sicht – anschließend die Sechsecke vergleichen.',
@@ -41,15 +47,15 @@ export const HINWEISE={
     'Ohne eingerichteten Live-Modus: Die Schüler halten ihre Stimmkarte hoch, du zählst per Klick; den Beschluss tippen die Schüler als Buchstaben ein.',
     'Die Tabelle „Wer gewinnt?“ in der Abstimmungsphase zunächst verdeckt lassen und erst nach der Debatte zeigen.',
     'Nach der Stunde: „Raum beenden“ löscht alle Daten sofort. Sonst laufen Räume nach 24 Stunden ab.',
-    'Hinweis: Runde 1 beruht auf echten Daten von Oktober 2026, die Runden 2 bis 4 sind plausible, aber erfundene Szenarien. Alle Social-Media-Posts sind fiktiv.']
+    'Hinweis: Runde 1 beruht auf echten Daten (Verbraucherpreise September 2026), Option A ist der echte Tankrabatt vom 1. Oktober bis 31. Dezember 2026. Die Runden 2 bis 4 sind plausible, aber erfundene Szenarien. Alle Figuren und Social-Media-Posts sind fiktiv.']
 };
 
 export const WAND={
   grundlagen:{id:'grundlagen-wand',frage:'Warum stehen Verteilung und Umwelt nicht im Stabilitätsgesetz von 1967?',
     anfaenge:['1967 war vor allem wichtig, dass …','Umweltschutz war damals …','Heute gehören beide Ziele dazu, weil …'],
-    tipp:'Denk an die Zeit nach dem Zweiten Weltkrieg: Was brauchte das Land damals am dringendsten?',
+    tipp:'1966/67 erlebte die Bundesrepublik ihre erste Rezession nach dem Krieg. Was wollte die Politik mit dem Gesetz vor allem steuern?',
     denkWeiter:'Diskutiert wird ein „magisches Achteck“. Welches Ziel würdest du als siebtes ergänzen – und warum?',
-    erwartung:['Zeitgeist der Nachkriegszeit: Wiederaufbau, Wachstum und stabile Preise standen im Vordergrund.',
+    erwartung:['Anlass war die erste Rezession der Bundesrepublik 1966/67 mit steigender Arbeitslosigkeit. Das StabG sollte die Konjunktur steuern (Globalsteuerung nach Keynes unter Wirtschaftsminister Karl Schiller). Verteilung und Umwelt waren keine Ziele dieser Konjunkturpolitik.',
       'Die Umweltbewegung entstand erst ab den 1970er-Jahren; Umweltschutz ist seit 1994 Staatsziel (Art. 20a GG).',
       'Verteilung galt als Aufgabe der Sozialpolitik (Sozialstaatsprinzip, Art. 20 GG), nicht der Konjunktursteuerung im StabG.']},
   preis:{id:'preis-wand',frage:'Die EZB strebt eine Inflation von 2 % an – nicht 0 %. Warum?',
@@ -69,6 +75,7 @@ export const WAND={
   wachstum:{id:'wachstum-wand',frage:'Warum steigt die Arbeitslosigkeit oft erst, wenn der Abschwung schon eine Weile läuft?',
     anfaenge:['Betriebe entlassen nicht sofort, weil …','Statt Kündigungen gibt es zuerst …','Darum zeigt die Arbeitslosenquote …'],
     tipp:'Was macht ein Betrieb, der seine gut ausgebildeten Leute im nächsten Aufschwung wieder braucht?',
+    denkWeiter:'Im Juli 2026 hat das Statistische Bundesamt die Rezession 2024 nachträglich gestrichen: Statt −0,5 % stagnierte die Wirtschaft (0,0 %). Warum werden Statistiken überarbeitet – und was heißt das für Politiker, die sich auf die erste Zahl berufen?',
     erwartung:['Kündigungsfristen und Arbeitsverträge verzögern Entlassungen.',
       'Kurzarbeit, Abbau von Überstunden und Arbeitszeitkonten federn den Einbruch ab.',
       'Betriebe halten Fachkräfte, weil Suche und Einarbeitung teuer sind.',
@@ -84,7 +91,7 @@ export const WAND={
     anfaenge:['Vom Markteinkommen geht noch … ab.','Dazu kommen Zahlungen wie …','Der Staat verteilt so um, weil …'],
     tipp:'Vergleich eine Ausbildungsvergütung brutto und netto – und denk an Kindergeld, BAföG oder Wohngeld.',
     erwartung:['Progressive Einkommensteuer: Wer mehr verdient, zahlt einen höheren Steuersatz.',
-      'Sozialabgaben und Transfers (z. B. Kindergeld, Bürgergeld, Wohngeld, BAföG, Renten) gleichen aus.',
+      'Sozialabgaben und Transfers (z. B. Kindergeld, Grundsicherungsgeld – bis Juni 2026 Bürgergeld –, Wohngeld, BAföG, Renten) gleichen aus.',
       'Das nennt man Umverteilung oder Sekundärverteilung (Sozialstaatsprinzip, Art. 20 GG).',
       'Der Gini-Koeffizient sinkt dadurch deutlich; bei den verfügbaren Einkommen liegt er bei rund 0,29 bis 0,30.']},
   umwelt:{id:'umwelt-wand',frage:'Wer trägt die Last eines höheren CO₂-Preises stärker: Sabine, die jeden Tag von Bad Sulza nach Erfurt pendelt, oder Jonas, der in Jena ohne Auto lebt? Was könnte das ausgleichen?',
@@ -105,7 +112,7 @@ export const WAND={
     tipp:'Was ist 2022 mit den Preisen für Gas und Strom passiert – und warum?',
     erwartung:['Phillips-Kurve: Hohe Nachfrage und Auslastung bedeuten wenig Arbeitslosigkeit, aber steigende Preise.',
       '2022: Angebotsschock – die Energiepreise stiegen nach Russlands Angriff auf die Ukraine stark (Kosten treiben die Preise).',
-      'Bei Angebotsschocks können Inflation und Arbeitslosigkeit gleichzeitig steigen: Stagflation (vgl. Ölkrise 1973).']},
+      'Bei Angebotsschocks können Inflation und Arbeitslosigkeit gleichzeitig steigen: Stagflation (vgl. Ölkrise 1973/74; in Deutschland 2023, als die Wirtschaft schrumpfte und die Arbeitslosigkeit stieg).']},
   politik:{id:'politik-wand',frage:'Warum schafft es kein Maßnahmenpaket, alle sechs Ziele über 70 Punkte zu bringen? Was folgt daraus für die Politik?',
     anfaenge:['Jede Maßnahme hilft einem Ziel, aber …','Zum Beispiel …','Deshalb muss die Politik …'],
     tipp:'Schau dir an, welche Ziele bei jeder Maßnahme rot werden.',
@@ -146,9 +153,10 @@ export const IMPULS={
   verteilung:'Positionslinie im Raum zur These „Der Mindestlohn sollte auf 15 € steigen.“ Stellt euch auf und begründet eure Position.',
   umwelt:'Das Bundesverfassungsgericht hat 2021 entschieden: Wer beim Klimaschutz zu spät handelt, schränkt die Freiheit künftiger Generationen ein. Was heißt das für euch?',
   beziehungen:'Stellt euch nach eurer Wahl in Gruppen zusammen. Welche Gruppe hat die überzeugendste Wirkungskette?',
-  phillips:'Energiepreisschock 2026: Droht wieder Stagflation? Sammelt Argumente dafür und dagegen.',
+  phillips:'Ölpreisschock 2026: Droht wieder Stagflation? Sammelt Argumente dafür und dagegen.',
   politik:'Haltet in 60 Sekunden eine „Regierungserklärung“: Warum ist euer Paket das richtige?',
   check:'Vergleicht zwei Messlatten von der Wand: Welche ist strenger – und wer würde sie wählen?',
   sichern:'Blitzumfrage: Welches Ziel landet bei euch auf Platz 1 – und passt das zur aktuellen Politik?',
+  leben:'Welche Figur hat am meisten verloren, obwohl das Sechseck insgesamt besser wurde – und war das gerecht?',
   wissenscheck:'Erklärt euch zu zweit gegenseitig die Aufgabe, bei der ihr am unsichersten wart. Wer es erklären kann, hat es verstanden.'
 };
