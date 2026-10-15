@@ -50,8 +50,8 @@ const ROUNDS=[
  {y:'2027',real:false,t:'Zollkrieg und KI-Boom',
   post:{h:'thueringen.wirtschaft',txt:'Eisenacher Zulieferer meldet Kurzarbeit an. Gleichzeitig sucht Jenas Optikbranche 300 Fachkräfte. Peak und Crashout am selben Tag.',likes:'3.870'},
   txt:'Die USA erheben 25 % Zoll auf Autos aus der EU – Thüringer Zulieferer verlieren Aufträge. Gleichzeitig boomt die KI: Chipfabriken brauchen Präzisionsoptik aus Jena, KI-Firmen suchen Leute. Der Mindestlohn steigt wie beschlossen auf 14,60 €.',
-  ops:{job:{auto:1},lohn:{optik:1.04,tech:1.08},ML:14.60/13.90,umsatz:{baecker:0.99},hex:{B:-6,W:-2,A:4}},
-  fig:{mia:'Ihr Betrieb hat volle Auftragsbücher: Die Ausbildungsvergütung steigt um 4 %.',jonas:'Sein Stundenlohn in der Bar steigt mit dem Mindestlohn auf 14,60 €.',sabine:'In der Pflege ändert sich wenig.',tobias:'In Apolda wird weniger gekauft, weil viele Zulieferer-Familien sparen. Die Mindestlohnerhöhung kostet ihn zusätzlich.',daniel:'Sein Werk meldet Kurzarbeit an – wie geht es weiter?',gisela:'Ihr Nachbar arbeitet beim Zulieferer und hat Angst um seinen Job.',lea:'Investoren melden sich, die Gehälter in der KI-Branche steigen.',paul:'Kaum betroffen – Weizen wird weltweit gehandelt.'},
+  ops:{job:{auto:1},lohn:{optik:1.04,tech:1.08},ML:14.60/13.90,DT:66.80,umsatz:{baecker:0.99},hex:{B:-6,W:-2,A:4}},
+  fig:{mia:'Ihr Betrieb hat volle Auftragsbücher: Die Ausbildungsvergütung steigt um 4 %. Dafür kostet ihr Deutschlandticket jetzt 66,80 € statt 63 €.',jonas:'Sein Stundenlohn in der Bar steigt mit dem Mindestlohn auf 14,60 €.',sabine:'In der Pflege ändert sich wenig.',tobias:'In Apolda wird weniger gekauft, weil viele Zulieferer-Familien sparen. Die Mindestlohnerhöhung kostet ihn zusätzlich.',daniel:'Sein Werk meldet Kurzarbeit an – wie geht es weiter?',gisela:'Ihr Nachbar arbeitet beim Zulieferer und hat Angst um seinen Job.',lea:'Investoren melden sich, die Gehälter in der KI-Branche steigen.',paul:'Kaum betroffen – Weizen wird weltweit gehandelt.'},
   q:'Wie reagiert die Politik auf die US-Zölle?',
   opts:[
    {k:'A',t:'Kurzarbeit verlängern + Weiterbildung',d:'Das Kurzarbeitergeld läuft weiter, Beschäftigte werden für E-Mobilität und KI umgeschult.',ops:{job:{auto:3},hex:{B:6,V:2,W:1},debt:1}},
@@ -103,7 +103,8 @@ const FIGX={
  paul:{goal:{t:'Den Hof mit 8.000 € Rücklage an die Tochter übergeben',amt:8000},cut:200,look:{bg:'#EBFBEE',skin:'#E3A87F',hair:'cap',hc:'#2F9E44',top:'#C92A2A',acc:'check'}}
 };
 FIG.forEach(f=>Object.assign(f,FIGX[f.id]));
-FIG.find(f=>f.id==='mia').li.mobil=0; // Deutschlandticket: fester Preis
+// Deutschlandticket statt Sprit: Mias Fahrtkosten hängen nicht am Ölpreis, sondern am Ticketpreis (ticket)
+{const mia=FIG.find(f=>f.id==='mia');mia.ticket=true;mia.li.mobil=0}
 
 function portraitSVG(f){
   const L=f.look,h=L.hc,sk=L.skin;let back='',front='',acc='';
@@ -143,7 +144,7 @@ const OPTX={
   chk:{a:'Zielkonflikt: Der Umweltschutz profitiert, Verteilung und Wachstum leiden',d:['Zielharmonie: Alle Ziele profitieren, weil der Staat spart','Zielneutralität: Ohne Eingriff ändert sich am Sechseck nichts'],why:'Hohe Preise bringen Menschen zum Energiesparen, belasten aber Geringverdiener besonders und bremsen den Konsum. Auch „nichts tun“ ist eine Entscheidung mit Folgen.'}},
  '1A':{real:'In der Corona-Krise waren im April 2020 rund 6 Millionen Menschen in Kurzarbeit. Die Arbeitslosigkeit stieg dadurch deutlich weniger als in vielen anderen Ländern – das Instrument gilt international als deutsches Erfolgsmodell.',
   chk:{a:'Zielharmonie: Beschäftigung und Verteilung verbessern sich gemeinsam',d:['Zielkonflikt: Mehr Beschäftigung, aber ungerechtere Verteilung','Zielkonflikt: Mehr Beschäftigung, aber weniger Umweltschutz'],why:'Jobs bleiben erhalten und Einkommen brechen nicht weg – Arbeit ist die wichtigste Einkommensquelle. Die Weiterbildung bekämpft zugleich strukturelle Arbeitslosigkeit. Der Preis sind höhere Staatsausgaben.'}},
- '1B':{real:'Seit 2024 zahlt das produzierende Gewerbe bei der Stromsteuer nur noch den EU-Mindestsatz. Ein noch stärker verbilligter Industriestrompreis wurde jahrelang diskutiert – Kritiker warnen vor dauerhaften Subventionen.',
+ '1B':{real:'Seit 2024 zahlt das produzierende Gewerbe bei der Stromsteuer nur noch den EU-Mindestsatz. Dazu kommt seit 2026 ein Industriestrompreis, den die EU-Kommission im April 2026 genehmigt hat: Von 2026 bis 2028 bekommen energieintensive Betriebe aus rund 90 Branchen, etwa Chemie, Glas oder Stahl, für höchstens die Hälfte ihres Stroms einen Zuschuss. Angepeilt sind rund 5 Cent je Kilowattstunde für den Strom selbst, Netzentgelte und Abgaben kommen dazu. Im Gegenzug müssen die Firmen einen Teil der Entlastung in Klimaschutz investieren. Kosten: rund 3,8 Milliarden Euro, beantragt wird ab Anfang 2027. Kritiker bemängeln, dass Steuergeld nur an Großverbraucher geht, Mittelstand und Handwerk gehen leer aus.',
   chk:{a:'Zielkonflikt: Beschäftigung und Wachstum profitieren, Umwelt und Außenwirtschaft leiden',d:['Zielharmonie: Billiger Strom hilft allen sechs Zielen','Zielkonflikt: Mehr Beschäftigung, aber höhere Inflation'],why:'Billiger Strom sichert Industriejobs, senkt aber den Anreiz, Energie zu sparen. Und weil die Exporte steigen, wächst der ohnehin hohe Leistungsbilanzüberschuss.'}},
  '1C':{real:'2018 reagierte die EU auf US-Zölle auf Stahl mit Gegenzöllen auf Jeans, Bourbon-Whiskey und Motorräder. 2025 verzichtete die EU dagegen auf Vergeltung und akzeptierte in einem Abkommen US-Zölle von 15 % auf die meisten Waren.',
   chk:{a:'Kein Ziel gewinnt: Preisniveau, Wachstum und Beschäftigung verschlechtern sich zugleich',d:['Zielharmonie: Zölle schützen Jobs und senken die Preise','Zielkonflikt: Mehr Beschäftigung, aber höhere Preise'],why:'Zölle verteuern Importe, provozieren weitere Gegenmaßnahmen und kosten Exportjobs. Ökonomen sehen in Handelskriegen fast nur Verlierer.'}},
@@ -167,13 +168,15 @@ function realHTML(o){return `<div class="real"><b>Das gab es wirklich</b><p clas
 function debtHTML(d){return `<p class="small">Staatsverschuldung</p><div class="bar debt"><i style="width:${d}%;background:${d>=82?'var(--bad)':d<40?'var(--ok)':'var(--amb)'}"></i></div><p class="small muted">Ab der Markierung greift 2029 die Schuldenbremse: Dann kommt ein Sparpaket.</p>`}
 function crisisHTML(rd){return rd&&rd.crisis?`<div class="fb bad"><b>Die Schuldenbremse greift!</b> Die Staatsschulden sind in den letzten Jahren stark gestiegen. Der Bund muss sparen: Das Klimageld wird halbiert, Förderprogramme wie BAföG, Gründer-, Handwerks- und Agrarförderung werden gekürzt. Wachstum und Verteilung leiden.</div>`:''}
 
-function newSt(){return {E:1,S:1,H:1,L:1,Mc:1,Ml:1,zins:ZINS0,ML:ML0,lohn:{},umsatz:{},job:{},T:0,St:0,tmp:{},hex:Object.assign({},START.de.v),debt:50}}
+const DT0=63; // Deutschlandticket 2026, ab Januar 2027 66,80 € (Beschluss der Verkehrsministerkonferenz vom 30.09.2026)
+function newSt(){return {E:1,S:1,H:1,L:1,Mc:1,Ml:1,zins:ZINS0,ML:ML0,DT:DT0,lohn:{},umsatz:{},job:{},T:0,St:0,tmp:{},hex:Object.assign({},START.de.v),debt:50}}
 const cloneSt=s=>JSON.parse(JSON.stringify(s));
 function applyOps(st,o){
   if(!o)return;
   ['E','S','H','L','Mc','Ml'].forEach(k=>{if(o[k])st[k]*=o[k]});
   if(o.zins)st.zins+=o.zins;
   if(o.ML)st.ML=Math.round(st.ML*o.ML*100)/100;
+  if(o.DT)st.DT=o.DT;
   if(o.lohn)for(const s in o.lohn)st.lohn[s]=(st.lohn[s]||1)*o.lohn[s];
   if(o.umsatz)for(const s in o.umsatz)st.umsatz[s]=(st.umsatz[s]||1)*o.umsatz[s];
   if(o.job)Object.assign(st.job,o.job);
@@ -208,6 +211,7 @@ function monthly(f,s){
   add('Energie zu Hause',-f.li.energie*(EH-1),f.oel?`Heizöl ${pc(s.H||1)} ${vor} (Iran-Krieg)${co2} → Strom und Heizung (${eur(f.li.energie)} im Monat) werden teurer.`:`Heizen ${pc(E)} durch den CO₂-Preis (EU-Emissionshandel ab 2028) → Strom und Heizung (${eur(f.li.energie)} im Monat) werden teurer.`);
   add('Tanken & Mobilität',-f.li.mobil*(S-1),`Spritpreise ${pc(S)} ${vor} (Iran-Krieg${s.E>1?', später der CO₂-Preis':''})${t.S?', dieses Jahr gedämpft durch eine Steuersenkung':''} → Tanken für ${eur(f.li.mobil)} im Monat wird teurer. Wer viel pendelt, trifft das besonders.`);
   add('Lebensmittel & Konsum',-f.li.essen*(s.L-1),`Lebensmittel und Konsumgüter ${pc(s.L)}: Höhere Energie- und Transportkosten, Zölle und die Dürre werden über die Preise weitergegeben → der Einkauf (${eur(f.li.essen)} im Monat) wird teurer.`);
+  if(f.ticket&&(s.DT||DT0)!==DT0)add('Deutschlandticket',-(s.DT-DT0),`Das Deutschlandticket kostet seit Januar 2027 ${fmt(s.DT,2)} € statt ${fmt(DT0,2)} € im Monat. Das ist echt: Die Verkehrsministerkonferenz hat den Preis am 30.09.2026 beschlossen, erstmals nach einem Kostenindex.`);
   add('Miete',-f.li.miete*(M-1),`Mieten ${pc(M)}: ${f.stadt?'In den Städten':'Auch auf dem Land'} suchen mehr Menschen eine Wohnung, als es Wohnungen gibt. Knappes Angebot plus hohe Nachfrage → der Preis steigt.`);
   const dz=s.zins-ZINS0;
   const zt=dz>=0?`Die EZB hat den Leitzins seit Herbst 2026 um ${fmt(dz,2)} Prozentpunkte erhöht`:`Die EZB hat den Leitzins seit Herbst 2026 um ${fmt(-dz,2)} Prozentpunkte gesenkt`;

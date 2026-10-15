@@ -213,6 +213,15 @@ td.r,th.r{text-align:right}
 .erk .erk-h{display:flex;align-items:center;gap:8px;font-weight:500}
 .erk ul{margin:0;padding-left:1.2em}
 .erk .btn.primary{background:var(--md-tertiary);color:var(--md-on-tertiary)}
+.erk-vergleich{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (min-width:600px){.erk.offen .erk-vergleich{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.erk textarea{width:100%;border:1px solid var(--md-outline);border-radius:var(--r-m);padding:8px 12px;background:var(--md-surface-container-lowest);color:var(--md-on-surface);resize:vertical;min-height:64px;font:inherit}
+.erk textarea:focus{outline:none;border:2px solid var(--md-tertiary);padding:7px 11px}
+.erk [data-erk-body]:focus:not(:focus-visible){outline:none}
+/* Lernziele „Was du danach kannst“ auf der Startseite eines Themas */
+.lernziele{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.lernziele li{display:flex;gap:10px;align-items:flex-start;font-size:.875rem;line-height:1.25rem}
+.lernziele .ms{color:var(--md-primary);flex:none}
 .choice{display:flex;flex-wrap:wrap;gap:8px}
 .choice button{border:1px solid var(--md-outline-variant);background:transparent;border-radius:var(--r-s);padding:6px 16px;min-height:32px;cursor:pointer;font-size:.875rem;font-weight:500;color:var(--md-on-surface-variant);overflow:hidden}
 .choice button.sel{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}

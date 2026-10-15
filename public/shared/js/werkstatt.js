@@ -68,7 +68,7 @@ export function createWerkstatt(cfg){
   /* ---------- Erkenntnisse ---------- */
   function saveMs(){store(P+'-wissen',[...msGot]);updMs();if(!DEST.find(d=>d.id===curView)?.tool)renderView()}
   function updMs(){$('#ms-count').textContent=`${msGot.size}/${MS_ALL.length}`}
-  function resetWissen(){msGot=new Set();saveMs()}
+  function resetWissen(){msGot=new Set();Object.keys(MS).forEach(t=>{try{localStorage.removeItem(`${P}-erk-${t}`)}catch(e){}});saveMs()}
 
   /** Elemente mit data-nur-lk nur für die Lehrkraft zeigen (beim Öffnen und bei jeder Änderung im Lernraum) */
   const nurLk=(root=document)=>{const lk=raum.istLehrkraft();$$('[data-nur-lk]',root).forEach(el=>{el.hidden=!lk})};
@@ -108,20 +108,29 @@ export function createWerkstatt(cfg){
   // Das Abstimmungsfenster fängt Esc selbst ab (lernraum.js).
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden&&$('#lr-pause').hidden)zurueck()});
 
+  // Erst selbst formulieren, dann vergleichen: Die eigene Erkenntnis (freiwillig) bleibt nur in diesem Browser
+  // (Schlüssel <speicher>-erk-<werkstatt>) und geht nie an den Server. Nach dem Vergleich stehen beide nebeneinander.
+  const erkKey=t=>`${P}-erk-${t}`;
   function erkHTML(tool){
     return `<div class="erk" data-erk="${tool}">
-    <div class="row" style="justify-content:space-between"><span class="erk-h"><span class="ms" aria-hidden="true">lightbulb</span>Erkenntnis</span>
-    <button class="btn small primary" type="button" data-erk-btn><span class="ms" aria-hidden="true">visibility</span>Erkenntnis aufdecken</button></div>
-    <div data-erk-body hidden><ul>${MS[tool].map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
-    <p class="small muted">Gespeichert in „${esc(cfg.wissenTitel)}“.</p></div></div>`;
+    <span class="erk-h"><span class="ms" aria-hidden="true">lightbulb</span>Erkenntnis</span>
+    <div class="erk-vergleich">
+      <div class="stack erk-eigen"><label class="small" for="erk-${tool}"><b>Deine Erkenntnis in einem Satz</b> (freiwillig, bleibt nur auf deinem Gerät)</label>
+        <textarea id="erk-${tool}" rows="2" maxlength="400" data-erk-eigen></textarea></div>
+      <div class="stack" data-erk-body hidden><p class="small"><b>Merksatz</b></p><ul>${MS[tool].map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+      <p class="small">Gespeichert in „${esc(cfg.wissenTitel)}“. Passt dein Satz dazu? Ergänze, was fehlt.</p></div></div>
+    <div class="row"><button class="btn small primary" type="button" data-erk-btn><span class="ms" aria-hidden="true">visibility</span>Mit dem Merksatz vergleichen</button></div></div>`;
   }
   function bindErk(root){
     $$('[data-erk]',root).forEach(box=>{
-      const t=box.dataset.erk, btn=$('[data-erk-btn]',box), body=$('[data-erk-body]',box);
-      const show=()=>{body.hidden=false;btn.hidden=true};
+      const t=box.dataset.erk, btn=$('[data-erk-btn]',box), body=$('[data-erk-body]',box), ta=$('[data-erk-eigen]',box);
+      const show=()=>{body.hidden=false;btn.closest('.row').hidden=true;box.classList.add('offen')};
+      ta.value=store(erkKey(t))||'';
+      let z=null;const sichern=()=>{clearTimeout(z);if(ta.value.trim())store(erkKey(t),ta.value);else try{localStorage.removeItem(erkKey(t))}catch(e){}};
+      ta.addEventListener('input',()=>{clearTimeout(z);z=setTimeout(sichern,300)});ta.addEventListener('change',sichern);
       if(MS[t].every((_,i)=>msGot.has(t+'-'+i))) show();
       // Der Knopf verschwindet: Fokus auf die Merksätze, damit Tastatur und Screenreader dort weitermachen
-      btn.addEventListener('click',()=>{MS[t].forEach((_,i)=>msGot.add(t+'-'+i));saveMs();show();body.tabIndex=-1;body.focus()});
+      btn.addEventListener('click',()=>{sichern();MS[t].forEach((_,i)=>msGot.add(t+'-'+i));saveMs();show();body.tabIndex=-1;body.focus()});
     });
   }
 
@@ -132,7 +141,7 @@ export function createWerkstatt(cfg){
       $('#gs',root).addEventListener('input',e=>r(e.target.value));r('');$('#gs',root).focus()});
   }
   function openWissen(){
-    openModal(esc(cfg.wissenTitel),`<p class="task">Hier sammeln sich die Merksätze, sobald ihr in einer Werkstatt die Erkenntnis aufdeckt. Zusammen ergeben sie euren Hefteintrag.</p><div class="panel" id="ws"></div><div class="row"><button class="btn small" id="ws-all" type="button" aria-pressed="false" data-nur-lk hidden>Alle anzeigen</button><button class="btn small" id="ws-copy" type="button">Gesammelte Merksätze kopieren</button><span class="small muted" id="ws-msg"></span></div>`,root=>{
+    openModal(esc(cfg.wissenTitel),`<p class="task">Hier sammeln sich die Merksätze, sobald ihr in einer Werkstatt eure Erkenntnis mit dem Merksatz vergleicht. Zusammen ergeben sie euren Hefteintrag.</p><div class="panel" id="ws"></div><div class="row"><button class="btn small" id="ws-all" type="button" aria-pressed="false" data-nur-lk hidden>Alle anzeigen</button><button class="btn small" id="ws-copy" type="button">Gesammelte Merksätze kopieren</button><span class="small muted" id="ws-msg"></span></div>`,root=>{
       // „Alle anzeigen“ (nur Lehrkraft) zeigt alle Merksätze, ohne sie als entdeckt zu speichern
       let all=false;const alle=()=>all&&raum.istLehrkraft();
       const r=()=>{$('#ws',root).innerHTML=MS_ALL.map((m,i)=>{const got=msGot.has(m.id)||alle();const t=TOOLS.find(x=>x.id===m.tool);return `<div class="ms-item ${got?'':'locked'}"><span class="num" style="min-width:1.6em">${i+1}.</span><div>${got?esc(m.text):`noch nicht entdeckt – Werkstatt „${esc(t.title)}“`}</div></div>`}).join('')};

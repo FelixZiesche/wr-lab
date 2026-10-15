@@ -289,8 +289,8 @@ test.describe('ohne Lernraum', () => {
   test('Fall-Akte: Steckbrief, falsche Abzweigung mit Tipp, Gutachten-Baukasten, gelöste Fälle bleiben gespeichert', async ({ page }) => {
     await oeffne(page, 'fallakte');
     const akte = page.locator('[data-akte="akte"]');
-    await expect(akte.locator('[data-akte-stand]')).toHaveText('0 von 8 gelöst');
-    await expect(akte.locator('.akte-thumb')).toHaveCount(8);
+    await expect(akte.locator('[data-akte-stand]')).toHaveText('0 von 9 gelöst');
+    await expect(akte.locator('.akte-thumb')).toHaveCount(9);
     // Steckbrief mit Foto und Bildnachweis
     await expect(akte.locator('.akte-fakten')).toContainText('Gaming-PC');
     await expect(akte.locator('.akte-bild figcaption')).toContainText('Wikimedia Commons');
@@ -300,7 +300,7 @@ test.describe('ohne Lernraum', () => {
     await expect(akte.locator('[data-akte-loesung]')).toBeEmpty();
     await akte.locator('[data-sid="person"][data-j="1"]').click();
     await expect(akte.locator('.navi-ergebnis')).toContainText('Nichtig');
-    await expect(akte.locator('[data-akte-stand]')).toHaveText('1 von 8 gelöst');
+    await expect(akte.locator('[data-akte-stand]')).toHaveText('1 von 9 gelöst');
     // Gutachten-Baukasten: falscher Satz gibt einen Hinweis, dann alle Sätze in der richtigen Reihenfolge
     const bau = akte.locator('.gutachten');
     await expect(bau.locator('[data-satz]')).toHaveCount(6);
@@ -321,11 +321,11 @@ test.describe('ohne Lernraum', () => {
     await akte.locator('[data-gut-zeigen]').click();
     await expect(akte.locator('[data-akte-loesung]')).toContainText('So schreibst du die Lösung auf');
     await expect(akte.locator('[data-akte-loesung]')).not.toContainText('Gutachten gebaut!');
-    await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 8 gelöst');
+    await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 9 gelöst');
 
     // Nach dem Neuladen bleiben beide Fälle gelöst
     await oeffne(page, 'fallakte');
-    await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 8 gelöst');
+    await expect(akte.locator('[data-akte-stand]')).toHaveText('2 von 9 gelöst');
     await expect(akte.locator('[data-fall="7"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(akte.locator('[data-akte-loesung]')).toContainText('§ 108 Abs. 3 BGB');
     await expect(akte.locator('[data-fall="0"]')).toHaveClass(/geloest/);
@@ -460,7 +460,7 @@ test.describe('ohne Lernraum', () => {
 
   test('Ihr seid das Gericht: ohne Lernraum allein urteilen', async ({ page }) => {
     await oeffne(page, 'gericht');
-    await expect(page.locator('[data-abst]')).toHaveCount(6);
+    await expect(page.locator('[data-abst]')).toHaveCount(7);
     const fall = page.locator('[data-abst="gericht-wohnung"]');
     await expect(fall).toContainText('Ihr seid das Gericht · Die Wohnung');
     await expect(fall.locator('[data-abst-urteil]')).toBeDisabled();
@@ -470,10 +470,68 @@ test.describe('ohne Lernraum', () => {
     await fall.locator('[data-abst-neu]').click();
     await expect(fall.locator('[data-abst-urteil]')).toBeVisible();
     await expect(page.locator('[data-abst="gericht-simson"] .gf-fig figcaption')).toContainText('CC BY-SA 4.0');
-    // Alle sechs Gerichtsfälle haben ein Foto, der Jobwechsel spielt von Café zu Café in Jena
-    await expect(page.locator('[data-abst^="gericht-"] .gf-fig')).toHaveCount(6);
+    // Alle sieben Gerichtsfälle haben ein Foto, der Jobwechsel spielt von Café zu Café in Jena
+    await expect(page.locator('[data-abst^="gericht-"] .gf-fig')).toHaveCount(7);
     await expect(page.locator('[data-abst="gericht-job"] .gf-fig figcaption')).toContainText('CC BY 4.0');
     await expect(page.locator('[data-abst="gericht-job"]')).toContainText('als Aushilfe in einem Café in Jena');
+    // Der Brötchen-Auftrag: Oskar als Bote – diesmal wirksam
+    const bote = page.locator('[data-abst="gericht-bote"]');
+    await bote.getByLabel('Nichtig', { exact: true }).check();
+    await bote.locator('[data-abst-urteil]').click();
+    await expect(bote.locator('.fb.bad')).toContainText('Richtig ist: Wirksam');
+    await expect(bote.locator('.fb.bad')).toContainText('Bote');
+  });
+
+  test('Neue Fälle: Karim und § 113 BGB, Rosen für den Streamer noch offen, Ausbildungsvertrag im Job-Blitz', async ({ page }) => {
+    await oeffne(page, 'fallakte');
+    const akte = page.locator('[data-akte="akte"]');
+    // Fall 9: Mehr Stunden im Supermarkt – der Job-Paragraf ist die Lösung
+    await akte.locator('[data-fall="8"]').click();
+    await expect(akte.locator('.akte-fakten')).toContainText('Karim, 17');
+    for (const [sid, j] of [['person', 3], ['vorteil', 1], ['einwilligung', 1], ['taschengeld', 1]]) await akte.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
+    await akte.locator('[data-sid="job"][data-j="1"]').click();
+    await expect(akte.locator('.navi-schritt .fb.amb')).toContainText('genau diesen Job');
+    await akte.locator('[data-sid="job"][data-j="0"]').click();
+    await expect(akte.locator('.navi-ergebnis')).toContainText('§ 113 BGB');
+    await expect(akte.locator('.navi-ergebnis')).toHaveClass(/ok/);
+    await akte.locator('[data-gut-zeigen]').click();
+    await expect(akte.locator('[data-akte-loesung]')).toContainText('nach § 113 BGB wirksam');
+
+    // Rosen für den Streamer: Mama hat noch nicht entschieden – im Moment schwebend unwirksam
+    await oeffne(page, 'taschengeld');
+    const tg = page.locator('[data-akte="akte-taschengeld"]');
+    await tg.locator('[data-fall="3"]').click();
+    for (const [sid, j] of [['person', 3], ['vorteil', 1], ['einwilligung', 1], ['taschengeld', 1], ['job', 1]]) await tg.locator(`[data-sid="${sid}"][data-j="${j}"]`).click();
+    await tg.locator('[data-sid="genehmigung"][data-j="1"]').click();
+    await expect(tg.locator('.navi-schritt .fb.amb')).toContainText('erst noch entscheiden');
+    await tg.locator('[data-sid="genehmigung"][data-j="3"]').click();
+    await expect(tg.locator('.navi-ergebnis')).toHaveClass(/amb/);
+    await tg.locator('[data-gut-zeigen]').click();
+    await expect(tg.locator('[data-akte-loesung]')).toContainText('im Moment schwebend unwirksam');
+    await expect(tg.locator('[data-akte-loesung]')).toContainText('§ 108 Abs. 2 BGB');
+
+    // Der erste Job: Die letzte Karte ist der Ausbildungsvertrag – nur mit Eltern
+    await oeffne(page, 'job');
+    const box = page.locator('[data-blitz="job-blitz"]');
+    for (let i = 1; i <= 8; i++) { await box.locator('[data-wahl="eltern"]').click(); await box.locator('[data-blitz-weiter]').click(); }
+    await expect(box.locator('[data-blitz-n]')).toHaveText('Karte 9 von 9');
+    await expect(box.locator('[data-blitz-text]')).toContainText('Ausbildungsvertrag');
+    await box.locator('[data-wahl="allein"]').click();
+    await expect(box.locator('[data-blitz-fb] .fb.bad')).toContainText('§ 11 BBiG');
+  });
+
+  test('Rechts-Navi mit Zitiertechnik, Altersgrenze 15 am Schieber', async ({ page }) => {
+    await oeffne(page, 'navi');
+    await expect(page.locator('[data-test="haus-zitieren"]')).toBeVisible();
+    await expect(page.locator('#modal-body')).toContainText('Zitiertechnik: So gibst du eine Fundstelle an');
+    await oeffne(page, 'haus');
+    await expect(page.locator('[data-test="haus-zitieren"]')).toHaveCount(0);
+    await expect(page.locator('[data-luecken="haus-luecken"]')).toBeVisible();
+    await oeffne(page, 'alter');
+    await page.locator('#al-r').fill('15');
+    await expect(page.locator('#al-meilen li.erreicht').last()).toContainText('15: Mopedführerschein');
+    await page.locator('#al-r').fill('16');
+    await expect(page.locator('#al-meilen li.erreicht').last()).toContainText('Art. 8 DSGVO');
   });
 });
 

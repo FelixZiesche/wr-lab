@@ -2,7 +2,7 @@
 import { test, expect, SECHSECK } from './helpers.mjs';
 
 const BEREICHE = {
-  start: ['grundlagen'],
+  start: ['nachrichten', 'grundlagen'],
   ziele: ['preis', 'beschaeftigung', 'wachstum', 'aussen', 'verteilung', 'umwelt'],
   abwaegen: ['beziehungen', 'phillips', 'politik', 'check'],
   wissen: ['sichern', 'wissenscheck']
@@ -14,7 +14,7 @@ test('Startansicht mit Sechseck, Kennzahlen und Navigation', async ({ page }) =>
   await expect(page.locator('#view-title')).toHaveText('Lernwerkstatt Magisches Sechseck');
   await expect(page.locator('#hero-hex .hexcorner')).toHaveCount(6);
   await expect(page.locator('.lage .chip')).toHaveCount(6);
-  await expect(page.locator('#ms-count')).toHaveText('0/16');
+  await expect(page.locator('#ms-count')).toHaveText('0/17');
 
   // Steckbrief über eine Ecke des Sechsecks
   await page.locator('#hero-hex .hexcorner[data-k="P"]').click();
@@ -79,9 +79,18 @@ test('Barrierefreiheit: Phillips-Jahresleiste und Ecken des Sechsecks per Tastat
 test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async ({ page }) => {
   await page.goto(`${SECHSECK}#preis`);
   await expect(page.locator('#modal-title')).toHaveText('Warenkorb-Werkstatt');
+  // Erst selbst formulieren, dann vergleichen: Der eigene Satz bleibt nur im Browser und steht neben dem Merksatz
+  const erk = page.locator('[data-erk="preis"]');
+  await expect(erk.locator('[data-erk-body]')).toBeHidden();
+  await erk.getByLabel('Deine Erkenntnis in einem Satz').fill('Steigen die Preise schneller als mein Lohn, kann ich mir weniger leisten.');
+  await expect(erk.locator('[data-erk-btn]')).toHaveText(/Mit dem Merksatz vergleichen/);
   await page.locator('[data-erk-btn]').click();
   await expect(page.locator('[data-erk-body]')).toBeVisible();
-  await expect(page.locator('#ms-count')).toHaveText('2/16');
+  await expect(erk.locator('[data-erk-eigen]')).toHaveValue('Steigen die Preise schneller als mein Lohn, kann ich mir weniger leisten.');
+  const [links, rechts] = [await erk.locator('[data-erk-eigen]').boundingBox(), await erk.locator('[data-erk-body]').boundingBox()];
+  expect(rechts.x).toBeGreaterThan(links.x + links.width - 1); // nebeneinander
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ms6-erk-preis')))).toBe('Steigen die Preise schneller als mein Lohn, kann ich mir weniger leisten.');
+  await expect(page.locator('#ms-count')).toHaveText('2/17');
   await page.locator('#modal-close').click();
 
   await page.locator('#btn-wissen').click();
@@ -98,7 +107,48 @@ test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async (
   await expect(page.locator('html')).toHaveClass(/big/);
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/big/);
-  await expect(page.locator('#ms-count')).toHaveText('2/16');
+  await expect(page.locator('#ms-count')).toHaveText('2/17');
+  // Nach dem Neuladen: eigener Satz und Merksatz stehen weiter nebeneinander
+  await page.goto(`${SECHSECK}#preis`);
+  await expect(page.locator('[data-erk="preis"] [data-erk-eigen]')).toHaveValue('Steigen die Preise schneller als mein Lohn, kann ich mir weniger leisten.');
+  await expect(page.locator('[data-erk="preis"] [data-erk-body]')).toBeVisible();
+});
+
+test('Leitfrage, Lernziele und Nachrichten-Blitzrunde mit Auflösung am Ende', async ({ page }) => {
+  await page.goto(SECHSECK);
+  await expect(page.locator('.banner h2')).toContainText('Warum kann die Politik nicht einfach alles gleichzeitig reparieren?');
+  await expect(page.locator('.lernziele li')).toHaveCount(5);
+  await page.locator('[data-gehzu="nachrichten"]').first().click();
+  await expect(page.locator('#modal-title')).toHaveText('Gute Nachricht, schlechte Nachricht?');
+  const box = page.locator('[data-blitz="news-blitz"]');
+  await expect(box.locator('[data-blitz-n]')).toHaveText('Karte 1 von 8');
+  // Verdeckt: keine Rückmeldung, immer „Kommt drauf an“ → richtig sind die Karten 3, 5, 6 und 8
+  for (let i = 1; i <= 8; i++) await box.locator('[data-wahl="beides"]').click();
+  await expect(box.locator('[data-blitz-ende]')).toContainText('Dein Bauchgefühl ist gespeichert');
+  await page.goto('about:blank');
+  await page.goto(`${SECHSECK}#sichern`);
+  const aufl = page.locator('[data-blitz-aufl="news-blitz"]');
+  await expect(aufl).toContainText('Dein Bauchgefühl: 4 von 8 richtig');
+  await expect(aufl.locator('li.wrong').first()).toContainText('Ausbildungsvergütung');
+  await page.locator('[data-schreib="sichern-wand"] summary', { hasText: 'So kannst du anfangen' }).click();
+  await expect(page.locator('[data-schreib="sichern-wand"]')).toContainText('Zurück zur Leitfrage');
+});
+
+test('Erst schätzen, dann schieben: BIP-Blitzrunde und Schätzfragen in den Regler-Werkstätten', async ({ page }) => {
+  await page.goto(`${SECHSECK}#wachstum`);
+  const bip = page.locator('[data-blitz="bip-blitz"]');
+  await bip.locator('[data-wahl="nicht"]').click();
+  await expect(bip.locator('[data-blitz-fb] .fb.bad')).toContainText('richtig ist: BIP steigt');
+  await expect(bip.locator('[data-blitz-fb]')).toContainText('Reparatur');
+  for (const [id, richtig] of [['umwelt', 'um rund 42 Mio. t'], ['aussen', 'Er steigt'], ['verteilung', 'mehr als die Hälfte']]) {
+    await page.goto('about:blank');
+    await page.goto(`${SECHSECK}#${id}`);
+    const t = page.locator(`[data-test="${id}-schaetzen"]`);
+    await t.locator('label', { hasText: richtig }).click();
+    await t.locator('[data-pruefen]').click();
+    await expect(t.locator('[data-ergebnis]')).toHaveText('1 von 1 richtig');
+    await expect(t.locator('.test-erkl')).toBeVisible();
+  }
 });
 
 test.describe('Handy (390 px)', () => {

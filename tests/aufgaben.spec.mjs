@@ -83,13 +83,13 @@ test('Schreibfeld ohne Lernraum: ins Heft, Entwurf bleibt gespeichert, keine Lö
   await expect(feld.locator('[data-schreib-senden]')).toBeHidden();
   await expect(feld.locator('[data-schreib-status]')).toContainText('Ab ins Heft');
   await feld.locator('summary', { hasText: 'So kannst du anfangen' }).click();
-  await expect(feld).toContainText('Am wichtigsten ist mir');
+  await expect(feld).toContainText('Die Politik kann nicht alles gleichzeitig reparieren, weil');
   await feld.locator('textarea').fill('Mir ist Umweltschutz am wichtigsten.');
   await page.waitForTimeout(400);
   await page.reload();
   await expect(page.locator('[data-schreib="sichern-wand"] textarea')).toHaveValue('Mir ist Umweltschutz am wichtigsten.');
   await expect(page.locator('.lehrerpanel')).toHaveCount(0);
-  await expect(page.getByText('Persönliche Gewichtung mit Bezug')).toHaveCount(0);
+  await expect(page.getByText('Folgerung: Die Politik muss Ziele gewichten')).toHaveCount(0);
 });
 
 test('Tastatur: nach „Prüfen“ und „Weiter“ springt der Fokus auf die Rückmeldung bzw. den Anfang der Stufe', async ({ page }) => {

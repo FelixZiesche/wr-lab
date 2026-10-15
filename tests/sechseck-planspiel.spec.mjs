@@ -9,9 +9,10 @@ const PARTIE = [
   { dec: 'C', check: 0, choice: 0 },
   { dec: 'A', check: 1, choice: 1 }
 ];
-// Erwartete Abschlussbilanz für Mia bei dieser Partie (berechnet mit dem Stand vor dem Umbau).
-const MIA_ENDE = 'Mia startete mit 1.200 € und hat jetzt 9.004 €. Die Politik der vier Jahre hat Mia insgesamt +1.104 € gebracht.';
-const MIA_KONTO = '9.004 €';
+// Erwartete Abschlussbilanz für Mia bei dieser Partie (berechnet mit dem Stand vor dem Umbau). Seit Oktober 2026 zahlt Mia
+// ab 2027 für das Deutschlandticket 66,80 € statt 63 € (gerundet 4 € im Monat): 3 Jahre × 12 × 4 € = 144 € weniger.
+const MIA_ENDE = 'Mia startete mit 1.200 € und hat jetzt 8.860 €. Die Politik der vier Jahre hat Mia insgesamt +960 € gebracht.';
+const MIA_KONTO = '8.860 €';
 
 /** Spielt eine Runde auf dem Gerät eines Spielers bis zur nächsten Runde (oder Bilanz). */
 async function spieleRunde(page, r, { dec, check, choice }, { live = false, warten } = {}) {

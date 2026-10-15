@@ -136,7 +136,19 @@ export const FAELLE=[
       'Ohne Einwilligung seiner Eltern und ohne vollständige Bezahlung war der Ratenkauf zunächst schwebend unwirksam (§ 108 Abs. 1 BGB).',
       'Inzwischen ist Finn 18 und voll geschäftsfähig, deshalb tritt seine eigene Genehmigung an die Stelle der Genehmigung der Eltern (§ 108 Abs. 3 BGB).',
       'Indem Finn dem Verkäufer schreibt, dass der Kauf bleibt, und die nächste Rate überweist, genehmigt er den Kauf.',
-      'Ergebnis: Der Kauf ist wirksam, auf die Meinung der Eltern kommt es nicht mehr an.']}
+      'Ergebnis: Der Kauf ist wirksam, auf die Meinung der Eltern kommt es nicht mehr an.']},
+  {titel:'Mehr Stunden im Supermarkt',icon:'storefront',foto:'supermarkt',
+    fakten:[['Wer','Karim, 17, 11. Klasse'],['Job','Aushilfe im Supermarkt, von den Eltern erlaubt (ohne feste Stundenzahl)'],['Was','geänderter Arbeitsvertrag: 10 statt 6 Stunden pro Woche'],['Wann','nachmittags nach der Schule und samstags'],['Eltern','wissen von der Änderung nichts']],
+    text:'Karim (17) aus Erfurt geht in die 11. Klasse. Seit einem halben Jahr jobbt er mit Erlaubnis seiner Eltern als Aushilfe in einem Supermarkt am Anger: Regale auffüllen, Leergut sortieren, Kasse. Weil zwei Kollegen gekündigt haben, bietet ihm die Marktleiterin mehr Stunden an: 10 statt 6 pro Woche, nachmittags nach der Schule und samstags. Karim unterschreibt den geänderten Arbeitsvertrag sofort, ohne zu Hause zu fragen.',
+    frage:'Ist der geänderte Arbeitsvertrag wirksam?',weg:{person:P.minder,vorteil:1,einwilligung:1,taschengeld:1,job:0},
+    tipps:{person:'Karim ist 17.',vorteil:'Mit dem Vertrag verpflichtet sich Karim, mehr zu arbeiten.',einwilligung:'Wussten die Eltern von der Änderung?',taschengeld:'Bezahlt Karim hier etwas – oder geht es um seinen Job?',job:'Die Eltern haben den Job im Supermarkt erlaubt. Geht es hier um genau diesen Job?'},
+    loesung:['Der geänderte Arbeitsvertrag ist wirksam, wenn Karim ihn allein abschließen durfte oder seine Eltern zustimmen.',
+      'Karim ist 17 Jahre alt und damit nach § 106 BGB beschränkt geschäftsfähig.',
+      'Mit dem Vertrag verpflichtet er sich, mehr zu arbeiten, er erlangt also nicht lediglich einen rechtlichen Vorteil, und eine Einwilligung der Eltern zur Änderung liegt nicht vor (§ 107 BGB).',
+      'Nach § 113 Abs. 1 BGB ist ein Minderjähriger, dem die Eltern einen Job erlaubt haben, für die Geschäfte rund um diesen Job unbeschränkt geschäftsfähig, auch für Änderungen des Arbeitsvertrags.',
+      'Karims Eltern haben den Aushilfsjob im Supermarkt ohne feste Stundenzahl erlaubt, und mit mehr Stunden bleibt es ein Job derselben Art.',
+      'Ergebnis: Karim durfte den geänderten Vertrag allein unterschreiben, er ist nach § 113 BGB wirksam.'],
+    denkWeiter:'Ganz ohne Grenzen geht es nicht: Die Eltern können ihre Erlaubnis einschränken oder zurücknehmen (§ 113 Abs. 2 BGB), etwa wenn die Noten leiden. Und für Jugendliche gilt das Jugendarbeitsschutzgesetz: höchstens 8 Stunden am Tag und 40 in der Woche, im Supermarkt nur zwischen 6 und 20 Uhr. Mit 10 Stunden pro Woche ist Karim weit davon entfernt.'}
 ];
 
 /* ---------- Taschengeld-Detektiv: Fälle zu § 110 BGB ---------- */
@@ -178,17 +190,17 @@ export const TASCHENGELD=[
       'Ergebnis: Weil die Eltern die Genehmigung verweigern, ist der Kauf endgültig unwirksam.'],
     denkWeiter:'Packs mit zufälligen Spielerkarten sind umstritten: In Belgien stufte die Glücksspielkommission im April 2018 bezahlte Lootboxen, etwa die Packs in FIFA 18, als verbotenes Glücksspiel ein.'},
   {titel:'Rosen für den Streamer',icon:'live_tv',foto:'tiktok',
-    fakten:[['Wer','Lea, 15'],['Was','TikTok-Coins für Geschenke im LIVE'],['Kauf 1','25 € per Guthabenkarte vom Taschengeld'],['Kauf 2','50 € über Mamas PayPal'],['Mama','verweigert die Genehmigung']],
-    text:'Lea (15) schaut jeden Abend den TikTok-LIVE von Streamer Kevo (fiktiv) aus Jena. Er bittet um „Rosen“ und „Löwen“ für sein LIVE-Match. Lea löst eine TikTok-Guthabenkarte über 25 € ein, die sie vom Taschengeld gekauft hat, und kauft davon Coins. Am nächsten Abend kauft sie noch einmal Coins für 50 € – diesmal über Mamas PayPal, das noch auf dem Handy eingeloggt ist. Mama entdeckt die Abbuchung, ist dagegen und sagt: „Diesen Kauf genehmige ich nicht.“',
-    frage:'Ist der zweite Coin-Kauf über Mamas PayPal wirksam?',weg:SCHWEBEND_NEIN,
-    tipps:{person:'Lea ist 15.',vorteil:'Lea muss für die Coins bezahlen.',einwilligung:'Hat Mama vorher zugestimmt?',taschengeld:'Wessen Geld war das beim zweiten Kauf?',job:'Hat der Kauf etwas mit einem Job zu tun?',genehmigung:'Wie reagiert Mama?'},
+    fakten:[['Wer','Lea, 15'],['Was','TikTok-Coins für Geschenke im LIVE'],['Kauf 1','25 € per Guthabenkarte vom Taschengeld'],['Kauf 2','50 € über Mamas PayPal'],['Mama','will erst am Wochenende entscheiden']],
+    text:'Lea (15) schaut jeden Abend den TikTok-LIVE von Streamer Kevo (fiktiv) aus Jena. Er bittet um „Rosen“ und „Löwen“ für sein LIVE-Match. Lea löst eine TikTok-Guthabenkarte über 25 € ein, die sie vom Taschengeld gekauft hat, und kauft davon Coins. Am nächsten Abend kauft sie noch einmal Coins für 50 € – diesmal über Mamas PayPal, das noch auf dem Handy eingeloggt ist. Mama entdeckt die Abbuchung und ist sauer. Sie sagt: „Ob ich das durchgehen lasse, entscheide ich am Wochenende.“ Heute ist Mittwoch.',
+    frage:'Wie ist die Rechtslage beim zweiten Coin-Kauf im Moment?',weg:{...SCHWEBEND_NEIN,genehmigung:3},
+    tipps:{person:'Lea ist 15.',vorteil:'Lea muss für die Coins bezahlen.',einwilligung:'Hat Mama vorher zugestimmt?',taschengeld:'Wessen Geld war das beim zweiten Kauf?',job:'Hat der Kauf etwas mit einem Job zu tun?',genehmigung:'Hat Mama schon Ja oder Nein gesagt – oder will sie erst noch entscheiden?'},
     loesung:['Der zweite Coin-Kauf ist wirksam, wenn Lea ihn allein abschließen durfte oder ihre Mutter zustimmt.',
       'Lea ist 15 Jahre alt und damit nach § 106 BGB beschränkt geschäftsfähig, eine Einwilligung der Mutter liegt nicht vor.',
       'Den ersten Kauf hat Lea mit einer Guthabenkarte vom Taschengeld bezahlt, er ist nach § 110 BGB wirksam.',
       'Beim zweiten Kauf zahlt sie mit dem Geld ihrer Mutter, das ihr niemand überlassen hat, deshalb greift § 110 BGB nicht.',
-      'Der zweite Kauf ist schwebend unwirksam und hängt von der Genehmigung der Mutter ab (§ 108 Abs. 1 BGB).',
-      'Ergebnis: Weil die Mutter die Genehmigung verweigert, ist der zweite Kauf endgültig unwirksam, und sie kann das Geld zurückfordern.'],
-    denkWeiter:'TikTok erlaubt Geschenke in LIVEs erst ab 18 – Lea hat beim Konto ein falsches Alter angegeben. Der Schutz der Geschäftsfähigkeit gilt trotzdem, denn entscheidend ist das echte Alter.'},
+      'Der zweite Kauf ist deshalb schwebend unwirksam und hängt von der Genehmigung der Mutter ab (§ 108 Abs. 1 BGB).',
+      'Ergebnis: Weil die Mutter noch nicht entschieden hat, ist der zweite Kauf im Moment schwebend unwirksam.'],
+    denkWeiter:'Wie lange darf sich Mama Zeit lassen? Fordert TikTok sie auf, sich zu erklären, kann sie nur noch zwei Wochen lang genehmigen. Schweigt sie, gilt die Genehmigung als verweigert (§ 108 Abs. 2 BGB), und TikTok muss das Geld zurückgeben. Übrigens erlaubt TikTok Geschenke in LIVEs erst ab 18 – Lea hat beim Konto ein falsches Alter angegeben. Der Schutz der Geschäftsfähigkeit gilt trotzdem, denn entscheidend ist das echte Alter.'},
   {titel:'Der verbotene Energydrink',icon:'local_drink',foto:'energy',
     fakten:[['Wer','Jonas, 14'],['Was','eine Dose Energydrink'],['Preis','2 €, sofort bezahlt'],['Geld','Taschengeld'],['Eltern','haben es vorher ausdrücklich verboten'],['Danach','Eltern verweigern die Genehmigung']],
     text:'Jonas (14) aus Gotha darf keine Energydrinks trinken – das haben ihm seine Eltern klar gesagt. Trotzdem kauft er sich im Späti vom Taschengeld eine Dose für 2 € und bezahlt sofort. Seine Eltern finden die leere Dose im Rucksack und sagen zu Jonas: „Diesen Kauf genehmigen wir nicht!“',
@@ -224,7 +236,8 @@ export const MEILENSTEINE=[
   {ab:7,icon:'shopping_basket',titel:'7: beschränkt geschäftsfähig',t:'Verträge mit Zustimmung der Eltern, Taschengeld ohne. Für Schäden haftest du, wenn du einsehen kannst, was du tust.',p:'§§ 106, 828 BGB'},
   {ab:10,icon:'directions_car',titel:'10: Haftung im Straßenverkehr',t:'Bei Unfällen mit Auto, Straßenbahn oder Zug haftest du erst ab 10 Jahren – außer du hast den Schaden mit Absicht verursacht.',p:'§ 828 Abs. 2 BGB'},
   {ab:14,icon:'gavel',titel:'14: strafmündig',t:'Ab 14 kannst du für Straftaten bestraft werden – nach dem Jugendstrafrecht.',p:'§ 19 StGB'},
-  {ab:16,icon:'how_to_vote',titel:'16: Kommunal- und Europawahl',t:'In Thüringen wählst du ab 16 bei Kommunalwahlen mit, dazu bei der Europawahl. Außerdem brauchst du einen Personalausweis und darfst beim Notar ein Testament machen.',p:'ThürKWG, § 2229 BGB'},
+  {ab:15,icon:'two_wheeler',titel:'15: Mopedführerschein',t:'Seit 2021 darfst du in ganz Deutschland schon ab 15 den Führerschein der Klasse AM machen – zum Beispiel für eine Simson. Bis zu deinem 16. Geburtstag gilt er aber nur in Deutschland.',p:'§ 10 Fahrerlaubnis-Verordnung'},
+  {ab:16,icon:'how_to_vote',titel:'16: Kommunal- und Europawahl',t:'In Thüringen wählst du ab 16 bei Kommunalwahlen mit, dazu bei der Europawahl. Außerdem brauchst du einen Personalausweis und darfst beim Notar ein Testament machen. Fragt eine App oder ein Online-Dienst nach deiner Einwilligung, deine Daten zu verarbeiten, darfst du sie ab 16 selbst geben.',p:'ThürKWG, § 2229 BGB, Art. 8 DSGVO'},
   {ab:17,icon:'directions_car',titel:'17: Begleitetes Fahren',t:'Mit dem Führerschein BF17 darfst du Auto fahren, wenn eine erfahrene Begleitperson dabei ist.',p:'Fahrerlaubnis-Verordnung'},
   {ab:18,icon:'celebration',titel:'18: volljährig',t:'Voll geschäftsfähig, Wahlrecht bei Landtags- und Bundestagswahl, alle Verträge allein.',p:'§ 2 BGB'}
 ];
@@ -269,6 +282,10 @@ export const FOTO={
     link:'https://commons.wikimedia.org/wiki/File:Computer_mice_(2026).jpg',lizenz:'https://creativecommons.org/licenses/by-sa/4.0/'},
   energy:{motiv:'Energydrink',src:'img/energydrink.svg',alt:'Illustration: Energydrink-Dose neben einem Zettel der Eltern: Keine Energydrinks!',credit:'eigene Illustration (WR-Lab)'},
   tiktok:{motiv:'TikTok-LIVE',src:'img/tiktok-live.svg',alt:'Illustration: Handy mit einem TikTok-LIVE, daneben fliegen virtuelle Geschenke wie Rosen, Herzen und Coins',credit:'eigene Illustration (WR-Lab)'},
+  supermarkt:{motiv:'Supermarkt-Regale',src:'img/supermarkt.jpg',alt:'Lange Regale in einem Supermarkt, voll mit Fischkonserven und Thunfischdosen, daneben Kühltruhen',credit:'The real Marcoman / Wikimedia Commons, CC0',
+    link:'https://commons.wikimedia.org/wiki/File:Netto_Marken-Discount_Innenansicht_(4).jpg',lizenz:'https://creativecommons.org/publicdomain/zero/1.0/'},
+  baeckerei:{motiv:'Bäckerei in Jena',src:'img/baeckerei-jena.jpg',alt:'Bäckerei am Johannisplatz in Jena: Schaufenster mit Brötchen und Kaffee im Erdgeschoss eines alten Hauses',credit:'Timk70 / Wikimedia Commons, CC BY-SA 4.0',
+    link:'https://commons.wikimedia.org/wiki/File:Baeckerei_Zwiebel_%26_CiZ,_Jena,_Johannisplatz_9_%26_10.jpg',lizenz:'https://creativecommons.org/licenses/by-sa/4.0/'},
   switch:{motiv:'Nintendo Switch',src:'img/switch.jpg',alt:'Nintendo Switch mit roten Joy-Cons und Dockingstation',credit:'KK IN HK / Wikimedia Commons, CC BY-SA 4.0',
     link:'https://commons.wikimedia.org/wiki/File:Nintendo_Switch.jpg',lizenz:'https://creativecommons.org/licenses/by-sa/4.0/'}
 };

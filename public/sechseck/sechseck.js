@@ -2,7 +2,7 @@
 // Gerüst, Navigation und Planspiel-Mechanik kommen aus /shared/, hier stehen nur die Inhalte.
 import { $, $$, fmt, sgn, clamp, esc, store, svgMass, svgHandy, innenBreite, beiBreite, zeigeHinweis } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
-import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls } from '../shared/js/aufgaben.js';
+import { schreibfeld, zuordnen, lueckentext, test as kurztest, wissenscheck, impuls, blitz, blitzAufloesung } from '../shared/js/aufgaben.js';
 import { mountPlanspiel, joinHash, setPendingJoin } from '../shared/js/planspiel.js';
 import { raum } from '../shared/js/lernraum.js';
 import { ORDER, G, gc, hexPts, ptsStr, hexDot, radar, eckPos, START, GOAL_IMG } from './daten.js';
@@ -12,6 +12,7 @@ import { WISSENSCHECK } from './wissenscheck.js';
 
 /* ---------- Merksätze ---------- */
 const MS={
+  nachrichten:['Ob eine Wirtschaftsnachricht gut oder schlecht ist, hängt oft davon ab, welches Ziel man anschaut und wen sie trifft. Was einem Ziel hilft, schadet häufig einem anderen – genau darum geht es im magischen Sechseck.'],
   grundlagen:['Das magische Sechseck umfasst sechs Ziele der Wirtschaftspolitik: stabiles Preisniveau, hoher Beschäftigungsstand, außenwirtschaftliches Gleichgewicht und stetiges, angemessenes Wachstum (magisches Viereck, § 1 StabG 1967) sowie gerechte Einkommens- und Vermögensverteilung und Schutz der natürlichen Lebensgrundlagen.',
               '„Magisch“ heißt das Sechseck, weil sich nicht alle Ziele gleichzeitig vollständig erreichen lassen – wer eines fördert, gefährdet oft ein anderes.'],
   preis:['Die Inflationsrate misst die Veränderung des Verbraucherpreisindex gegenüber dem Vorjahr. Grundlage ist ein fester Warenkorb mit Gewichten (Wägungsschema). Die EZB strebt mittelfristig 2 % an.',
@@ -177,7 +178,28 @@ function openSteckbrief(k){
     root=>{$('#sb-go',root).addEventListener('click',()=>openTool(G[k].tool));$$('[data-sb]',root).forEach(b=>b.addEventListener('click',()=>openSteckbrief(b.dataset.sb)))});
 }
 
-/* 1 Grundlagen */
+/* 1 Einstieg: Nachrichten-Blitzrunde, aufgelöst erst in „Hefteintrag und Kurztest“ */
+const NEWS={id:'news-blitz',werkstatt:'nachrichten',verdeckt:true,
+  titel:'Gute oder schlechte Nachricht für Deutschland? Entscheide aus dem Bauch. (Die Schlagzeilen sind erfunden.)',
+  optionen:[{id:'gut',t:'Gut',icon:'thumb_up'},{id:'schlecht',t:'Schlecht',icon:'thumb_down'},{id:'beides',t:'Kommt drauf an',icon:'balance'}],
+  karten:[
+    {t:'„Die Preise steigen um 3,3 %, deine Ausbildungsvergütung nur um 2 %.“',r:'schlecht',e:'Dein Reallohn sinkt: Für dein Geld bekommst du weniger als vorher. Das Ziel stabiles Preisniveau ist verfehlt.'},
+    {t:'„Die Inflation sinkt von 3,3 % auf 2 %.“',r:'gut',e:'Die Preise steigen nur noch so stark, wie es die EZB anstrebt (2 %). Gut für die Kaufkraft.'},
+    {t:'„Der Tankrabatt macht Benzin um bis zu 17 Cent billiger.“',r:'beides',e:'Gut für alle, die tanken, etwa Pendler aus dem Weimarer Land. Aber dem Staat fehlen Steuereinnahmen, und billiger Sprit hilft dem Klima nicht. Ein Zielkonflikt.'},
+    {t:'„In Thüringen finden 5.000 Arbeitslose wieder einen Job.“',r:'gut',e:'Mehr Beschäftigung heißt mehr Einkommen und mehr Steuern und Beiträge. Hier gibt es kaum einen Haken.'},
+    {t:'„Deutschland verkauft so viel ins Ausland wie nie: Rekordüberschuss!“',r:'beides',e:'Exporte sichern Jobs, etwa in der Optik in Jena. Aber ein hoher Überschuss heißt: Andere Länder verschulden sich, es drohen Streit und Zölle. Das Ziel ist ein Gleichgewicht.'},
+    {t:'„Die EZB erhöht den Leitzins.“',r:'beides',e:'Das bremst die Inflation, macht aber Kredite teurer – den Autokredit genauso wie den Kredit einer Firma, die investieren will. Das Wachstum leidet.'},
+    {t:'„Mehr Menschen in Thüringen sind armutsgefährdet.“',r:'schlecht',e:'Die Verteilung wird ungleicher, und der Zusammenhalt leidet. Ein klares Minus für das Ziel gerechte Verteilung.'},
+    {t:'„Die Treibhausgase sinken, weil Fabriken wegen der Krise weniger produzieren.“',r:'beides',e:'Gut für das Klima, schlecht für Wachstum und Jobs. Genau so sieht ein Zielkonflikt aus.'}]};
+tool({id:'nachrichten',hinweise:HINWEISE.nachrichten,ch:1,goals:ORDER,title:'Gute Nachricht, schlechte Nachricht?',sub:'Acht Schlagzeilen, eine Sekunde pro Karte: Ist das gut für Deutschland? Die Auflösung kommt am Ende',
+html(){return `<p class="task"><b>Auftrag:</b> Lies jede Schlagzeile und entscheide blitzschnell: gute Nachricht, schlechte Nachricht – oder kommt es darauf an? Nicht lange nachdenken! Ob du richtig lagst, erfährst du am Ende in „Hefteintrag und Kurztest“.</p>
+${blitz(NEWS)}
+${schreibfeld(WAND.nachrichten)}
+${impuls(IMPULS.nachrichten)}
+${erkHTML('nachrichten')}`},
+init(root){bindErk(root)}});
+
+/* 2 Grundlagen */
 // Zuordnung Indikator → Ziel: Erklärung der Ziele hinter dem Hilfeknopf, Erklärung jeder Karte nach dem Prüfen
 const ZIEL_INFO={
   P:'<p><b>Stabilität des Preisniveaus:</b> Die Preise sollen insgesamt nur langsam und gleichmäßig steigen. Die EZB strebt 2 % im Jahr an.</p>',
@@ -440,9 +462,20 @@ const PHASES={
   ab:{n:'Abschwung (Rezession)',d:'Nachfrage und Aufträge gehen zurück, Lager füllen sich, Investitionen werden verschoben. Kurzarbeit, später Entlassungen. Bei zwei Quartalen mit sinkendem BIP spricht man von technischer Rezession.',t:['sinkend','steigend','Anstieg lässt nach','sinkend','pessimistisch']},
   tief:{n:'Tiefstand (Depression)',d:'Geringe Auslastung, hohe Arbeitslosigkeit, wenig Investitionen, niedrige Zinsen. Staatliche Konjunkturprogramme sollen die Nachfrage stützen.',t:['niedrig','hoch','niedrig, evtl. sinkend','niedrig','gedrückt']}
 };
-tool({id:'wachstum',hinweise:HINWEISE.wachstum,ch:2,goals:['W'],title:'Konjunktur-Werkstatt',sub:'Konjunkturzyklus durchfahren, reales vs. nominales BIP berechnen, Deutschland einordnen',
+const BIP_BLITZ={id:'bip-blitz',werkstatt:'wachstum',
+  titel:'Erst schätzen: Steigt dadurch das BIP?',
+  optionen:[{id:'steigt',t:'BIP steigt',icon:'trending_up'},{id:'nicht',t:'BIP steigt nicht',icon:'trending_flat'}],
+  karten:[
+    {t:'Nach einem Auffahrunfall auf der A4 bei Jena werden beide Autos in der Werkstatt repariert.',r:'steigt',e:'Die Reparatur ist eine bezahlte Leistung und zählt zum BIP. Reicher macht der Unfall niemanden – eine Schwäche des BIP als Wohlstandsmaß.'},
+    {t:'Oma passt jeden Nachmittag auf ihre Enkel auf, ohne Geld dafür zu bekommen.',r:'nicht',e:'Unbezahlte Arbeit wie Kinderbetreuung, Pflege oder Ehrenamt erfasst das BIP nicht, obwohl sie viel wert ist.'},
+    {t:'Du verkaufst deine alte PS5 auf Kleinanzeigen.',r:'nicht',e:'Die PS5 wurde schon im Jahr ihrer Herstellung gezählt. Beim Gebrauchtverkauf wechselt nur der Besitzer, neu hergestellt wird nichts.'},
+    {t:'Nach einem Waldbrand im Thüringer Wald pflanzt ein Forstbetrieb im Auftrag des Landes neue Bäume.',r:'steigt',e:'Die Aufforstung ist bezahlte Arbeit und erhöht das BIP. Den Schaden durch den Brand zieht das BIP aber nirgends ab.'},
+    {t:'Eine Bäckerei in Apolda backt mehr Brötchen und verkauft sie.',r:'steigt',e:'Mehr hergestellte und verkaufte Waren: Genau das misst das BIP.'},
+    {t:'Du hilfst samstags ehrenamtlich bei der Tafel in Erfurt.',r:'nicht',e:'Ehrenamt ist unbezahlt und taucht im BIP nicht auf. Deshalb ergänzen Messgrößen wie der Nationale Wohlfahrtsindex oder die Wohlfahrtsmessung der OECD das BIP – und deshalb steht neben dem Wachstum auch Umweltschutz im Sechseck.'}]};
+tool({id:'wachstum',hinweise:HINWEISE.wachstum,ch:2,goals:['W'],title:'Konjunktur-Werkstatt',sub:'Erst schätzen, was das BIP misst, dann den Konjunkturzyklus durchfahren und reales Wachstum berechnen',
 html(){return `
-<p class="task"><b>Auftrag:</b> Fahrt mit dem Regler durch einen Konjunkturzyklus und beobachtet, wie sich die Indikatoren verändern. Ordnet Deutschland im Herbst 2026 ein und rechnet nominales in reales Wachstum um.</p>
+<p class="task"><b>Auftrag:</b> Schätzt zuerst in der Blitzrunde, was das BIP überhaupt misst. Fahrt dann mit dem Regler durch einen Konjunkturzyklus und beobachtet, wie sich die Indikatoren verändern. Ordnet Deutschland im Herbst 2026 ein und rechnet nominales in reales Wachstum um.</p>
+${blitz(BIP_BLITZ)}
 <div class="grid2 wide-left">
   <div class="panel chart"><h3>Konjunkturzyklus um den Wachstumstrend</h3><div id="kz-svg"></div>
   <div class="ctrl"><label for="kz-t">Zeit im Zyklus <output id="kz-to"></output></label><input type="range" id="kz-t" min="0" max="100" step="0.5" value="8"></div>
@@ -460,7 +493,6 @@ html(){return `
    <p>Reales Wachstum: <b id="bn-r" class="num"></b> · real pro Kopf: <b id="bn-k" class="num"></b></p>
    <p class="small muted">Das nominale BIP misst in aktuellen Preisen. Steigen nur die Preise, wächst es, ohne dass mehr produziert wird. Deshalb zählt für das Wachstumsziel das reale (preisbereinigte) BIP.</p></div>
 </div>
-<div class="panel"><h3>Kritik am BIP als Wohlstandsmaß</h3><p>Das BIP erfasst keine unbezahlte Arbeit (Pflege, Ehrenamt), keine Umweltschäden und keine Verteilung. Ein Unfall mit Reparatur und Krankenhausaufenthalt erhöht das BIP sogar. Alternativen wie der Nationale Wohlfahrtsindex oder die Wohlfahrtsmessung der OECD ergänzen es. Deshalb steht neben dem Wachstum auch Umweltschutz im Sechseck.</p></div>
 ${schreibfeld(WAND.wachstum)}
 ${impuls(IMPULS.wachstum)}
 ${erkHTML('wachstum')}`},
@@ -508,7 +540,10 @@ init(root){
 /* 5 Außenwirtschaft */
 tool({id:'aussen',hinweise:HINWEISE.aussen,ch:2,goals:['A'],title:'Leistungsbilanz-Waage',sub:'Teilbilanzen einstellen, Saldo in % des BIP bewerten, Wechselkurseffekte testen',
 html(){return `
-<p class="task"><b>Auftrag:</b> Stellt die vier Teilbilanzen ein und beobachtet, wohin die Waage kippt. Prüft, ob die EU-Frühwarnschwelle überschritten wird. Testet dann, wie ein stärkerer oder schwächerer Euro auf Export und Import wirkt.</p>
+<p class="task"><b>Auftrag:</b> Schätzt zuerst, was ein stärkerer Euro mit dem Preis eines Mikroskops aus Jena macht. Stellt dann die vier Teilbilanzen ein und beobachtet, wohin die Waage kippt. Prüft, ob die EU-Frühwarnschwelle überschritten wird. Testet zum Schluss im Wechselkurs-Labor, ob eure Schätzung stimmt.</p>
+${kurztest({id:'aussen-schaetzen',titel:'Erst schätzen, dann schieben: der Euro und das Mikroskop',fragen:[
+  {f:'Ein Mikroskop von ZEISS aus Jena kostet 10.000 €. Der Euro steigt von 1,15 auf 1,30 US-Dollar. Was passiert mit dem Preis in den USA?',o:['Er steigt: von 11.500 $ auf 13.000 $.','Er sinkt: von 11.500 $ auf 10.000 $.','Er bleibt gleich, denn das Mikroskop kostet ja weiter 10.000 €.'],r:0,
+    e:'10.000 € × 1,30 = 13.000 $ statt 10.000 € × 1,15 = 11.500 $. Ein stärkerer Euro macht deutsche Waren im Ausland teurer. Probiert es unten im Wechselkurs-Labor aus.'}]})}
 <div class="grid2 wide-left">
   <div class="panel chart"><h3>Die Waage</h3><div id="lb-svg"></div>
    <div class="row"><button class="btn small" data-lb="de" type="button">Deutschland 2025 (Bundesbank)</button><button class="btn small" data-lb="null" type="button">Ausgeglichen</button><button class="btn small" data-lb="def" type="button">Defizitland</button></div></div>
@@ -578,7 +613,10 @@ const LZ={
 };
 tool({id:'verteilung',hinweise:HINWEISE.verteilung,ch:2,goals:['V'],title:'Lorenz-Werkstatt',sub:'Lorenzkurve zeichnen, Gini-Koeffizient berechnen, Umverteilung durch den Staat sichtbar machen',
 html(){return `
-<p class="task"><b>Auftrag:</b> Verteilt 100 % des Einkommens auf fünf gleich große Bevölkerungsgruppen (ärmstes bis reichstes Fünftel). Vergleicht Markteinkommen und verfügbare Einkommen: Wie stark verteilt der Staat um? Und warum ist Vermögen viel ungleicher verteilt?</p>
+<p class="task"><b>Auftrag:</b> Schätzt zuerst, wie viel Vermögen dem reichsten Zehntel gehört. Verteilt dann 100 % des Einkommens auf fünf gleich große Bevölkerungsgruppen (ärmstes bis reichstes Fünftel). Vergleicht Markteinkommen und verfügbare Einkommen: Wie stark verteilt der Staat um? Und warum ist Vermögen viel ungleicher verteilt?</p>
+${kurztest({id:'verteilung-schaetzen',titel:'Erst schätzen, dann schieben: Wem gehört das Vermögen?',fragen:[
+  {f:'Wie viel des gesamten Nettovermögens in Deutschland gehört dem reichsten Zehntel der Haushalte?',o:['rund 10 %','rund 30 %','mehr als die Hälfte'],r:2,
+    e:'Rund 56 % (Deutsche Bundesbank, Studie „Private Haushalte und ihre Finanzen“, Befragung 2021). Die ärmere Hälfte der Haushalte besitzt zusammen nur einen sehr kleinen Teil. Wie das aussieht, zeigt die Lorenzkurve unten mit dem Knopf „Vermögen“.'}]})}
 <div class="grid2 wide-left">
   <div class="panel chart"><h3>Lorenzkurve</h3><div id="lz-svg"></div></div>
   <div class="panel stack"><div class="row">${Object.entries(LZ).map(([k,o])=>`<button class="btn small" data-lz="${k}" type="button">${o.b}</button>`).join('')}</div>
@@ -641,7 +679,10 @@ init(root){
 const THG=[[1990,1251],[2000,1045],[2010,942],[2015,904],[2019,800],[2020,730],[2021,760],[2022,750],[2023,674],[2024,649],[2025,649]];
 tool({id:'umwelt',hinweise:HINWEISE.umwelt,ch:2,goals:['U'],title:'Klima-Werkstatt',sub:'Treibhausgas-Pfad bis 2045 planen, CO₂-Preis an der Zapfsäule berechnen',
 html(){return `
-<p class="task"><b>Auftrag:</b> Legt fest, um wie viele Millionen Tonnen Deutschland ab 2026 jedes Jahr Emissionen senkt. Wird das Ziel 2030 erreicht? Berechnet anschließend, was ein CO₂-Preis an der Tankstelle und beim Heizen kostet.</p>
+<p class="task"><b>Auftrag:</b> Schätzt zuerst, wie schnell Deutschland die Emissionen senken muss. Legt dann mit dem Regler fest, um wie viele Millionen Tonnen Deutschland ab 2026 jedes Jahr Emissionen senkt. Wird das Ziel 2030 erreicht? Berechnet anschließend, was ein CO₂-Preis an der Tankstelle und beim Heizen kostet.</p>
+${kurztest({id:'umwelt-schaetzen',titel:'Erst schätzen, dann schieben: Wie schnell muss es gehen?',fragen:[
+  {f:'2025 stieß Deutschland rund 649 Mio. t Treibhausgase aus. 2030 sollen es höchstens 438 Mio. t sein. Um wie viel muss Deutschland ab 2026 jedes Jahr senken?',o:['um rund 15 Mio. t','um rund 42 Mio. t','um rund 100 Mio. t'],r:1,
+    e:'(649 − 438) ÷ 5 Jahre ≈ 42 Mio. t pro Jahr. Zum Vergleich: 2019 bis 2025 waren es im Schnitt rund 25 Mio. t, 2025 kaum noch etwas. Stellt den Regler unten auf 42 und auf 43: Ab wann klappt es?'}]})}
 <div class="panel chart"><h3>Treibhausgasemissionen Deutschland (Mio. t CO₂-Äquivalente)</h3><div id="th-svg"></div>
  <div class="legend" style="margin-bottom:6px"><span><i style="background:var(--g-U)"></i>Emissionen bis 2025</span><span><i style="background:var(--g-U);opacity:.5"></i>euer Pfad (gepunktet)</span><span><i style="background:var(--ok)"></i>Zielpfad Klimaschutzgesetz: 2030 → 438, 2040 → −88 %, 2045 → netto null</span></div>
  <div class="ctrl"><label for="th-r">Minderung pro Jahr ab 2026 <output id="th-ro"></output></label><input type="range" id="th-r" min="0" max="80" step="1" value="15"></div>
@@ -940,8 +981,8 @@ init(root){
 }});
 
 /* 12b Hefteintrag und Kurztest */
-tool({id:'sichern',ch:6,goals:ORDER,hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, Schlagzeilen den Zielen zuordnen und ein Test mit einem Versuch',
-html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Pro Frage habt ihr nur einen Versuch.</p>
+tool({id:'sichern',ch:6,goals:ORDER,hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, Schlagzeilen zuordnen, ein Test mit einem Versuch und der Vergleich mit deinem Bauchgefühl vom Anfang',
+html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Pro Frage habt ihr nur einen Versuch. Schaut dann, wie gut euer Bauchgefühl bei den Nachrichten am Anfang war, und beantwortet die Leitfrage.</p>
 ${lueckentext({id:'sichern-heft',titel:'Hefteintrag: Das magische Sechseck',saetze:[
   'Das [Stabilitäts- und Wachstumsgesetz|Stabilitätsgesetz|StabG] von [1967] nennt vier Ziele: ein stabiles [Preisniveau], einen hohen [Beschäftigungsstand|Beschäftigung], ein außenwirtschaftliches [Gleichgewicht] und ein stetiges und angemessenes [Wirtschaftswachstum|Wachstum].',
   'Später kamen eine gerechte [Einkommens- und Vermögensverteilung|Verteilung|Einkommensverteilung] und der Schutz der natürlichen [Lebensgrundlagen|Umwelt] hinzu.',
@@ -958,13 +999,14 @@ ${kurztest({id:'sichern-test',titel:'Kurztest: vier Fragen',fragen:[
   {f:'Die EZB erhöht den Leitzins, um die Inflation zu bremsen. Welches Ziel gerät dadurch eher unter Druck?',o:['Wachstum','Umwelt','Außenwirtschaft'],r:0,e:'Höhere Zinsen machen Kredite teurer. Konsum und Investitionen sinken – die Wirtschaft wächst langsamer.'},
   {f:'Welche Zielbeziehung beschreibt die Phillips-Kurve?',o:['Harmonie zwischen Wachstum und Umwelt','Konflikt zwischen Preisniveau und Beschäftigung','Neutralität zwischen Verteilung und Außenwirtschaft'],r:1,e:'Nach der Phillips-Kurve geht weniger Arbeitslosigkeit mit höherer Inflation einher – und umgekehrt.'},
   {f:'Was misst der Gini-Koeffizient?',o:['Wie stark die Preise steigen','Wie ungleich Einkommen oder Vermögen verteilt sind','Wie viel Deutschland exportiert'],r:1,e:'0 heißt: Alle haben gleich viel. 1 heißt: Eine Person hat alles.'}]})}
+${blitzAufloesung(NEWS)}
 ${schreibfeld(WAND.sichern)}
 ${impuls(IMPULS.sichern)}
 ${erkHTML('sichern')}`},
 init(root){bindErk(root)}});
 
 /* 12c Wissenscheck (Aufgaben in wissenscheck.js) */
-tool({id:'wissenscheck',ch:6,goals:ORDER,hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:'31 Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Erwartungshorizont und Auswertung',
+tool({id:'wissenscheck',ch:6,goals:ORDER,hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Erwartungshorizont und Auswertung`,
 html(){return `<p class="task"><b>Auftrag:</b> Prüft, was ihr könnt. Fangt bei den Grundlagen an und arbeitet euch bis zum Beurteilen vor. Den Erwartungshorizont seht ihr erst, nachdem ihr geantwortet habt. Am Ende zeigt die Auswertung, was ihr noch wiederholen solltet.</p>
 ${wissenscheck(WISSENSCHECK)}
 ${schreibfeld(WAND.wissenscheck)}
@@ -987,13 +1029,19 @@ init(root){
 /* ---------- Startseite und Wissen ---------- */
 function startHTML(){
   return `<section class="banner"><img src="${PHOTOS[2]}" alt="Blick über das Saaletal auf Jena mit dem JenTower"><span class="credit">Foto: Lukas D. / Unsplash</span>
-    <div class="banner-text"><p class="eyebrow">Stand der Daten: Oktober 2026</p><h2>Sechs Ziele sollen gleichzeitig gelten. Sie stehen sich gegenseitig im Weg.</h2></div></section>
+    <div class="banner-text"><p class="eyebrow">Klasse 11 · Soziale Marktwirtschaft · Daten: Oktober 2026</p><h2>Inflation 3,3 %, fast 3 Millionen Arbeitslose, Treibhausgase erst −48 % statt −65 %: Warum kann die Politik nicht einfach alles gleichzeitig reparieren?</h2></div></section>
   <section class="hero"><div class="hero-hex" id="hero-hex">${heroHex(null)}</div>
     <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Werkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
     <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}" aria-labelledby="lage-${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody" id="lage-${k}"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
     <p class="small muted">Fotos: ${ORDER.map(k=>esc(GOAL_IMG[k].credit)).join(', ')} / Unsplash</p>
     <p class="hint">Ecke im Sechseck oder Kennzahl antippen: Steckbrief bzw. passende Werkstatt öffnet sich.</p>
-    <div class="cta"><button class="fab" type="button" id="cta-leben"><span class="ms" aria-hidden="true">sports_esports</span>Planspiel starten</button></div></div></section>
+    <div class="cta"><button class="fab" type="button" data-gehzu="nachrichten"><span class="ms" aria-hidden="true">bolt</span>Blitzrunde starten</button><button class="btn outlined" type="button" id="cta-leben"><span class="ms" aria-hidden="true">sports_esports</span>Planspiel starten</button></div></div></section>
+  <section class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="lernziele">
+    <li><span class="ms" aria-hidden="true">check_circle</span><span>Die sechs Ziele der Wirtschaftspolitik nennen und mit Kennzahlen messen</span></li>
+    <li><span class="ms" aria-hidden="true">check_circle</span><span>Inflationsrate, Reallohn, Arbeitslosenquote und Leistungsbilanzsaldo berechnen</span></li>
+    <li><span class="ms" aria-hidden="true">check_circle</span><span>Zielharmonie, Zielkonflikt und Zielneutralität an Beispielen erklären</span></li>
+    <li><span class="ms" aria-hidden="true">check_circle</span><span>Wirtschaftspolitische Maßnahmen mit ihren Haupt- und Nebenwirkungen beurteilen</span></li>
+    <li><span class="ms" aria-hidden="true">check_circle</span><span>Die Leitfrage beantworten: Warum muss die Politik Ziele gewichten?</span></li></ul></section>
   ${chapterHTML(1)}
   <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. In „Ziele“ nimmt sich jede Werkstatt ein Ziel vor und misst es mit echten Zahlen. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
   <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms" aria-hidden="true">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
@@ -1003,14 +1051,15 @@ function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m
   <li>Thüringer Landesamt für Statistik: Verbraucherpreise in Thüringen im September 2026 (Pressemitteilung 248/2026 vom 05.10.2026)</li>
   <li>ADAC: Spritpreise im September 2025 und September 2026 (Pressemitteilungen vom 01.10.2025 und 01.10.2026) und nach dem Tankrabatt (07.10.2026)</li>
   <li>Bundesagentur für Arbeit: Arbeitsmarkt im September 2026 (Presseinfo Nr. 37 vom 30.09.2026), Kurzarbeit Juli 2026 und April 2020; Regionaldirektion Sachsen-Anhalt-Thüringen: Arbeitsmarkt in Thüringen im September 2026 (Presseinfo Nr. 62 vom 30.09.2026)</li>
-  <li>Deutsche Bundesbank: Zahlungsbilanzstatistik, Leistungsbilanz und Teilbilanzen (Stand 13.10.2026); Studie „Private Haushalte und ihre Finanzen“ (Vermögensverteilung)</li>
+  <li>Deutsche Bundesbank: Zahlungsbilanzstatistik, Leistungsbilanz und Teilbilanzen (Stand 13.10.2026); Studie „Private Haushalte und ihre Finanzen“, Befragung 2021 (Vermögensverteilung: reichstes Zehntel rund 56 % des Nettovermögens)</li>
   <li>Europäische Zentralbank: Leitzinsen (Einlagensatz 2,25 % ab 17.06.2026, 2,50 % ab 16.09.2026)</li>
   <li>Gemeinschaftsdiagnose Herbst 2026 „Aufschwung mit Strukturproblemen“ (24.09.2026): Prognosen BIP, Inflation, Arbeitslosenquote, Leistungsbilanz</li>
   <li>Umweltbundesamt: Treibhausgas-Emissionen in Deutschland 2025; Projektionsdaten 2026 (14.03.2026)</li>
   <li>Bundesministerium für Ernährung und Landwirtschaft: Erntebericht 2018 (Dürre)</li>
   <li>Bundesamt für Umwelt (Schweiz): CO₂-Abgabe und Merkblatt zur Rückverteilung 2026 (61,80 Franken pro Person)</li>
   <li>Gesetzestexte: § 1 StabG (08.06.1967), Art. 20 und 20a GG, Art. 127 AEUV, Bundes-Klimaschutzgesetz; § 2 und § 68 Energiesteuergesetz mit den Tankrabatten 2026 (BGBl. 2026 I Nr. 116 und Nr. 275); § 10 BEHG (CO₂-Preis 2026) und Gesetzentwurf für 2027 (BT-Drucksache 21/7869); § 9 EStG (Entfernungspauschale); Fünfte Mindestlohnanpassungsverordnung und § 8 SGB IV (Minijob-Grenze); §§ 105 und 149 SGB III (Kurzarbeitergeld, Arbeitslosengeld); § 19 SGB II (Grundsicherungsgeld seit 01.07.2026)</li>
-  <li>Deutschlandticket: Beschluss der Verkehrsministerkonferenz vom 18.09.2025 (63 € ab Januar 2026); Correctiv-Faktencheck vom 15.01.2026 zum TikTok-Video über 129,99 €</li>
+  <li>Deutschlandticket: Beschluss der Verkehrsministerkonferenz vom 18.09.2025 (63 € ab Januar 2026) und vom 30.09.2026 (66,80 € ab Januar 2027, erstmals nach einem Kostenindex; Stand Oktober 2026); Correctiv-Faktencheck vom 15.01.2026 zum TikTok-Video über 129,99 €</li>
+  <li>Industriestrompreis: Genehmigung der EU-Kommission vom 16.04.2026, gilt rückwirkend ab 01.01.2026 bis 2028 (Zielpreis rund 5 ct/kWh für höchstens die Hälfte des Verbrauchs, rund 90 Branchen, rund 3,8 Mrd. €, Anträge beim BAFA ab Anfang 2027; Stand Oktober 2026)</li>
   <li>Alle Personen im Planspiel und in den Fällen sowie alle Social-Media-Posts sind erfunden (fiktiv).</li>
   <li>Fotos: engin akyurt, Jacob Meissner, Lukas D., Md. Hasanuzzaman Himel, Yosuke Ota, Remy Gieling, Artem Labunsky, Wolfgang Weiser, Karsten Würth, Marcel Strauß – alle über Unsplash (Unsplash-Lizenz)</li></ul>
   <p>Modellwerkzeuge (Simulator, Planspiel, Bewertungsskalen) sind didaktische Vereinfachungen und keine Prognosen. Spielstände und Merksätze werden nur in diesem Browser gespeichert.</p>

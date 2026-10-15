@@ -12,9 +12,9 @@ test.describe('ohne Lernraum', () => {
     await expect(page.locator('#modal-title')).toHaveText('Wissenscheck');
     const wc = page.locator('[data-wc="wissenscheck"]');
     const a = i => aufgabe(page, i);
-    await expect(wc.locator('.wc-a')).toHaveCount(31);
-    await expect(wc.locator('.wc-a:visible')).toHaveCount(12);
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('0 von 64 Punkten');
+    await expect(wc.locator('.wc-a')).toHaveCount(36);
+    await expect(wc.locator('.wc-a:visible')).toHaveCount(15);
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('0 von 73 Punkten');
     // Vor der Antwort kein Erwartungshorizont
     await expect(wc.locator('.wc-eh')).toHaveCount(0);
     await expect(page.getByText('§ 1 StabG nennt')).toHaveCount(0);
@@ -50,8 +50,8 @@ test.describe('ohne Lernraum', () => {
     await a(4).locator('label', { hasText: 'falsch' }).click();
     await a(4).locator('[data-wc-pruefen]').click();
     await expect(a(4).locator('.fb')).toContainText('Richtig.');
-    await expect(wc.locator('[data-wc-n="1"]')).toHaveText('4/12');
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('3,5 von 64 Punkten');
+    await expect(wc.locator('[data-wc-n="1"]')).toHaveText('4/15');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('3,5 von 73 Punkten');
 
     // Anwenden: Rechnen mit typischem Fehler, Komma und Prozentzeichen
     await wc.locator('.wc-tabs [data-wc-tab="2"]').click();
@@ -79,7 +79,7 @@ test.describe('ohne Lernraum', () => {
     await page.reload();
     await expect(aufgabe(page, 13)).toBeVisible();
     await expect(aufgabe(page, 13).locator('.fb')).toContainText('Richtig.');
-    await expect(page.locator('[data-wc-gesamt]')).toHaveText('7,5 von 64 Punkten');
+    await expect(page.locator('[data-wc-gesamt]')).toHaveText('7,5 von 73 Punkten');
   });
 
   test('Offene Aufgabe: Feedback ohne KI, Erwartungshorizont abhaken, überarbeiten; Auswertung, wiederholen, neu starten', async ({ page }) => {
@@ -136,14 +136,14 @@ test.describe('ohne Lernraum', () => {
     await wc.locator('.wc-tabs [data-wc-tab="0"]').click();
     const aus = wc.locator('[data-wc-stufe="0"]');
     await expect(aus).toContainText('4 von 22 Punkten · 2/6 bearbeitet');
-    await expect(aus).toContainText('Gesamt: 4 von 64 Punkten (6 %)');
-    await expect(aus).toContainText('Noch 29 Aufgaben sind offen.');
+    await expect(aus).toContainText('Gesamt: 4 von 73 Punkten (5 %)');
+    await expect(aus).toContainText('Noch 34 Aufgaben sind offen.');
     await expect(aus).toContainText('Tipp für „Beurteilen“');
 
     // Neu starten (mit Rückfrage)
     await aus.locator('[data-wc-neu]').click();
     await aus.locator('[data-wc-neu-n]').click();
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('4 von 64 Punkten');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('4 von 73 Punkten');
 
     // „Wiederholen“ öffnet die passende Werkstatt
     await aus.locator('[data-gehzu="politik"]').click();
@@ -155,7 +155,7 @@ test.describe('ohne Lernraum', () => {
     await expect(page.locator('[data-wc-stufe="0"]')).toBeVisible();
     await page.locator('[data-wc-neu]').click();
     await page.locator('[data-wc-neu-y]').click();
-    await expect(page.locator('[data-wc-gesamt]')).toHaveText('0 von 64 Punkten');
+    await expect(page.locator('[data-wc-gesamt]')).toHaveText('0 von 73 Punkten');
     await expect(aufgabe(page, 0)).toBeVisible();
     await expect(aufgabe(page, 0).locator('input:checked')).toHaveCount(0);
   });
@@ -266,7 +266,7 @@ test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.cha
   // In der Datenbank stehen nur Punkte, ein Zeichen pro Aufgabe
   const uid = await s.evaluate(async () => (await import('/shared/js/lernraum.js')).raum.live().uid);
   const eintrag = await readDoc(`rooms/${code}/players/${uid}`);
-  expect(eintrag.fields.wc.stringValue).toBe('a-0' + '-'.repeat(28));
+  expect(eintrag.fields.wc.stringValue).toBe('a-0' + '-'.repeat(33));
   // Beamer-Modus: keine Spitznamen
   await lk.locator('#lr-beamer').click();
   await expect(wcBox.locator('table')).toHaveCount(0);

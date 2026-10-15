@@ -30,6 +30,7 @@ const GLOSS=[
   ['Beschränkt geschäftsfähig','Minderjährige von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern.'],
   ['Betreuung','Das Betreuungsgericht bestellt für Volljährige, die ihre Angelegenheiten wegen einer Krankheit oder Behinderung nicht selbst regeln können, einen Betreuer (§ 1814 BGB). Eine Betreuung allein macht nicht geschäftsunfähig.'],
   ['BGB','Bürgerliches Gesetzbuch. Es regelt seit 1900 die Rechtsbeziehungen zwischen Privatpersonen, zum Beispiel Kaufverträge.'],
+  ['Bote','Überbringt nur die Willenserklärung eines anderen, zum Beispiel das Kind, das für seine Eltern Brötchen holt. Ein Bote muss nicht geschäftsfähig sein, sein Alter spielt keine Rolle.'],
   ['Einwilligung','Vorherige Zustimmung der Eltern (§§ 107, 183 BGB).'],
   ['Endgültig unwirksam','Die Eltern haben die Genehmigung verweigert. Ware und Geld gehen zurück.'],
   ['Familiengericht','Abteilung beim Amtsgericht. Es muss bestimmte Geschäfte der Eltern für ihre Kinder genehmigen, zum Beispiel einen Kredit (§ 1643 BGB).'],
@@ -83,7 +84,7 @@ const {tool,erkHTML,bindErk,openTool,chapterHTML}=W;
 
 /* ---------- Fotos mit Bildnachweis ---------- */
 function nachweis(k){const f=FOTO[k],[wer,lizenz]=f.credit.split(', ');if(!f.link)return `Illustration: ${esc(f.credit)}`;return `Foto: <a href="${f.link}" rel="noopener" target="_blank">${esc(wer)}</a>, <a href="${f.lizenz}" rel="noopener" target="_blank">${esc(lizenz)}</a>`}
-const fotoHTML=k=>`<figure class="gf-fig"><img src="${FOTO[k].src}" alt="${esc(FOTO[k].alt)}" loading="lazy"><figcaption>${nachweis(k)}</figcaption></figure>`;
+const fotoHTML=k=>!FOTO[k]?'':`<figure class="gf-fig"><img src="${FOTO[k].src}" alt="${esc(FOTO[k].alt)}" loading="lazy"><figcaption>${nachweis(k)}</figcaption></figure>`;
 // Fälle mit Foto für den Steckbrief
 const mitBild=f=>FOTO[f.foto]?{...f,bild:{src:FOTO[f.foto].src,alt:FOTO[f.foto].alt,nachweis:nachweis(f.foto)}}:f;
 
@@ -114,8 +115,9 @@ const RAETSEL=[
   {f:'Ab welchem Alter bist du beschränkt geschäftsfähig?',r:7,e:'Mit dem 7. Geburtstag (§ 106 BGB). Vorher ist alles, was du allein abschließt, nichtig.'},
   {f:'Ab welchem Alter darfst du in Thüringen bei der Kommunalwahl wählen?',r:16,e:'Ab 16 wählst du in Thüringen den Gemeinderat und den Bürgermeister mit, außerdem das Europäische Parlament. Für Landtag und Bundestag musst du 18 sein.'},
   {f:'Ab welchem Alter kannst du für eine Straftat bestraft werden?',r:14,e:'Ab 14 bist du strafmündig (§ 19 StGB). Bis 17 gilt das Jugendstrafrecht, bis 20 kann es noch angewendet werden (§ 105 JGG).'},
-  {f:'Ab welchem Alter darfst du einen Handyvertrag ganz allein abschließen?',r:18,e:'Erst mit 18 bist du voll geschäftsfähig (§ 2 BGB). Vorher brauchst du die Zustimmung deiner Eltern.'}];
-tool({id:'alter',ch:2,farben:['rot','gelb','gruen'],hinweise:HINWEISE.alter,title:'Vom Baby zum Vertragsprofi',sub:'Am Altersschieber erleben, was du in welchem Alter darfst – und vier Altersrätsel lösen',
+  {f:'Ab welchem Alter darfst du einen Handyvertrag ganz allein abschließen?',r:18,e:'Erst mit 18 bist du voll geschäftsfähig (§ 2 BGB). Vorher brauchst du die Zustimmung deiner Eltern.'},
+  {f:'Ab welchem Alter darfst du den Mopedführerschein machen, zum Beispiel für eine Simson?',r:15,e:'Seit 2021 geht der Führerschein der Klasse AM in ganz Deutschland schon ab 15. Im Ausland darfst du damit aber erst ab 16 fahren.'}];
+tool({id:'alter',ch:2,farben:['rot','gelb','gruen'],hinweise:HINWEISE.alter,title:'Vom Baby zum Vertragsprofi',sub:'Am Altersschieber erleben, was du in welchem Alter darfst – und fünf Altersrätsel lösen',
 html(){return `<p class="task"><b>Auftrag:</b> Schieb das Alter von 0 bis 21 Jahre. Beobachte, wann sich die Farbe ändert und welche Altersgrenzen du erreichst. Löse dann die Altersrätsel: Stell das richtige Alter am Schieber ein.</p>
 <div class="grid2">
   <div class="stack"><div class="panel gf-alter" id="al-box">
@@ -168,7 +170,7 @@ init(root){
 }});
 
 /* 3 Das Haus der Geschäftsfähigkeit (Grafik und Lückentext aus dem Arbeitsblatt) */
-tool({id:'haus',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.haus,title:'Das Haus der Geschäftsfähigkeit',sub:'Das Haus einrichten, den Hefteintrag aus dem Gesetz ergänzen und richtig zitieren',
+tool({id:'haus',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.haus,title:'Das Haus der Geschäftsfähigkeit',sub:'Das Haus einrichten und den Hefteintrag aus dem Gesetz ergänzen',
 html(){return `<p class="task"><b>Auftrag:</b> Richte das Haus der Geschäftsfähigkeit ein: Ordne jede Karte dem passenden Raum zu. Fülle dann den Hefteintrag mit den Informationen aus den §§ 104 bis 113 BGB aus. Die Gesetzestexte findest du unten zum Aufklappen.</p>
 <p class="small"><span class="ms sm" aria-hidden="true">lightbulb</span> <b>Tipp:</b> Gilt der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern, gehört die Karte zu den Ausnahmen. Das Fragezeichen <span class="ms sm" aria-hidden="true">help</span> an jedem Raum erklärt dir, was er bedeutet.</p>
 ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Haus der Geschäftsfähigkeit?',
@@ -207,6 +209,16 @@ ${lueckentext({id:'haus-luecken',titel:'Hefteintrag: Stufen der Geschäftsfähig
   'Rechtsfähig ist jeder Mensch nach § 1 BGB ab der Vollendung der [Geburt].']})}
 <details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>Gesetzestexte §§ 1, 2, 104–110 und 113 BGB nachlesen</summary>
   <dl class="glossary">${[1,2,104,105,106,107,108,110,113].map(n=>`<dt>${GESETZ[n].p} – ${GESETZ[n].titel}</dt><dd>${GESETZ[n].t}</dd>`).join('')}</dl></details>
+${schreibfeld(WAND.haus)}
+${impuls(IMPULS.haus)}
+${erkHTML('haus')}`},
+init(root){bindErk(root)}});
+
+/* 4 Der Rechts-Navi: das Prüfschema zum Durchklicken */
+tool({id:'navi',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.navi,title:'Der Rechts-Navi',sub:'Das Prüfungsschema als Route: Frage für Frage zum Ergebnis – und den Paragrafen richtig zitieren',
+html(){return `<p class="task"><b>Auftrag:</b> Mach eine Probefahrt mit dem Rechts-Navi. Beantworte die Fragen für das Beispiel und schau, wo du ankommst. Zitiere den Paragrafen, bei dem du gelandet bist, so wie es unten bei der Zitiertechnik steht. Starte dann neu und probier andere Abzweigungen aus: Wann landest du bei „Nichtig“, wann bei „Schwebend unwirksam“?</p>
+${pruefschema({id:'navi-probe',titel:'Wirksam oder nicht? Der Rechts-Navi prüft für dich.',schema:NAVI,
+  beispiel:'<b>Probefahrt:</b> Lea (16) kauft sich ohne Wissen ihrer Eltern Kopfhörer für 40 € und bezahlt sofort mit ihrem Taschengeld.'})}
 <div class="panel stack"><h3 class="title-m">Zitiertechnik: So gibst du eine Fundstelle an</h3>
   <p class="body-l mono" style="font-size:1.25rem">§ 823 Abs. 2 S. 1 BGB</p>
   <dl class="kv"><dt>§ 823</dt><dd>Welcher Paragraf?</dd><dt>Abs. 2</dt><dd>Welcher Absatz? Absätze stehen im Gesetz in Klammern: (1), (2) …</dd><dt>S. 1</dt><dd>Welcher Satz im Absatz?</dd><dt>Nr. 1</dt><dd>Welche Nummer einer Aufzählung? Etwa § 104 Nr. 1 BGB</dd><dt>BGB</dt><dd>Welches Gesetz? Hier das Bürgerliche Gesetzbuch</dd><dt>§§ 434, 90 BGB</dt><dd>Zwei Paragrafenzeichen: mehrere Paragrafen</dd></dl></div>
@@ -215,23 +227,13 @@ ${kurztest({id:'haus-zitieren',titel:'Zitiertechnik: vier Fragen, je ein Versuch
   {f:'Was bedeutet „§§ 104, 105 BGB“?',o:['Paragraf 104 Absatz 105','Paragraf 104 und Paragraf 105','Die Paragrafen 104 bis 150'],r:1,e:'Zwei Paragrafenzeichen stehen für mehrere Paragrafen.'},
   {f:'In § 104 BGB steht unter „1.“: Geschäftsunfähig ist, wer nicht das siebente Lebensjahr vollendet hat. Wie zitierst du diese Stelle?',o:['§ 104 Abs. 1 BGB','§ 1 Nr. 104 BGB','§ 104 Nr. 1 BGB'],r:2,e:'Aufzählungen mit Ziffern heißen Nummer (Nr.), Absätze in Klammern heißen Absatz (Abs.).'},
   {f:'Wo steht, dass man mit 18 volljährig wird?',o:['§ 2 BGB','§ 18 BGB','§ 110 BGB'],r:0,e:'§ 2 BGB: Die Volljährigkeit tritt mit der Vollendung des 18. Lebensjahres ein.'}]})}
-${schreibfeld(WAND.haus)}
-${impuls(IMPULS.haus)}
-${erkHTML('haus')}`},
-init(root){bindErk(root)}});
-
-/* 4 Der Rechts-Navi: das Prüfschema zum Durchklicken */
-tool({id:'navi',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.navi,title:'Der Rechts-Navi',sub:'Das Prüfungsschema als Route: Frage für Frage zum Ergebnis – wirksam, schwebend unwirksam oder nichtig',
-html(){return `<p class="task"><b>Auftrag:</b> Mach eine Probefahrt mit dem Rechts-Navi. Beantworte die Fragen für das Beispiel und schau, wo du ankommst. Starte dann neu und probier andere Abzweigungen aus: Wann landest du bei „Nichtig“, wann bei „Schwebend unwirksam“?</p>
-${pruefschema({id:'navi-probe',titel:'Wirksam oder nicht? Der Rechts-Navi prüft für dich.',schema:NAVI,
-  beispiel:'<b>Probefahrt:</b> Lea (16) kauft sich ohne Wissen ihrer Eltern Kopfhörer für 40 € und bezahlt sofort mit ihrem Taschengeld.'})}
 ${schreibfeld(WAND.navi)}
 ${impuls(IMPULS.navi)}
 ${erkHTML('navi')}`},
 init(root){bindErk(root)}});
 
 /* 5 Fall-Akte: die Fälle aus dem Arbeitsblatt, gelöst mit dem Rechts-Navi */
-tool({id:'fallakte',ch:3,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.fallakte,title:'Fall-Akte',sub:'Acht Fälle von Franz bis zur Partybox: mit dem Rechts-Navi lösen und das Gutachten selbst bauen',
+tool({id:'fallakte',ch:3,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.fallakte,title:'Fall-Akte',sub:'Neun Fälle von Franz bis zum Supermarkt-Job: mit dem Rechts-Navi lösen und das Gutachten selbst bauen',
 html(){return `<p class="task"><b>Auftrag:</b> Löst die Fälle zu zweit. Lest zuerst den Steckbrief, dann klickt euch durch den Rechts-Navi. Biegt ihr falsch ab, bekommt ihr einen Tipp. Danach baut ihr aus den Sätzen das Gutachten – übertragt mindestens zwei Gutachten ins Heft.</p>
 ${fallakte({id:'akte',titel:'Fall-Akte Geschäftsfähigkeit',schema:NAVI,faelle:FAELLE.map(mitBild)})}
 ${schreibfeld(WAND.fallakte)}
@@ -253,8 +255,10 @@ const GERICHT=[
   {id:'gericht-tiktok',titel:'Der TikTok Shop',fall:`${fotoHTML('maus')}<p><b>Noah (15)</b> sieht im TikTok Shop, wie ein Gaming-Streamer (fiktiv) eine Gaming-Maus für 89 € in die Kamera hält. Noah bestellt sie sofort – mit „Jetzt kaufen, später bezahlen“.</p>`,
     frage:'Ist der Kauf wirksam?',r:1,e:'Später bezahlen heißt: Noch ist nichts bezahlt. § 110 BGB greift nicht, der Kauf ist schwebend unwirksam – bis die Eltern entscheiden oder Noah vollständig mit Taschengeld bezahlt hat.'},
   {id:'gericht-konsole',titel:'Die Konsole',fall:`${fotoHTML('switch')}<p><b>Oskar (6)</b> bekommt von seiner Oma eine Nintendo Switch geschenkt und sagt begeistert: „Danke, die nehm ich!“</p>`,
-    frage:'Hat Oskar das Geschenk wirksam angenommen?',r:2,e:'Überraschung: Auch ein Geschenk kann Oskar nicht selbst annehmen. Unter 7 ist jede eigene Willenserklärung nichtig (§§ 104, 105 BGB). Die Eltern nehmen das Geschenk für ihn an – dann gehört die Konsole Oskar.'}];
-tool({id:'gericht',ch:3,farben:['rot','gelb','gruen'],hinweise:HINWEISE.gericht,title:'Ihr seid das Gericht',sub:'Sechs knifflige Fälle: Die ganze Klasse stimmt live auf dem Handy ab, dann kommt das Urteil',
+    frage:'Hat Oskar das Geschenk wirksam angenommen?',r:2,e:'Überraschung: Auch ein Geschenk kann Oskar nicht selbst annehmen. Unter 7 ist jede eigene Willenserklärung nichtig (§§ 104, 105 BGB). Die Eltern nehmen das Geschenk für ihn an – dann gehört die Konsole Oskar.'},
+  {id:'gericht-bote',titel:'Der Brötchen-Auftrag',fall:`${fotoHTML('baeckerei')}<p>Derselbe <b>Oskar (6)</b> aus Jena bekommt von seiner Mama 5 € und einen Zettel: „6 Brötchen“. In der Bäckerei sagt er: „Meine Mama will sechs Brötchen.“ Er bezahlt mit Mamas Geld und trägt die Tüte stolz nach Hause.</p>`,
+    frage:'Ist der Kauf der Brötchen wirksam?',r:0,e:'Überraschung: Diesmal ja! Oskar gibt keine eigene Willenserklärung ab, er überbringt nur die seiner Mama – als Bote. Der Kaufvertrag kommt zwischen Mama und der Bäckerei zustande. Ein Bote muss nicht geschäftsfähig sein, deshalb spielt Oskars Alter keine Rolle. Bei der Konsole wollte Oskar dagegen selbst etwas annehmen.'}];
+tool({id:'gericht',ch:3,farben:['rot','gelb','gruen'],hinweise:HINWEISE.gericht,title:'Ihr seid das Gericht',sub:'Sieben knifflige Fälle: Die ganze Klasse stimmt live auf dem Handy ab, dann kommt das Urteil',
 html(){return `<p class="task"><b>Auftrag:</b> Fällt euer Urteil: wirksam, schwebend unwirksam oder nichtig? Im Lernraum startet eure Lehrkraft die Abstimmung, ihr stimmt auf dem Handy ab und seht danach das Ergebnis der Klasse. Ohne Lernraum urteilst du allein. Begründe dein Urteil mit dem Rechts-Navi.</p>
 ${GERICHT.map(g=>abstimmung({...g,optionen:URTEIL})).join('')}
 ${schreibfeld(WAND.gericht)}
@@ -287,7 +291,7 @@ ${zuordnen({id:'online-zuordnen',frage:'Wirksam, schwebend unwirksam oder nichti
     {t:'Lea (16) schließt ein Spotify-Premium-Abo ab, das sich jeden Monat automatisch verlängert. Bezahlen will sie die Monate nach und nach vom Taschengeld.',f:'schwebend',e:'Ein Abo verpflichtet für die Zukunft, die kommenden Monate sind noch nicht bezahlt. Dafür müssen die Eltern zustimmen. Schon bezahlte Monate können nach § 110 BGB wirksam sein.'},
     {t:'Jonas (16) bestellt mit Klarna Sneaker für 140 €: „Jetzt kaufen, in 30 Tagen bezahlen“.',f:'schwebend',e:'Später bezahlen heißt: Noch ist nichts bezahlt, § 110 BGB greift nicht. Klarna lässt außerdem erst ab 18 bezahlen.'},
     {t:'Paul (17) schließt im Handyshop allein einen Handyvertrag über 24 Monate ab.',f:'schwebend',e:'Monatliche Pflichten über zwei Jahre: ohne Zustimmung schwebend unwirksam (§ 108 BGB).'},
-    {t:'Lina (17) bestellt das Deutschlandticket für 63 € im Monat als Abo.',f:'schwebend',e:'Das Deutschlandticket ist ein Abo, das jeden Monat weiterläuft. § 110 BGB greift nicht.'},
+    {t:'Lina (17) bestellt das Deutschlandticket als Abo: 63 € im Monat, ab Januar 2027 66,80 €.',f:'schwebend',e:'Das Deutschlandticket ist ein Abo, das jeden Monat weiterläuft. Die kommenden Monate sind noch nicht bezahlt, also greift § 110 BGB nicht.'},
     {t:'Tim (15) bekommt von seinem Opa einen Gutschein über 50 € für einen Gaming-Shop geschenkt.',f:'wirksam',e:'Lediglich rechtlicher Vorteil (§ 107 BGB).'},
     {t:'Sarah (19) schließt online einen Handyvertrag ab.',f:'wirksam',e:'Sarah ist volljährig und voll geschäftsfähig (§ 2 BGB).'},
     {t:'Mia (6) tippt in einem Spiel auf „Diamanten kaufen“ für 4,99 €.',f:'nichtig',e:'Mia ist geschäftsunfähig, ihre Willenserklärung ist nichtig (§§ 104, 105 BGB).'},
@@ -313,7 +317,8 @@ const JOB={id:'job-blitz',werkstatt:'job',
     {t:'Ein Girokonto eröffnen, auf das ihr Lohn überwiesen wird.',r:'allein',e:'Ein Lohnkonto gehört zur Abwicklung des Jobs (§ 113 BGB). Viele Banken wollen in der Praxis trotzdem die Unterschrift der Eltern sehen.'},
     {t:'Vom Lohn, den sie bar bekommt, eine Kinokarte kaufen.',r:'allein',e:'Das regelt nicht § 113, sondern § 110 BGB: Lassen die Eltern ihr den Lohn zur freien Verfügung, darf sie damit bezahlen.'},
     {t:'Mit dem Chef mehr Lohn aushandeln.',r:'allein',e:'Auch Änderungen am Arbeitsvertrag gehören zum erlaubten Job (§ 113 BGB).'},
-    {t:'Ein WG-Zimmer mieten, um näher am Café zu wohnen.',r:'eltern',e:'Ein Mietvertrag gehört nicht zum Job, auch wenn er praktisch wäre. Dafür braucht Lisa ihre Eltern.'}]};
+    {t:'Ein WG-Zimmer mieten, um näher am Café zu wohnen.',r:'eltern',e:'Ein Mietvertrag gehört nicht zum Job, auch wenn er praktisch wäre. Dafür braucht Lisa ihre Eltern.'},
+    {t:'Nach der 10. Klasse einen Ausbildungsvertrag als Augenoptikerin bei einem Betrieb in Jena abschließen.',r:'eltern',e:'Eine Ausbildung ist mehr als ein Job: Im Vordergrund steht das Lernen. Nach herrschender Meinung gilt § 113 BGB dafür nicht. Lisa braucht deshalb die Zustimmung ihrer Eltern (§§ 107, 108 BGB). Im Ausbildungsvertrag stehen auch die Namen der Eltern (§ 11 BBiG).'}]};
 tool({id:'job',ch:3,farben:['gelb','blau'],hinweise:HINWEISE.job,title:'Der erste Job',sub:'Minijob im Café in Weimar: Was darfst du mit 16 allein – und wofür brauchst du deine Eltern?',
 html(){return `<p class="task"><b>Auftrag:</b> Lisa hat ihren ersten Job. Entscheide bei jeder Karte: Darf sie das allein oder nur mit ihren Eltern? Du bekommst sofort eine Rückmeldung. Lies dazu § 113 BGB.</p>
 <details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>${GESETZ[113].p} nachlesen</summary><p class="small">${GESETZ[113].t}</p></details>
@@ -399,7 +404,7 @@ function startHTML(){
   <section class="gf-start">
     <div class="stack"><p class="body-l">Döner, Handyvertrag, V-Bucks, Klarna: Jeden Tag schließt du Verträge, oft ohne es zu merken. Aber gelten sie auch? In dieser Lernwerkstatt testest du zuerst dein Bauchgefühl, lernst dann die Regeln des BGB kennen und löst echte Fälle – allein, zu zweit oder live mit der ganzen Klasse als Gericht.</p>
       <div class="cta"><button class="fab" type="button" data-gf-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-dest="mission"><span class="ms" aria-hidden="true">pets</span>Mission Zwergspitz</button></div></div>
-    <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="gf-ziele">
+    <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="lernziele">
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Rechtsfähigkeit und die drei Stufen der Geschäftsfähigkeit unterscheiden</span></li>
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Einwilligung und Genehmigung, nichtig und schwebend unwirksam auseinanderhalten</span></li>
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Die drei wichtigen Ausnahmen kennen: Vorteil, Taschengeld, Job (§§ 107, 110, 113 BGB)</span></li>
@@ -412,10 +417,13 @@ function startHTML(){
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen (Stand Oktober 2026)</h3><ul>
   <li>Bürgerliches Gesetzbuch: §§ 1, 2, 104–113 (mit 105a), 183, 184, 566, 812, 818, 827–829, 833, 1643, 1814, 1854, 2229 BGB (gesetze-im-internet.de)</li>
   <li>Mindestlohngesetz: § 22 Abs. 2 MiLoG · Fünfte Mindestlohnanpassungsverordnung: 13,90 € brutto pro Stunde ab Januar 2026</li>
-  <li>Strafgesetzbuch: § 19 StGB · Jugendgerichtsgesetz: § 105 JGG · Fahrerlaubnis-Verordnung: begleitetes Fahren ab 17 · Personalausweisgesetz: Ausweispflicht ab 16</li>
+  <li>Strafgesetzbuch: § 19 StGB · Jugendgerichtsgesetz: § 105 JGG · Fahrerlaubnis-Verordnung: § 10 (Klasse AM ab 15 in ganz Deutschland seit 28.07.2021, bis 16 nur im Inland gültig, Schlüsselzahl 195), begleitetes Fahren ab 17 · Personalausweisgesetz: Ausweispflicht ab 16 · Datenschutz-Grundverordnung: Art. 8 DSGVO (Einwilligung ab 16)</li>
+  <li>Berufsbildungsgesetz: § 11 BBiG (Vertragsniederschrift mit Angaben zu den gesetzlichen Vertretern) · Jugendarbeitsschutzgesetz: §§ 8, 14, 16 JArbSchG</li>
+  <li>Social Media ab 13: Vorschlag der Expertenkommission „Kinder- und Jugendschutz in der digitalen Welt“ vom 24.06.2026, noch nicht beschlossen (Stand Oktober 2026)</li>
   <li>Thüringer Kommunalwahlgesetz und Europawahlgesetz: Wahlrecht ab 16; Landtags- und Bundestagswahl ab 18</li>
   <li>Bundesgerichtshof: Beschlüsse V ZB 44/04 und V ZB 206/10 zur Schenkung von Wohnungen an Minderjährige</li>
-  <li>Deutschlandticket: 63 € im Monat ab Januar 2026 (Beschluss der Verkehrsministerkonferenz vom 18.09.2025) · Klarna: Bezahlen erst ab 18 Jahren</li>
+  <li>Deutschlandticket: 63 € im Monat ab Januar 2026 (Beschluss der Verkehrsministerkonferenz vom 18.09.2025), 66,80 € ab Januar 2027 (Beschluss der Verkehrsministerkonferenz vom 30.09.2026, Stand Oktober 2026) · Klarna: Bezahlen erst ab 18 Jahren</li>
+  <li>Jugendwort des Jahres 2026: „Ragebait“ (Pons Langenscheidt, bekanntgegeben am 10.10.2026 auf der Frankfurter Buchmesse)</li>
   <li>Fälle nach den Unterrichtsmaterialien der Lehrkraft, nach Thüringen verlegt. Alle Personen und Szenarien sind erfunden.</li>
   <li>Fotos (Wikimedia Commons): ${Object.values(FOTO).filter(f=>f.link).map(f=>`${esc(f.motiv)}: <a href="${f.link}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[0].replace(' / Wikimedia Commons',''))}</a> (<a href="${f.lizenz}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[1])}</a>)`).join(' · ')}</li>
   <li>Illustrationen: Labyrinth, TikTok-LIVE und Energydrink sind eigene Grafiken von WR-Lab. Influencer, Streamer und Rapper in den Fällen sind erfunden (fiktiv).</li>

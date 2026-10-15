@@ -17,9 +17,6 @@
 /* Startseite */
 .gf-start{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
 @media (min-width:900px){.gf-start{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
-.gf-ziele{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-.gf-ziele li{display:flex;gap:10px;align-items:flex-start;font-size:.875rem;line-height:1.25rem}
-.gf-ziele .ms{color:var(--md-primary);flex:none}
 .banner .credit a{color:inherit}
 
 /* Fotos mit Bildnachweis darunter */
