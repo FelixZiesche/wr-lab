@@ -119,7 +119,7 @@ tool({id:'alter',ch:2,farben:['rot','gelb','gruen'],hinweise:HINWEISE.alter,titl
 html(){return `<p class="task"><b>Auftrag:</b> Schieb das Alter von 0 bis 21 Jahre. Beobachte, wann sich die Farbe ändert und welche Altersgrenzen du erreichst. Löse dann die Altersrätsel: Stell das richtige Alter am Schieber ein.</p>
 <div class="grid2">
   <div class="stack"><div class="panel gf-alter" id="al-box">
-    <div class="gf-alter-kopf"><span class="gf-figur" id="al-figur" aria-hidden="true"><span class="ms">child_care</span></span>
+    <div class="gf-alter-kopf"><span class="gf-figur" id="al-figur" aria-hidden="true"><span class="ms" aria-hidden="true">child_care</span></span>
       <div><p class="display-s num" id="al-zahl" aria-live="polite">0 Jahre</p><p class="title-m" id="al-stufe"></p><p class="small muted" id="al-p"></p></div></div>
     <label class="small" for="al-r">Alter</label>
     <input type="range" id="al-r" min="0" max="21" step="1" value="0">
@@ -128,9 +128,9 @@ html(){return `<p class="task"><b>Auftrag:</b> Schieb das Alter von 0 bis 21 Jah
     <p class="small" id="al-kurz"></p>
     <div class="gf-darf" id="al-darf"></div>
   </div>
-  <section class="aufgabe" id="al-raetsel"><p class="aufgabe-kopf"><span class="ms sm">quiz</span>Altersrätsel <span class="small muted num" id="al-rn"></span></p>
+  <section class="aufgabe" id="al-raetsel"><p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">quiz</span>Altersrätsel <span class="small muted num" id="al-rn"></span></p>
     <p class="aufgabe-frage" id="al-rf"></p>
-    <div class="row"><button class="btn primary small" type="button" id="al-pruefen"><span class="ms">task_alt</span>Das Alter am Schieber prüfen</button><button class="btn small" type="button" id="al-weiter" hidden><span class="ms">arrow_forward</span>Nächstes Rätsel</button></div>
+    <div class="row"><button class="btn primary small" type="button" id="al-pruefen"><span class="ms" aria-hidden="true">task_alt</span>Das Alter am Schieber prüfen</button><button class="btn small" type="button" id="al-weiter" hidden><span class="ms" aria-hidden="true">arrow_forward</span>Nächstes Rätsel</button></div>
     <div id="al-fb" class="stack" role="status"></div></section></div>
   <div class="panel stack"><h3 class="title-m">Altersgrenzen</h3><p class="small muted" id="al-naechste"></p><ol class="gf-meilen" id="al-meilen"></ol></div>
 </div>
@@ -145,9 +145,9 @@ init(root){
     $('#al-stufe',root).textContent=st.titel;$('#al-p',root).textContent=st.p;$('#al-kurz',root).textContent=st.kurz;
     $('#al-darf',root).innerHTML=`<b>Das darfst du:</b> ${st.darf}`;
     const box=$('#al-box',root);['rot','gelb','gruen'].forEach(f=>box.classList.toggle('gf-stufe-'+f,f===farbe));
-    if(icon!==altIcon){fig.innerHTML=`<span class="ms">${icon}</span>`;fig.classList.remove('wechsel');void fig.offsetWidth;fig.classList.add('wechsel');altIcon=icon}
+    if(icon!==altIcon){fig.innerHTML=`<span class="ms" aria-hidden="true">${icon}</span>`;fig.classList.remove('wechsel');void fig.offsetWidth;fig.classList.add('wechsel');altIcon=icon}
     const n=MEILENSTEINE.filter(m=>a>=m.ab).length;
-    $('#al-meilen',root).innerHTML=MEILENSTEINE.map((m,i)=>`<li class="${a>=m.ab?'erreicht':''}${i===n-1&&n-1>erreicht?' neu':''}"><span class="ms">${a>=m.ab?m.icon:'lock'}</span><span><b>${m.titel}</b><br><span class="small">${m.t}</span><br><span class="small muted">${m.p}</span></span></li>`).join('');
+    $('#al-meilen',root).innerHTML=MEILENSTEINE.map((m,i)=>`<li class="${a>=m.ab?'erreicht':''}${i===n-1&&n-1>erreicht?' neu':''}"><span class="ms" aria-hidden="true">${a>=m.ab?m.icon:'lock'}</span><span><span class="sr-only">${a>=m.ab?'Erreicht:':'Noch gesperrt:'} </span><b>${m.titel}</b><br><span class="small">${m.t}</span><br><span class="small muted">${m.p}</span></span></li>`).join('');
     erreicht=n-1;
     const next=MEILENSTEINE.find(m=>m.ab>a);
     $('#al-naechste',root).textContent=next?`Nächste Grenze in ${next.ab-a} ${next.ab-a===1?'Jahr':'Jahren'}: ${next.titel.replace(/^\d+: /,'')}`:'Alle Altersgrenzen erreicht.';
@@ -161,7 +161,7 @@ init(root){
     $('#al-fb',root).innerHTML=`<div class="fb ${ok?'ok':'bad'}"><b>${ok?'Richtig!':a<q.r?'Zu jung.':'Zu alt.'}</b> ${ok?q.e:'Schieb weiter und prüf noch einmal.'}</div>`;
     if(ok){$('#al-pruefen',root).hidden=true;
       if(ri+1<RAETSEL.length){$('#al-weiter',root).hidden=false;$('#al-weiter',root).focus()}
-      else $('#al-fb',root).insertAdjacentHTML('beforeend',`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Alle ${RAETSEL.length} Rätsel gelöst!</b></div>`)}
+      else $('#al-fb',root).insertAdjacentHTML('beforeend',`<div class="fb ok"><span class="ms sm" aria-hidden="true">workspace_premium</span> <b>Alle ${RAETSEL.length} Rätsel gelöst!</b></div>`)}
   });
   $('#al-weiter',root).addEventListener('click',()=>{ri++;raetsel();r.focus()});
   r.addEventListener('input',zeige);zeige();raetsel();bindErk(root);
@@ -170,7 +170,7 @@ init(root){
 /* 3 Das Haus der Geschäftsfähigkeit (Grafik und Lückentext aus dem Arbeitsblatt) */
 tool({id:'haus',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.haus,title:'Das Haus der Geschäftsfähigkeit',sub:'Das Haus einrichten, den Hefteintrag aus dem Gesetz ergänzen und richtig zitieren',
 html(){return `<p class="task"><b>Auftrag:</b> Richte das Haus der Geschäftsfähigkeit ein: Ordne jede Karte dem passenden Raum zu. Fülle dann den Hefteintrag mit den Informationen aus den §§ 104 bis 113 BGB aus. Die Gesetzestexte findest du unten zum Aufklappen.</p>
-<p class="small"><span class="ms sm">lightbulb</span> <b>Tipp:</b> Gilt der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern, gehört die Karte zu den Ausnahmen. Das Fragezeichen <span class="ms sm" aria-hidden="true">help</span> an jedem Raum erklärt dir, was er bedeutet.</p>
+<p class="small"><span class="ms sm" aria-hidden="true">lightbulb</span> <b>Tipp:</b> Gilt der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern, gehört die Karte zu den Ausnahmen. Das Fragezeichen <span class="ms sm" aria-hidden="true">help</span> an jedem Raum erklärt dir, was er bedeutet.</p>
 ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Haus der Geschäftsfähigkeit?',
   faecher:[
     {id:'unfaehig',t:'Geschäfts&shy;unfähig<span class="zu-sub">unter 7 Jahren</span>',kurz:'Geschäftsunfähig (unter 7 Jahren)',
@@ -205,7 +205,7 @@ ${lueckentext({id:'haus-luecken',titel:'Hefteintrag: Stufen der Geschäftsfähig
   'Erlauben die Eltern einen Job, kann der Minderjährige alle Geschäfte rund um dieses [Arbeitsverhältnis|Dienst- oder Arbeitsverhältnis|Dienst- und Arbeitsverhältnis] allein abschließen, etwa den Arbeitsvertrag oder die Kündigung (§ 113 BGB). Was er vom Lohn kauft, regelt dagegen § [110] BGB.',
   'Mit Eintritt der [Volljährigkeit] sind Personen voll geschäftsfähig. Geschäftsunfähig sind nach § 104 BGB außerdem Personen in einem nicht nur vorübergehenden Zustand krankhafter Störung der [Geistestätigkeit], der die freie Willensbestimmung ausschließt.',
   'Rechtsfähig ist jeder Mensch nach § 1 BGB ab der Vollendung der [Geburt].']})}
-<details class="hilfe"><summary><span class="ms sm">menu_book</span>Gesetzestexte §§ 1, 2, 104–110 und 113 BGB nachlesen</summary>
+<details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>Gesetzestexte §§ 1, 2, 104–110 und 113 BGB nachlesen</summary>
   <dl class="glossary">${[1,2,104,105,106,107,108,110,113].map(n=>`<dt>${GESETZ[n].p} – ${GESETZ[n].titel}</dt><dd>${GESETZ[n].t}</dd>`).join('')}</dl></details>
 <div class="panel stack"><h3 class="title-m">Zitiertechnik: So gibst du eine Fundstelle an</h3>
   <p class="body-l mono" style="font-size:1.25rem">§ 823 Abs. 2 S. 1 BGB</p>
@@ -265,11 +265,11 @@ init(root){bindErk(root)}});
 /* 7 Taschengeld-Detektiv: Fälle zu § 110 BGB */
 tool({id:'taschengeld',ch:3,farben:['gelb','blau'],hinweise:HINWEISE.taschengeld,title:'Taschengeld-Detektiv',sub:'Labubu, Glurak-Jackpot, TikTok-Coins und Raten-PS5: Wann greift der Taschengeldparagraf – und wann nicht?',
 html(){return `<p class="task"><b>Auftrag:</b> Ermittelt zu zweit wie Detektive: Greift der Taschengeldparagraf oder nicht? Prüft jeden Fall mit dem §-110-Check, löst ihn mit dem Rechts-Navi und baut danach das Gutachten.</p>
-<div class="panel stack"><h3 class="title-m"><span class="ms sm">savings</span> Der §-110-Check: drei Fragen</h3>
+<div class="panel stack"><h3 class="title-m"><span class="ms sm" aria-hidden="true">savings</span> Der §-110-Check: drei Fragen</h3>
   <ol class="gf-check"><li><b>Wessen Geld?</b> Taschengeld oder Geld, das die Eltern (oder mit ihrer Zustimmung andere) zur freien Verfügung oder für genau diesen Zweck gegeben haben.</li>
   <li><b>Alles bezahlt?</b> Erst wenn der ganze Preis bezahlt ist – bei Raten also mit der letzten Rate.</li>
   <li><b>Erlaubt?</b> Was die Eltern ausdrücklich verboten haben, deckt auch Taschengeld nicht.</li></ol>
-  <details class="hilfe"><summary><span class="ms sm">menu_book</span>${GESETZ[110].p} nachlesen</summary><p class="small">${GESETZ[110].t}</p></details></div>
+  <details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>${GESETZ[110].p} nachlesen</summary><p class="small">${GESETZ[110].t}</p></details></div>
 ${fallakte({id:'akte-taschengeld',titel:'Akte Taschengeld',schema:NAVI,faelle:TASCHENGELD.map(mitBild)})}
 ${schreibfeld(WAND.taschengeld)}
 ${impuls(IMPULS.taschengeld)}
@@ -292,7 +292,7 @@ ${zuordnen({id:'online-zuordnen',frage:'Wirksam, schwebend unwirksam oder nichti
     {t:'Sarah (19) schließt online einen Handyvertrag ab.',f:'wirksam',e:'Sarah ist volljährig und voll geschäftsfähig (§ 2 BGB).'},
     {t:'Mia (6) tippt in einem Spiel auf „Diamanten kaufen“ für 4,99 €.',f:'nichtig',e:'Mia ist geschäftsunfähig, ihre Willenserklärung ist nichtig (§§ 104, 105 BGB).'},
     {t:'Ole (6) bestellt per Sprachbefehl am smarten Lautsprecher seiner Eltern Spielzeug für 30 €.',f:'nichtig',e:'Auch per Sprachbefehl gibt Ole eine Willenserklärung ab – und die ist nichtig, weil er unter 7 ist.'}]})}
-<div class="panel stack"><h3 class="title-m"><span class="ms sm">shield</span> So schützt du dich und deine Geschwister</h3>
+<div class="panel stack"><h3 class="title-m"><span class="ms sm" aria-hidden="true">shield</span> So schützt du dich und deine Geschwister</h3>
   <ul class="small"><li>Zahlungsdaten nicht im Spiel oder App-Store speichern, Käufe mit Passwort oder Fingerabdruck absichern.</li>
   <li>In den Familien-Einstellungen von Konsole und Handy Kaufsperren und Ausgabenlimits setzen.</li>
   <li>Bei ungewollten Käufen schnell den Support des Anbieters anschreiben und das Geld zurückfordern.</li></ul></div>
@@ -316,7 +316,7 @@ const JOB={id:'job-blitz',werkstatt:'job',
     {t:'Ein WG-Zimmer mieten, um näher am Café zu wohnen.',r:'eltern',e:'Ein Mietvertrag gehört nicht zum Job, auch wenn er praktisch wäre. Dafür braucht Lisa ihre Eltern.'}]};
 tool({id:'job',ch:3,farben:['gelb','blau'],hinweise:HINWEISE.job,title:'Der erste Job',sub:'Minijob im Café in Weimar: Was darfst du mit 16 allein – und wofür brauchst du deine Eltern?',
 html(){return `<p class="task"><b>Auftrag:</b> Lisa hat ihren ersten Job. Entscheide bei jeder Karte: Darf sie das allein oder nur mit ihren Eltern? Du bekommst sofort eine Rückmeldung. Lies dazu § 113 BGB.</p>
-<details class="hilfe"><summary><span class="ms sm">menu_book</span>${GESETZ[113].p} nachlesen</summary><p class="small">${GESETZ[113].t}</p></details>
+<details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>${GESETZ[113].p} nachlesen</summary><p class="small">${GESETZ[113].t}</p></details>
 ${blitz(JOB)}
 ${schreibfeld(WAND.job)}
 ${impuls(IMPULS.job)}
@@ -353,7 +353,7 @@ const KARTE=[
   '#################'];
 tool({id:'zwergspitz',ch:4,farben:['gelb','gruen','blau'],hinweise:HINWEISE.zwergspitz,title:'Mission Zwergspitz',sub:'Du willst unbedingt einen Zwergspitz, deine Eltern sagen Nein. Lauf durchs Labyrinth: Welche Wege führen zum Hund?',
 html(){return `<p class="task"><b>Auftrag:</b> Spielt zu zweit. Lauft mit der Figur zu einer Kreuzung, lest, was auf dem Weg passiert, und schätzt zuerst: Führt er zum Hund, in die Sackgasse oder kommt es darauf an? Dann lauft ihn ab. Schafft ihr alle sieben Wege?</p>
-<div class="stack"><p class="headline-s">Szenario: Du bist 15 und hast dich in einen Zwergspitz verliebt.</p>
+<div class="stack"><h2 class="headline-s">Szenario: Du bist 15 und hast dich in einen Zwergspitz verliebt.</h2>
   <p class="body-l">Seit du ein Foto von einem Zwergspitz-Welpen gesehen hast, willst du unbedingt einen. Deine Eltern teilen deine Begeisterung nicht: Ein Hund sei viel zu teuer, sagen sie. Sieben Wege führen durch das Heckenlabyrinth – welche enden beim Hund?</p></div>
 ${labyrinth({id:'zwergspitz-lab',titel:'Das Labyrinth zum Zwergspitz',karte:KARTE,wege:WEGE,speicher:'gf-zs',
   namen:{ziel:'Führt zum Hund',sackgasse:'Sackgasse',glueck:'Kommt drauf an'},
@@ -398,16 +398,16 @@ function startHTML(){
     <div class="banner-text"><p class="eyebrow">Klasse 10 · Bürgerliches Recht</p><h2 style="font-size:clamp(1.5rem,3.6vw,2.25rem);line-height:1.2">Ich bin 15 – welche Verträge darf ich eigentlich schon allein abschließen?</h2></div></section>
   <section class="gf-start">
     <div class="stack"><p class="body-l">Döner, Handyvertrag, V-Bucks, Klarna: Jeden Tag schließt du Verträge, oft ohne es zu merken. Aber gelten sie auch? In dieser Lernwerkstatt testest du zuerst dein Bauchgefühl, lernst dann die Regeln des BGB kennen und löst echte Fälle – allein, zu zweit oder live mit der ganzen Klasse als Gericht.</p>
-      <div class="cta"><button class="fab" type="button" data-gf-tool="bauchgefuehl"><span class="ms">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-dest="mission"><span class="ms">pets</span>Mission Zwergspitz</button></div></div>
+      <div class="cta"><button class="fab" type="button" data-gf-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-dest="mission"><span class="ms" aria-hidden="true">pets</span>Mission Zwergspitz</button></div></div>
     <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="gf-ziele">
-      <li><span class="ms">check_circle</span><span>Rechtsfähigkeit und die drei Stufen der Geschäftsfähigkeit unterscheiden</span></li>
-      <li><span class="ms">check_circle</span><span>Einwilligung und Genehmigung, nichtig und schwebend unwirksam auseinanderhalten</span></li>
-      <li><span class="ms">check_circle</span><span>Die drei wichtigen Ausnahmen kennen: Vorteil, Taschengeld, Job (§§ 107, 110, 113 BGB)</span></li>
-      <li><span class="ms">check_circle</span><span>Fälle mit dem Prüfschema lösen und Paragrafen richtig zitieren</span></li></ul></div>
+      <li><span class="ms" aria-hidden="true">check_circle</span><span>Rechtsfähigkeit und die drei Stufen der Geschäftsfähigkeit unterscheiden</span></li>
+      <li><span class="ms" aria-hidden="true">check_circle</span><span>Einwilligung und Genehmigung, nichtig und schwebend unwirksam auseinanderhalten</span></li>
+      <li><span class="ms" aria-hidden="true">check_circle</span><span>Die drei wichtigen Ausnahmen kennen: Vorteil, Taschengeld, Job (§§ 107, 110, 113 BGB)</span></li>
+      <li><span class="ms" aria-hidden="true">check_circle</span><span>Fälle mit dem Prüfschema lösen und Paragrafen richtig zitieren</span></li></ul></div>
   </section>
   ${chapterHTML(1)}
   <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf: erst die Regeln, dann die Fälle, dann die Mission. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das deinen Hefteintrag. Am Ende prüfst du alles im Wissenscheck.</p></section>
-  <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
+  <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms" aria-hidden="true">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen (Stand Oktober 2026)</h3><ul>
   <li>Bürgerliches Gesetzbuch: §§ 1, 2, 104–113 (mit 105a), 183, 184, 566, 812, 818, 827–829, 833, 1643, 1814, 1854, 2229 BGB (gesetze-im-internet.de)</li>
@@ -422,8 +422,8 @@ function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m
   <li>TikTok: Geschenke in LIVEs erst ab 18 (Better Internet for Kids, EU) · Lotterielos-Fall: Reichsgericht, RGZ 74, 234</li>
   <li>Lootboxen: Belgische Glücksspielkommission (Kansspelcommissie), Untersuchungsbericht zu Lootboxen, April 2018</li></ul>
   <p>Merksätze und Ergebnisse werden nur in diesem Browser gespeichert.</p>
-  <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
+  <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms" aria-hidden="true">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
 function wissenHTML(){const alle=['rot','gelb','gruen','blau'].map(dot).join('');
-  return chapterHTML(5,`<button class="card" type="button" data-open="glossar"><span class="dots">${alle}</span><h4>Begriffe nachschlagen</h4><p>${GLOSS.length} Fachbegriffe mit Suche</p><span class="go">Öffnen<span class="ms sm">arrow_forward</span></span></button><button class="card" type="button" data-open="wissen"><span class="dots">${alle}</span><h4>Mein Rechts-Wissen</h4><p>Alle Merksätze als Hefteintrag sammeln und kopieren</p><span class="go">Öffnen<span class="ms sm">arrow_forward</span></span></button>`)+sourcesHTML()}
+  return chapterHTML(5,`<button class="card" type="button" data-open="glossar"><span class="dots">${alle}</span><h3 class="title-m">Begriffe nachschlagen</h3><p>${GLOSS.length} Fachbegriffe mit Suche</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button><button class="card" type="button" data-open="wissen"><span class="dots">${alle}</span><h3 class="title-m">Mein Rechts-Wissen</h3><p>Alle Merksätze als Hefteintrag sammeln und kopieren</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button>`)+sourcesHTML()}
 
 W.start();

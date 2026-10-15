@@ -35,9 +35,11 @@ test('Lernraum: beitreten, Ort sehen, Antwort an die Wand, Lehrerpanel nur für 
   await expect(lk.locator('#lr-teil')).toContainText('Testi');
   await expect(lk.locator('#lr-teil')).toContainText('1 Person im Raum');
 
-  // Wo ist das Gerät gerade?
+  // Wo ist das Gerät gerade? Das Dashboard aktualisiert sich, der Fokus der Lehrkraft bleibt auf ihrem Knopf
+  await lk.locator('[data-lr-kick]').first().focus();
   await werkstatt(s, 'ziele', 'preis');
   await expect(lk.locator('#lr-teil tr', { hasText: 'Testi' })).toContainText('Warenkorb-Werkstatt');
+  await expect(lk.locator('[data-lr-kick]').first()).toBeFocused();
 
   // Antwort abschicken
   const feld = s.locator('[data-schreib="preis-wand"]');
@@ -141,12 +143,19 @@ test('Lernraum: anhalten, alle holen, Werkstätten sperren, drucken, beenden', a
   const code = await raumOeffnen(lk);
   const s = await beitreten(browser, code, 'Kalle');
 
-  // Alle anhalten
+  // Alle anhalten: alles hinter der Pause ist gesperrt, Esc hebt sie nicht auf, danach geht es an derselben Stelle weiter
+  await s.locator('#btn-glossar').focus();
   await lk.locator('#lr-anhalten').click();
   await expect(s.locator('#lr-pause')).toBeVisible();
   await expect(s.locator('#lr-pause')).toContainText('Schau nach vorn');
+  await expect(s.locator('#lr-pause')).toBeFocused();
+  await expect(s.locator('.app')).toHaveJSProperty('inert', true);
+  await s.keyboard.press('Escape');
+  await expect(s.locator('#lr-pause')).toBeVisible();
   await lk.locator('#lr-anhalten').click();
   await expect(s.locator('#lr-pause')).toBeHidden();
+  await expect(s.locator('.app')).toHaveJSProperty('inert', false);
+  await expect(s.locator('#btn-glossar')).toBeFocused();
 
   // Alle in eine Werkstatt holen
   await lk.locator('#lr-ziel').selectOption('phillips');
@@ -158,8 +167,9 @@ test('Lernraum: anhalten, alle holen, Werkstätten sperren, drucken, beenden', a
   // Werkstätten sperren: Politik-Simulator und Planspiel
   await lk.locator('#lr-frei summary').click();
   await lk.locator('[data-frei="politik"]').click();
-  await lk.locator('[data-frei="leben"]').click();
   await expect(lk.locator('[data-frei="politik"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(lk.locator('[data-frei="politik"]')).toBeFocused();
+  await lk.locator('[data-frei="leben"]').click();
   await s.locator('#rail-items [data-dest="abwaegen"]').click();
   const karte = s.locator('#view [data-tool="politik"]');
   await expect(karte).toHaveClass(/gesperrt/);
@@ -222,4 +232,22 @@ test('Lernraum und Planspiel nutzen denselben Raum', async ({ page: lk, browser 
 
   expect(s.errors).toEqual([]);
   await s.context().close();
+});
+
+test('Beitreten: Der Fokus steht im Feld, Fehler werden angesagt und am Feld markiert', async ({ page }) => {
+  await page.goto(`${SECHSECK}#raum=K7Q2XM`);
+  await expect(page.locator('#lr-nick')).toBeFocused();
+  await page.locator('#lr-code').fill('AB');
+  await page.locator('#lr-nick').fill('Testi');
+  await page.locator('#lr-jgo').click();
+  const fehler = page.locator('#lr-jerr');
+  await expect(fehler).toHaveText('Der Code hat sechs Zeichen, zum Beispiel K7Q2XM.');
+  await expect(fehler).toHaveAttribute('role', 'alert');
+  const feld = page.locator('#lr-code');
+  await expect(feld).toHaveAttribute('aria-invalid', 'true');
+  await expect(feld).toHaveAttribute('aria-describedby', 'lr-jerr');
+  await expect(page.locator('#lr-nick')).not.toHaveAttribute('aria-invalid', 'true');
+  // Wer das Feld korrigiert, bekommt es wieder als gültig angezeigt
+  await feld.fill('K7Q2XM');
+  expect(await feld.getAttribute('aria-invalid')).toBeNull();
 });

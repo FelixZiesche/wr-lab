@@ -35,10 +35,10 @@ export function labyrinth(def){
   const {id,titel,wege,ziel}=def,namen={...NAMEN,...def.namen},b=def.karte[0].length,h=def.karte.length;
   DEFS.set(id,def);
   registriere({id,frage:titel,loesung:wege.map((w,i)=>`<b>Weg ${i+1}: ${w.titel}</b> – ${namen[w.erg]}. ${w.e}`)});
-  const pfeil=(r,ic,t)=>`<button class="lab-pfeil" type="button" data-lab-dir="${r}" aria-label="${t}"><span class="ms">${ic}</span></button>`;
+  const pfeil=(r,ic,t)=>`<button class="lab-pfeil" type="button" data-lab-dir="${r}" aria-label="${t}"><span class="ms" aria-hidden="true">${ic}</span></button>`;
   return `<section class="aufgabe lab" data-labyrinth="${id}">
   <div class="lab-links">
-    <p class="aufgabe-kopf"><span class="ms sm">explore</span>${titel}</p>
+    <p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">explore</span>${titel}</p>
     <div class="lab-feld" tabindex="0" role="application" aria-roledescription="Spiel" aria-label="Labyrinth. Pfeiltasten oder W, A, S, D: ein Schritt. Mit Umschalttaste bis zur nächsten Kreuzung." aria-describedby="${id}-stand">
       <svg viewBox="0 0 ${b*T} ${h*T}" aria-hidden="true"><defs>
         <pattern id="${id}-busch" width="${T}" height="${T}" patternUnits="userSpaceOnUse"><rect width="${T}" height="${T}" class="lab-hecke"/><circle cx="11" cy="12" r="8" class="lab-busch"/><circle cx="29" cy="26" r="9" class="lab-busch"/><circle cx="8" cy="33" r="5" class="lab-busch"/></pattern>
@@ -56,9 +56,9 @@ export function labyrinth(def){
   <div class="lab-rechts">
     <div class="lab-panel" data-lab-panel></div>
     <p class="sr-only" role="status" data-lab-ansage></p>
-    <div class="akte-faelle lab-wege" role="group" aria-label="Zu einer Kreuzung springen">${wege.map((w,i)=>`<button class="akte-fall" type="button" data-lab-weg="${i}"><span class="ms">${w.icon}</span><span class="akte-titel">${i+1}. ${w.titel}</span><span class="akte-status small" data-status></span></button>`).join('')}</div>
+    <div class="akte-faelle lab-wege" role="group" aria-label="Zu einer Kreuzung springen">${wege.map((w,i)=>`<button class="akte-fall" type="button" data-lab-weg="${i}"><span class="ms" aria-hidden="true">${w.icon}</span><span class="akte-titel">${i+1}. ${w.titel}</span><span class="akte-status small" data-status></span></button>`).join('')}</div>
     <div data-lab-fertig></div>
-    <div class="row"><button class="btn small" type="button" data-lab-neu><span class="ms">restart_alt</span>Mission neu starten</button></div>
+    <div class="row"><button class="btn small" type="button" data-lab-neu><span class="ms" aria-hidden="true">restart_alt</span>Mission neu starten</button></div>
   </div></section>`;
 }
 
@@ -134,16 +134,16 @@ export function bindLabyrinth(box){
 
   /* ---------- Panel ---------- */
   const tippFb=w=>{const t=st.tipp[w.id];return !t?'':t===w.erg?'Gut eingeschätzt!':`Du hattest „${namen[t]}“ getippt.`};
-  const ergebnisHTML=w=>{const [k,ic]=ERG[w.erg];return `<div class="fb ${k}"><p><span class="ms sm">${ic}</span> <b>${namen[w.erg]}.</b> ${tippFb(w)}</p><p>${w.e}</p></div>`};
-  const kopfHTML=k=>`<p class="aufgabe-kopf"><span class="ms sm">${wege[k].icon}</span>Weg ${k+1}: ${wege[k].titel}</p>`;
-  const knopf=(attr,ic,t)=>`<div class="row"><button class="btn small primary" type="button" ${attr}><span class="ms">${ic}</span>${t}</button></div>`;
+  const ergebnisHTML=w=>{const [k,ic]=ERG[w.erg];return `<div class="fb ${k}"><p><span class="ms sm" aria-hidden="true">${ic}</span> <b>${namen[w.erg]}.</b> ${tippFb(w)}</p><p>${w.e}</p></div>`};
+  const kopfHTML=k=>`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">${wege[k].icon}</span>Weg ${k+1}: ${wege[k].titel}</p>`;
+  const knopf=(attr,ic,t)=>`<div class="row"><button class="btn small primary" type="button" ${attr}><span class="ms" aria-hidden="true">${ic}</span>${t}</button></div>`;
   function panelStart(){modus={art:'start'};
-    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm">explore</span>So spielst du</p><p class="small">Lauf mit deiner Figur zu einer der ${wege.length} Kreuzungen. Dort erfährst du, was auf diesem Weg passiert. Schätze zuerst, wohin er führt. Dann lauf ihn ab: Endet er im Ziel, steckst du in einer Sackgasse fest – oder entscheidet an einem Tor der Würfel?</p>`}
+    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">explore</span>So spielst du</p><p class="small">Lauf mit deiner Figur zu einer der ${wege.length} Kreuzungen. Dort erfährst du, was auf diesem Weg passiert. Schätze zuerst, wohin er führt. Dann lauf ihn ab: Endet er im Ziel, steckst du in einer Sackgasse fest – oder entscheidet an einem Tor der Würfel?</p>`}
   function zeigeWeg(k,hinweis,j){
     const w=wege[k],t=st.tipp[w.id];modus={art:'weg',k,j};
     let s=kopfHTML(k)+`<div class="wc-material">${w.text}</div>`+(hinweis?`<div class="fb amb">${hinweis}</div>`:'');
-    if(!t)s+=`<p class="aufgabe-frage">Was schätzt du: Wohin führt dieser Weg?</p><div class="navi-antw" role="group" aria-label="Deine Einschätzung">${Object.keys(ERG).map(x=>`<button class="btn small" type="button" data-lab-tipp="${x}"><span class="ms">${ERG[x][1]}</span>${namen[x]}</button>`).join('')}</div>`;
-    else if(j!=null)s+=`<div class="lab-unterwegs"><span class="ms sm">directions_walk</span><span>${w.unterwegs[j]}</span></div>`;
+    if(!t)s+=`<p class="aufgabe-frage">Was schätzt du: Wohin führt dieser Weg?</p><div class="navi-antw" role="group" aria-label="Deine Einschätzung">${Object.keys(ERG).map(x=>`<button class="btn small" type="button" data-lab-tipp="${x}"><span class="ms" aria-hidden="true">${ERG[x][1]}</span>${namen[x]}</button>`).join('')}</div>`;
+    else if(j!=null)s+=`<div class="lab-unterwegs"><span class="ms sm" aria-hidden="true">directions_walk</span><span>${w.unterwegs[j]}</span></div>`;
     else if(erkundet(k))s+=ergebnisHTML(w)+`<p class="small muted">Du kannst den Weg noch einmal ablaufen.</p>`;
     else s+=`<p class="small">Dein Tipp: <b>${namen[t]}</b>. Lauf den Weg entlang und finde heraus, ob du recht hast!</p>`;
     panel.innerHTML=s;
@@ -151,13 +151,13 @@ export function bindLabyrinth(box){
       ansage(`Dein Tipp: ${namen[st.tipp[w.id]]}. Der Weg ist frei.`);zurFigur()}));
   }
   function sackgasse(k){const w=wege[k];st.erg[w.id]='sackgasse';modus={art:'sackgasse',k};
-    panel.innerHTML=kopfHTML(k)+`<div class="fb bad"><p><span class="ms sm">block</span> <b>Sackgasse! Du steckst fest.</b> ${tippFb(w)}</p><p>${w.e}</p></div>`+knopf('data-lab-zurueck','undo','Zurück zur Kreuzung');
+    panel.innerHTML=kopfHTML(k)+`<div class="fb bad"><p><span class="ms sm" aria-hidden="true">block</span> <b>Sackgasse! Du steckst fest.</b> ${tippFb(w)}</p><p>${w.e}</p></div>`+knopf('data-lab-zurueck','undo','Zurück zur Kreuzung');
     $('[data-lab-zurueck]',panel).addEventListener('click',()=>{springe(schild[k]);zurFigur()});
     ansage('Sackgasse! Du steckst fest.');fokusPanel();
   }
   function wurfHTML(k,n){const w=wege[k],wf=w.wuerfel||{};
-    return n>=ja?`<div class="fb ok"><p><span class="ms sm">lock_open</span> <b>${n} – Ja!</b> ${wf.ja||''}</p><p>Das Tor ist offen. Lauf weiter ins Ziel!</p></div>`
-      :`<div class="fb bad"><p><span class="ms sm">lock</span> <b>${n} – Nein.</b> ${wf.nein||''}</p></div>${ergebnisHTML(w)}`+knopf('data-lab-zurueck','undo','Zurück zur Kreuzung')}
+    return n>=ja?`<div class="fb ok"><p><span class="ms sm" aria-hidden="true">lock_open</span> <b>${n} – Ja!</b> ${wf.ja||''}</p><p>Das Tor ist offen. Lauf weiter ins Ziel!</p></div>`
+      :`<div class="fb bad"><p><span class="ms sm" aria-hidden="true">lock</span> <b>${n} – Nein.</b> ${wf.nein||''}</p></div>${ergebnisHTML(w)}`+knopf('data-lab-zurueck','undo','Zurück zur Kreuzung')}
   function wuerfelPanel(k){const w=wege[k],n=wurf[k];modus={art:'wuerfel',k};st.weg=k;
     panel.innerHTML=kopfHTML(k)+`<div class="lab-wurf"><div data-lab-wuerfel>${wuerfelHTML(n||5,!n)}</div><div class="stack lab-info"><p><b>${namen.glueck}!</b> ${w.wuerfel?.frage||''}</p><p class="small muted">Der Würfel entscheidet: Bei ${ja} oder mehr Augen heißt es Ja.</p></div></div>`
       +(n?wurfHTML(k,n):knopf('data-lab-wuerfeln','casino','Würfeln'));
@@ -173,7 +173,7 @@ export function bindLabyrinth(box){
   }
   function imZiel(){const k=st.weg,w=wege[k];modus={art:'ziel'};
     if(w&&w.erg==='ziel')st.erg[w.id]='ziel';sichern();zeichneKarte();
-    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm">flag</span>Ziel erreicht</p><div class="fb ok"><p><b>Geschafft!</b> ${def.ziel?.text||''}</p></div>${w?ergebnisHTML(w):''}`+knopf('data-lab-start','replay','Zurück zum Start');
+    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">flag</span>Ziel erreicht</p><div class="fb ok"><p><b>Geschafft!</b> ${def.ziel?.text||''}</p></div>${w?ergebnisHTML(w):''}`+knopf('data-lab-start','replay','Zurück zum Start');
     $('[data-lab-start]',panel).addEventListener('click',()=>{offen={};wurf={};springe(F[start]);panelStart();zurFigur()});
     ansage('Geschafft! Ziel erreicht.');fokusPanel();
   }
@@ -229,8 +229,8 @@ export function bindLabyrinth(box){
     $('[data-lab-stand]',box).textContent=`${n} von ${wege.length} Wegen erkundet · ${st.schritte} ${st.schritte===1?'Schritt':'Schritte'}`;
     $$('[data-lab-weg]',box).forEach(bt=>{const k=+bt.dataset.labWeg,w=wege[k];bt.classList.toggle('geloest',erkundet(k));
       if(k===st.weg)bt.setAttribute('aria-current','true');else bt.removeAttribute('aria-current');
-      $('[data-status]',bt).innerHTML=erkundet(k)?`<span class="ms sm">${ERG[w.erg][1]}</span>${namen[w.erg]}`:st.tipp[w.id]?'Tipp abgegeben':'noch offen'});
-    $('[data-lab-fertig]',box).innerHTML=n===wege.length?`<div class="fb ok"><span class="ms sm">workspace_premium</span> <b>Mission erfüllt!</b> Du hast ${richtig} von ${n} Wegen richtig eingeschätzt. ${def.fertig?def.fertig(richtig,n):''}</div>`:'';
+      $('[data-status]',bt).innerHTML=erkundet(k)?`<span class="ms sm" aria-hidden="true">${ERG[w.erg][1]}</span>${namen[w.erg]}`:st.tipp[w.id]?'Tipp abgegeben':'noch offen'});
+    $('[data-lab-fertig]',box).innerHTML=n===wege.length?`<div class="fb ok"><span class="ms sm" aria-hidden="true">workspace_premium</span> <b>Mission erfüllt!</b> Du hast ${richtig} von ${n} Wegen richtig eingeschätzt. ${def.fertig?def.fertig(richtig,n):''}</div>`:'';
     sichern();
   }
 

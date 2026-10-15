@@ -25,9 +25,9 @@
 //               dashKopf, dashZeile(p, f), dashHinweis}
 // }
 // g = Spielstand eines Spielers {r, ph, decs, votes, ck, ch, chx, …}, t = Spielstand der Lehrkraft {r, ph, decs, …}
-import { $, $$, esc, store, bindPhoto } from './ui.js';
+import { $, $$, esc, store, bindPhoto, neuZeichnen } from './ui.js';
 import { connect } from './live.js';
-import { raum, normCode, qrSVG, linkZu } from './lernraum.js';
+import { raum, normCode, qrSVG, linkZu, fehlerZeigen, fehlerWeg } from './lernraum.js';
 
 export const OPTC={A:'var(--md-o-A);--on-oc:var(--md-on-o-A)',B:'var(--md-o-B);--on-oc:var(--md-on-o-B)',C:'var(--md-o-C);--on-oc:var(--md-on-o-C)'};
 const KEYS=['A','B','C'];
@@ -51,26 +51,37 @@ export function mountPlanspiel(app,spiel){
   const obs=new MutationObserver(()=>{if(!document.body.contains(app)){cleanup();obs.disconnect()}});obs.observe(document.body,{childList:true,subtree:true});
   const save=(k,v)=>store(spiel.speicher+'-'+k,v);
   const load=k=>store(spiel.speicher+'-'+k);
-  const top=()=>{const m=$('#modal');if(m&&!m.hidden)m.scrollTop=0;else window.scrollTo(0,0)};
-  const waiting=txt=>{app.innerHTML=`<div class="panel row"><span class="ms">hourglass_top</span><span>${txt}</span></div>`};
+  // Nach jedem Spielschritt: nach oben und Fokus auf die Überschrift des neuen Schritts (Tastatur, Screenreader).
+  // Live-Aktualisierungen lassen den Fokus, wo er ist (niemand wird beim Lesen oder Tippen gestört);
+  // nur wenn das fokussierte Element dabei wegfällt, springt er auf die Überschrift (neuZeichnen mit KOPF).
+  const KOPF='[data-fokus],h3:not(button h3):not(.hud h3)';
+  const fokus=sel=>{const z=(sel&&$(sel,app))||$(KOPF,app);if(z){if(!z.matches('button,input,a[href]'))z.tabIndex=-1;z.focus({preventScroll:true})}};
+  const oben=()=>{const m=$('#modal');if(m&&!m.hidden)m.scrollTop=0;else window.scrollTo(0,0)};
+  const top=()=>{oben();fokus()};
+  // springen: Der nächste Bildschirm bekommt den Fokus (nach Auswahl im Menü, auch wenn er erst nach dem Verbinden kommt)
+  let springen=false;const gesprungen=sel=>{if(springen){springen=false;oben();fokus(sel)}};
+  const waiting=txt=>{app.innerHTML=`<div class="panel row" role="status"><span class="ms" aria-hidden="true">hourglass_top</span><span>${txt}</span></div>`};
   const head=(R,h,size)=>`<div class="row"><span class="yr">${R.y}</span><h3${size?` style="font-size:${size}"`:''}>${h}</h3></div>`;
   const eventHead=(R,size)=>`<div class="row"><span class="yr">${R.y}</span><h3 style="font-size:${size}">${esc(R.t)}</h3><span class="tagx">${R.real?'echte Lage':'Szenario'}</span></div>`;
-  const nextLabel=r=>r<N-1?'Nächste Runde<span class="ms trail">arrow_forward</span>':'Zur Abschlussbilanz<span class="ms trail">arrow_forward</span>';
+  const nextLabel=r=>r<N-1?'Nächste Runde<span class="ms trail" aria-hidden="true">arrow_forward</span>':'Zur Abschlussbilanz<span class="ms trail" aria-hidden="true">arrow_forward</span>';
 
   /* ----- Startmenü ----- */
   function menu(){
     cleanup();
     const so=load('solo'),st=load('schueler'),lk=load('lk');
-    app.innerHTML=`<p class="task"><b>Worum geht’s?</b> ${spiel.einleitung}</p><div class="mode-cards">
-      <button class="mode-card" type="button" data-m="solo"><span class="ic"><span class="ms">person</span></span><span class="eyebrow">Einzelspiel</span><h3>Allein spielen</h3><p class="small muted">Du wählst eine Figur und entscheidest jede Runde selbst, was die Politik tut. Du spielst in deinem Tempo, kannst jederzeit unterbrechen und später weiterspielen.</p>${so&&so.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===so.fig)?.n||'')}, Runde ${Math.min(N,(so.decs||[]).length+1)}</span>`:''}</button>
-      <button class="mode-card" type="button" data-m="lk"><span class="ic"><span class="ms">co_present</span></span><span class="eyebrow">Klassenspiel</span><h3>Lehrkraft (Beamer)</h3><p class="small muted">Du erstellst den Klassenraum mit Code, steuerst die Runden und siehst live, was die Klasse macht.</p>${lk&&lk.code?`<span class="small">Offener Raum: <b class="mono">${esc(lk.code)}</b>, Runde ${Math.min(N,(lk.decs||[]).length+1)}</span>`:''}</button>
-      <button class="mode-card" type="button" data-m="schueler"><span class="ic"><span class="ms">groups</span></span><span class="eyebrow">Klassenspiel</span><h3>Schüler (eigenes Gerät)</h3><p class="small muted">Mit dem Code vom Beamer beitreten, Figur spielen, auf dem Handy abstimmen.</p>${st&&st.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===st.fig)?.n||'')}${st.code?` in Raum <b class="mono">${esc(st.code)}</b>`:''}</span>`:''}</button></div>
+    app.innerHTML=`<p class="task" data-fokus><b>Worum geht’s?</b> ${spiel.einleitung}</p><div class="mode-cards">
+      <button class="mode-card" type="button" data-m="solo"><span class="ic"><span class="ms" aria-hidden="true">person</span></span><span class="eyebrow">Einzelspiel</span><h3>Allein spielen</h3><p class="small muted">Du wählst eine Figur und entscheidest jede Runde selbst, was die Politik tut. Du spielst in deinem Tempo, kannst jederzeit unterbrechen und später weiterspielen.</p>${so&&so.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===so.fig)?.n||'')}, Runde ${Math.min(N,(so.decs||[]).length+1)}</span>`:''}</button>
+      <button class="mode-card" type="button" data-m="lk"><span class="ic"><span class="ms" aria-hidden="true">co_present</span></span><span class="eyebrow">Klassenspiel</span><h3>Lehrkraft (Beamer)</h3><p class="small muted">Du erstellst den Klassenraum mit Code, steuerst die Runden und siehst live, was die Klasse macht.</p>${lk&&lk.code?`<span class="small">Offener Raum: <b class="mono">${esc(lk.code)}</b>, Runde ${Math.min(N,(lk.decs||[]).length+1)}</span>`:''}</button>
+      <button class="mode-card" type="button" data-m="schueler"><span class="ic"><span class="ms" aria-hidden="true">groups</span></span><span class="eyebrow">Klassenspiel</span><h3>Schüler (eigenes Gerät)</h3><p class="small muted">Mit dem Code vom Beamer beitreten, Figur spielen, auf dem Handy abstimmen.</p>${st&&st.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===st.fig)?.n||'')}${st.code?` in Raum <b class="mono">${esc(st.code)}</b>`:''}</span>`:''}</button></div>
       <div class="panel"><h3>${esc(spiel.figurenTitel||'Die Figuren')}</h3><div class="figs">${FIG.map(f=>`<div class="fig" style="cursor:default"><div class="fighead">${avatarHTML(f)}<div><div class="nm">${esc(f.n)}, ${f.a}</div><div class="sm">${esc(f.ort)}</div></div></div><div class="small">${esc(f.job)}</div></div>`).join('')}</div></div>`;
-    $$('[data-m]',app).forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;
+    gesprungen();
+    $$('[data-m]',app).forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;springen=true;
       if(m==='solo')return player('solo',null);
       waiting('Verbinde mit dem Live-Klassenraum …');
       connect().then(L=>{if(!document.body.contains(app))return;m==='lk'?teacherStart(L):player('schueler',L)})}));
   }
+
+  const zumMenu=()=>{springen=true;menu()};
 
   /* ----- Spieler (Einzel und Schüler) ----- */
   function player(mode,L){
@@ -114,31 +125,39 @@ export function mountPlanspiel(app,spiel){
     }
     function ended(msg){
       cleanup();g={};save(mode,g);raum.vergessen();
-      app.innerHTML=`<div class="panel stack" style="max-width:560px"><h3 class="title-l">Live-Spiel beendet</h3><p>${esc(msg)}</p><div class="cta"><button class="btn primary" type="button" id="rj"><span class="ms">login</span>Neu beitreten</button><button class="btn text" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button></div></div>`;
-      $('#rj',app).addEventListener('click',()=>player(mode,L));$('#bk',app).addEventListener('click',menu);
+      const warDrin=app.contains(document.activeElement);
+      app.innerHTML=`<div class="panel stack" style="max-width:560px"><h3 class="title-l">Live-Spiel beendet</h3><p>${esc(msg)}</p><div class="cta"><button class="btn primary" type="button" id="rj"><span class="ms" aria-hidden="true">login</span>Neu beitreten</button><button class="btn text" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div></div>`;
+      // Lag der Fokus im Spiel, springt er auf die Meldung; sonst bleibt er, wo er ist
+      if(warDrin)springen=true;gesprungen();
+      $('#rj',app).addEventListener('click',()=>{springen=true;player(mode,L)});$('#bk',app).addEventListener('click',zumMenu);
     }
     function joinScreen(err){
-      app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button></div>
+      app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
       <form class="panel stack" id="jf" style="max-width:520px" novalidate><h3 class="title-l">Klassenraum beitreten</h3>
       <p class="small muted">Gib den Code vom Beamer ein und wähle einen Spitznamen. Bitte nicht deinen vollen echten Namen.</p>
       <div class="ctrl"><label for="jc">Code</label><input id="jc" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(g.code||'')}" style="font-family:var(--mono);font-size:1.5rem;letter-spacing:.2em;text-transform:uppercase"></div>
       <div class="ctrl"><label for="jn">Spitzname</label><input id="jn" type="text" maxlength="20" autocomplete="off" value="${esc(g.nick||'')}"></div>
-      <div class="fb bad" id="jerr" ${err?'':'hidden'}>${esc(err||'')}</div>
-      <div class="cta"><button class="btn primary" type="submit" id="jgo"><span class="ms">login</span>Weiter zur Figurenwahl</button></div></form>`;
-      $('#bk',app).addEventListener('click',menu);
+      <div class="fb bad" id="jerr" role="alert" ${err?'':'hidden'}>${esc(err||'')}</div>
+      <div class="cta"><button class="btn primary" type="submit" id="jgo"><span class="ms" aria-hidden="true">login</span>Weiter zur Figurenwahl</button></div></form>`;
+      $('#bk',app).addEventListener('click',zumMenu);
+      const felder={code:'#jc',nick:'#jn'},jerr=$('#jerr',app);
+      Object.values(felder).forEach(sel=>$(sel,app).addEventListener('input',e=>e.target.removeAttribute('aria-invalid')));
       $('#jf',app).addEventListener('submit',async e=>{e.preventDefault();
-        const b=$('#jgo',app);b.disabled=true;let room;
+        const b=$('#jgo',app);b.disabled=true;fehlerWeg(app,jerr,felder);let room;
         try{room=await raum.beitreten($('#jc',app).value,$('#jn',app).value)}
-        catch(err){b.disabled=false;const el=$('#jerr',app);if(err.html)el.innerHTML=err.message;else el.textContent=err.message;el.hidden=false;return}
+        catch(err){b.disabled=false;fehlerZeigen(app,jerr,err,felder);return}
         const rs=raum.sitzung();
-        g={code:rs.code,nick:rs.nick,joined:true,gameId:room.gameId};save(mode,g);pickFig();
+        g={code:rs.code,nick:rs.nick,joined:true,gameId:room.gameId};save(mode,g);springen=true;pickFig();
       });
+      // Nach der Auswahl im Menü direkt ins Feld: mit Code aus dem QR-Link in den Spitznamen
+      gesprungen(g.code?'#jn':'#jc');
     }
     function pickFig(err){
-      app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button><b>Wähle deine Figur</b>${mode==='schueler'?'<span class="small muted">Nimm die Figur, die deine Lehrkraft dir zuteilt.</span>':''}</div>
-      ${err?`<div class="fb bad">${esc(err)}</div>`:''}
+      app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button><h3 class="title-m">Wähle deine Figur</h3>${mode==='schueler'?'<span class="small muted">Nimm die Figur, die deine Lehrkraft dir zuteilt.</span>':''}</div>
+      ${err?`<div class="fb bad" role="alert">${esc(err)}</div>`:''}
       <div class="figs">${FIG.map(f=>`<button class="fig" type="button" data-f="${f.id}"><div class="fighead">${avatarHTML(f,true)}<div><div class="nm">${esc(f.n)}, ${f.a}</div><div class="sm">${esc(f.ort)}</div></div></div><div class="small">${esc(f.job)}</div>${spiel.figurInfo(f)}</button>`).join('')}</div>`;
-      $('#bk',app).addEventListener('click',menu);
+      $('#bk',app).addEventListener('click',zumMenu);
+      gesprungen();
       $$('[data-f]',app).forEach(b=>b.addEventListener('click',async()=>{
         const keep={code:g.code,nick:g.nick,joined:g.joined,gameId:g.gameId||null};
         const fig=b.dataset.f;
@@ -151,7 +170,7 @@ export function mountPlanspiel(app,spiel){
           }catch(e){console.warn(e);return pickFig('Beitreten hat nicht geklappt. Ist der Raum noch offen? Frag deine Lehrkraft.')}
           keep.joined=true;
         }
-        g=Object.assign(keep,{fig,decs:[],ch:[],chx:[],ck:[],votes:[],r:0,ph:'event'});save(mode,g);lastSent='';player(mode,L);
+        g=Object.assign(keep,{fig,decs:[],ch:[],chx:[],ck:[],votes:[],r:0,ph:'event'});save(mode,g);lastSent='';springen=true;player(mode,L);
       }));
     }
     function hud(f){
@@ -159,7 +178,7 @@ export function mountPlanspiel(app,spiel){
         <div><div class="k">Runde</div><div class="v">${Math.min(N,g.r+1)}/${N}</div></div>
         ${spiel.hudWerte(f,g)}
         ${mode==='schueler'?(live?`<div class="small"><span class="live-dot ${liveOn?'':'off'}"></span>${liveOn?`Live in Raum <b class="mono">${esc(g.code)}</b> als ${esc(g.nick)}`:'Verbinde …'}</div>`:`<div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`):''}
-        <span style="flex:1"></span>${live?'<button class="btn text small" type="button" id="leave"><span class="ms">logout</span>Raum verlassen</button>':''}<button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button></div>
+        <span style="flex:1"></span>${live?'<button class="btn text small" type="button" id="leave"><span class="ms" aria-hidden="true">logout</span>Raum verlassen</button>':''}<button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
         <div class="fb amb" id="leave-q" hidden>Raum wirklich verlassen? Dein Spielstand in diesem Raum wird gelöscht. <button class="btn small primary" type="button" id="leave-y">Verlassen</button> <button class="btn small text" type="button" id="leave-n">Abbrechen</button></div>`;
     }
     function render(){
@@ -172,32 +191,32 @@ export function mountPlanspiel(app,spiel){
       if(g.ph==='event'){
         h+=`${eventHead(R,'1.3rem')}
         ${spiel.ereignis(f,g)}
-        <div class="cta"><button class="btn primary" type="button" id="go">Zur Abstimmung<span class="ms trail">arrow_forward</span></button></div>`;
+        <div class="cta"><button class="btn primary" type="button" id="go">Zur Abstimmung<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
       }else if(g.ph==='vote'){
         h+=`${head(R,esc(R.q))}
         <p class="small muted">${mode==='solo'?'Du entscheidest. Deine Wahl wird zum Beschluss.':'Stimme aus Sicht deiner Figur ab.'}</p>
         <div class="opts">${R.opts.map(o=>`<button class="opt" type="button" data-o="${o.k}" style="--oc:${OPTC[o.k]}"><span class="lt"><span class="letter">${o.k}</span><b>${esc(o.t)}</b></span><span class="small">${esc(o.d)}</span>${spiel.optionWirkung(f,g,o)}</button>`).join('')}</div>`;
       }else if(g.ph==='card'){
         const o=R.opts.find(x=>x.k===g.vote);
-        h+=`<div class="stimmkarte" style="--oc:${OPTC[g.vote]}"><b>${g.vote}</b><span>${esc(o.t)}</span><span class="small">${esc(f.n)} stimmt dafür</span></div>
+        h+=`<div class="stimmkarte" data-fokus style="--oc:${OPTC[g.vote]}"><b>${g.vote}</b><span>${esc(o.t)}</span><span class="small">${esc(f.n)} stimmt dafür</span></div>
         <p class="small muted">${liveOn?'Deine Stimme ist beim Beamer angekommen.':'Halte die Karte hoch, damit deine Lehrkraft zählen kann.'}</p>
-        <div class="cta"><button class="btn" type="button" id="schere"><span class="ms">undo</span>Schere – Stimme ändern</button><button class="btn primary" type="button" id="go">Weiter: Beschluss abwarten<span class="ms trail">arrow_forward</span></button></div>`;
+        <div class="cta"><button class="btn" type="button" id="schere"><span class="ms" aria-hidden="true">undo</span>Schere – Stimme ändern</button><button class="btn primary" type="button" id="go">Weiter: Beschluss abwarten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
       }else if(g.ph==='wait'){
         h+=`<div class="panel stack"><h3>Welchen Beschluss hat die Klasse gefasst?</h3>
         <p class="small muted">${liveOn?'Sobald deine Lehrkraft den Beschluss verkündet, geht es automatisch weiter.':'Deine Lehrkraft verkündet den Beschluss. Tippe den Buchstaben an:'}</p>
-        ${liveOn?'<div class="row"><span class="ms">hourglass_top</span><span>Warte auf den Beschluss …</span></div>':`<div class="choice">${R.opts.map(o=>`<button type="button" data-d="${o.k}" style="font-weight:700">${o.k} – ${esc(o.t)}</button>`).join('')}</div>
+        ${liveOn?'<div class="row"><span class="ms" aria-hidden="true">hourglass_top</span><span>Warte auf den Beschluss …</span></div>':`<div class="choice">${R.opts.map(o=>`<button type="button" data-d="${o.k}" style="font-weight:700">${o.k} – ${esc(o.t)}</button>`).join('')}</div>
         <details><summary class="small">Runde verpasst? Klassencode eingeben</summary><div class="row" style="margin-top:6px"><input id="kc" type="text" maxlength="${N}" placeholder="z. B. BAC" aria-label="Klassencode" style="width:8em;text-transform:uppercase"><button class="btn small" type="button" id="kcgo">Übernehmen</button></div></details>`}</div>`;
       }else if(g.ph==='result'){
         const o=R.opts.find(x=>x.k===g.decs[g.r]);
         h+=`<div class="row"><span class="yr">${R.y}</span><span class="letter" style="--oc:${OPTC[o.k]}">${o.k}</span><h3>Beschluss: ${esc(o.t)}</h3></div>
         ${spiel.ergebnis(f,g)}
-        <div class="cta"><button class="btn primary" type="button" id="go">Weiter: Fachbegriff-Check<span class="ms trail">arrow_forward</span></button></div>`;
+        <div class="cta"><button class="btn primary" type="button" id="go">Weiter: Fachbegriff-Check<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
       }else if(g.ph==='check'){
         const o=R.opts.find(x=>x.k===g.decs[g.r]);const C=spiel.check(g.r,o);const ops=C.optionen;const a=(g.ck||[])[g.r];
         h+=`${head(R,'Fachbegriff-Check')}<div class="panel stack">
         <p><b>${esc(C.frage)}</b></p>
         <div class="choice" style="flex-direction:column">${ops.map((x,i)=>`<button type="button" data-k="${i}" style="text-align:left" class="${a!=null?(x.ok?'right':(a===i?'wrong':'')):''}">${esc(x.txt)}</button>`).join('')}</div>
-        ${a!=null?`<div class="fb ${ops[a].ok?'ok':'amb'}"><b>${ops[a].ok?'Richtig!':'Nicht ganz.'}</b> ${esc(C.warum)}</div><div class="cta"><button class="btn primary" type="button" id="go">Weiter: private Entscheidung<span class="ms trail">arrow_forward</span></button></div>`:''}</div>`;
+        ${a!=null?`<div class="fb ${ops[a].ok?'ok':'amb'}"><b>${ops[a].ok?'Richtig!':'Nicht ganz.'}</b> ${esc(C.warum)}</div><div class="cta"><button class="btn primary" type="button" id="go">Weiter: private Entscheidung<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`:''}</div>`;
       }else if(g.ph==='choice'){
         const C=R.choice;const picked=g.ch[g.r];const fb=picked!=null?privat.rueckmeldung(C.opts[picked],g.chx[g.r]):null;
         h+=`${head(R,'Deine private Entscheidung')}<div class="panel stack"><p><b>${esc(C.q)}</b></p>
@@ -206,10 +225,12 @@ export function mountPlanspiel(app,spiel){
         <div class="cta"><button class="btn primary" type="button" id="go">${nextLabel(g.r)}</button></div>`:''}</div>`;
       }else if(g.ph==='end'){
         h+=`${spiel.bilanz(f,g,!!live)}
-        ${live?'':`<div class="cta"><button class="btn" type="button" id="again"><span class="ms">refresh</span>Noch einmal mit anderen Beschlüssen</button><button class="btn" type="button" id="newfig">Andere Figur wählen</button></div>`}`;
+        ${live?'':`<div class="cta"><button class="btn" type="button" id="again"><span class="ms" aria-hidden="true">refresh</span>Noch einmal mit anderen Beschlüssen</button><button class="btn" type="button" id="newfig">Andere Figur wählen</button></div>`}`;
       }
-      app.innerHTML=h;bindPhoto(app);
-      $('#bk',app)?.addEventListener('click',()=>{cleanup();menu()});
+      // Live-Aktualisierungen ohne Änderung lassen die Seite stehen; sonst bleibt der Fokus auf demselben Knopf
+      if(!neuZeichnen(app,h,KOPF))return gesprungen();
+      bindPhoto(app);
+      $('#bk',app)?.addEventListener('click',()=>{cleanup();zumMenu()});
       if($('#leave',app)){
         $('#leave',app).addEventListener('click',()=>{$('#leave-q',app).hidden=false});
         $('#leave-n',app).addEventListener('click',()=>{$('#leave-q',app).hidden=true});
@@ -221,24 +242,25 @@ export function mountPlanspiel(app,spiel){
         g.vote=b.dataset.o;g.votes=g.votes||[];g.votes[g.r]=g.vote;
         if(mode==='solo'){g.decs[g.r]=g.vote;g.ph='result'}else g.ph='card';
         persist();render();top()}));
-      if(g.ph==='card'){$('#schere',app).addEventListener('click',()=>{g.ph='vote';persist();render()});go.addEventListener('click',()=>{g.ph=g.decs.length>g.r?'result':'wait';persist();render();top()})}
+      if(g.ph==='card'){$('#schere',app).addEventListener('click',()=>{g.ph='vote';persist();render();fokus()});go.addEventListener('click',()=>{g.ph=g.decs.length>g.r?'result':'wait';persist();render();top()})}
       if(g.ph==='wait'&&!liveOn){
         $$('[data-d]',app).forEach(b=>b.addEventListener('click',()=>{g.decs[g.r]=b.dataset.d;g.decs=g.decs.slice(0,g.r+1);g.ph='result';persist();render();top()}));
         $('#kcgo',app).addEventListener('click',()=>{const c=($('#kc',app).value||'').toUpperCase().split('').filter(x=>KEYS.includes(x)).slice(0,N).join('');if(!c)return;g.decs=c.split('');g.r=Math.min(c.length-1,N-1);g.ph='result';g.ch=g.ch.slice(0,g.r);g.chx=g.chx.slice(0,g.r);persist();render();top()});
       }
       if(g.ph==='result')go.addEventListener('click',()=>{g.ph='check';persist();render();top()});
       if(g.ph==='check'){
-        $$('[data-k]',app).forEach(b=>b.addEventListener('click',()=>{g.ck=g.ck||[];if(g.ck[g.r]!=null)return;g.ck[g.r]=+b.dataset.k;persist();render()}));
+        $$('[data-k]',app).forEach(b=>b.addEventListener('click',()=>{g.ck=g.ck||[];if(g.ck[g.r]!=null)return;g.ck[g.r]=+b.dataset.k;persist();render();fokus('.fb:not([hidden])')}));
         go?.addEventListener('click',()=>{g.ph='choice';persist();render();top()});
       }
       if(g.ph==='choice'){
-        $$('[data-c]',app).forEach(b=>b.addEventListener('click',()=>{if(g.ch[g.r]!=null)return;const i=+b.dataset.c;g.ch[g.r]=i;g.chx[g.r]=privat.wurf(R.choice.opts[i]);persist();render()}));
+        $$('[data-c]',app).forEach(b=>b.addEventListener('click',()=>{if(g.ch[g.r]!=null)return;const i=+b.dataset.c;g.ch[g.r]=i;g.chx[g.r]=privat.wurf(R.choice.opts[i]);persist();render();fokus('.fb:not([hidden])')}));
         go?.addEventListener('click',()=>{g.r++;g.vote=null;g.ph=g.r>=N?'end':'event';persist();render();top()});
       }
       if(g.ph==='end'&&!live){
         $('#again',app).addEventListener('click',()=>{g.decs=[];g.ch=[];g.chx=[];g.ck=[];g.votes=[];g.r=0;g.ph='event';persist();render();top()});
-        $('#newfig',app).addEventListener('click',()=>{g={gameId:g.gameId};persist();player(mode,L)});
+        $('#newfig',app).addEventListener('click',()=>{g={gameId:g.gameId};persist();springen=true;player(mode,L)});
       }
+      gesprungen();
     }
     render();pushMe();
   }
@@ -253,7 +275,7 @@ export function mountPlanspiel(app,spiel){
     const rs0=raum.sitzung();t.code=rs0&&rs0.rolle==='lk'?rs0.code:null;
     const persist=()=>save('lk',t);persist();
     const anon=()=>raum.beamer();
-    let players=[],roomOk=false,roomErr='',busy=false,playersUnsub=null,confirmClose=false;
+    let players=[],roomOk=false,roomErr='',busy=false,playersUnsub=null,confirmClose=false,confirmReset=false;
     const pushState=()=>{if(live&&t.code&&roomOk)live.updateRoom(t.code,{round:t.r,phase:t.ph,decisions:t.decs.slice(),gameId:t.gameId}).catch(e=>console.warn('Raum-Update',e))};
     async function attach(){
       if(!live||!t.code){render();return}
@@ -280,7 +302,7 @@ export function mountPlanspiel(app,spiel){
     const stepOf=p=>{const order=['event','vote','card','wait','result','check','choice'];return (p.r||0)*10+Math.max(0,order.indexOf(p.ph))+(p.ph==='end'?100:0)};
     function lobbyLiveHTML(){
       if(!live)return `<div class="fb neu"><b>Live-Modus nicht eingerichtet.</b> Das Planspiel läuft mit Stimmkarten. Wie du den Live-Klassenraum einschaltest, steht in der README im GitHub-Projekt.</div>`;
-      if(!t.code||!roomOk)return `<div class="panel stack"><h3 class="title-l">Live-Klassenraum</h3><p>Erstelle einen Raum. Die Schüler treten mit Code oder QR-Code bei – ohne Konto.</p>${roomErr?`<div class="fb bad">${esc(roomErr)}</div>`:''}<div class="cta"><button class="btn primary" type="button" id="mkroom" ${busy?'disabled':''}><span class="ms">add</span>Live-Klassenraum erstellen</button></div></div>`;
+      if(!t.code||!roomOk)return `<div class="panel stack"><h3 class="title-l">Live-Klassenraum</h3><p>Erstelle einen Raum. Die Schüler treten mit Code oder QR-Code bei – ohne Konto.</p>${roomErr?`<div class="fb bad">${esc(roomErr)}</div>`:''}<div class="cta"><button class="btn primary" type="button" id="mkroom" ${busy?'disabled':''}><span class="ms" aria-hidden="true">add</span>Live-Klassenraum erstellen</button></div></div>`;
       const url=joinURL(t.code);const cnt={};players.forEach(p=>cnt[p.fig]=(cnt[p.fig]||0)+1);
       return `<div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code" style="font-size:clamp(2.5rem,7vw,4.5rem);letter-spacing:.15em;line-height:1.15;margin-top:4px;display:block">${esc(t.code)}</div>
         <p class="small">Seite öffnen → <b>Planspiel</b> → <b>Schüler</b> → Code eingeben. Oder QR-Code scannen.</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
@@ -289,7 +311,7 @@ export function mountPlanspiel(app,spiel){
     }
     function playersHTML(){
       if(!players.length)return '<p class="small muted">Noch niemand im Raum.</p>';
-      return `<div class="row" style="gap:8px">${players.map(p=>`<span class="pill neu" style="padding:4px 6px 4px 4px;gap:6px"><span class="avatar" style="width:24px;height:24px;border-radius:8px">${spiel.portrait(figOf(p))}</span>${label(p)}${!anon()?`<button class="icon-btn" type="button" data-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen" style="width:24px;height:24px"><span class="ms sm">close</span></button>`:''}</span>`).join('')}</div>`;
+      return `<div class="row" style="gap:8px">${players.map(p=>`<span class="pill neu" style="padding:4px 6px 4px 4px;gap:6px"><span class="avatar" style="width:24px;height:24px;border-radius:8px">${spiel.portrait(figOf(p))}</span>${label(p)}${!anon()?`<button class="icon-btn" type="button" data-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen" style="width:24px;height:24px"><span class="ms sm" aria-hidden="true">close</span></button>`:''}</span>`).join('')}</div>`;
     }
     function dashHTML(){
       if(!live||!t.code||!roomOk)return '';
@@ -317,27 +339,28 @@ export function mountPlanspiel(app,spiel){
       const liveOk=!!(live&&t.code&&roomOk);
       let h=`<div class="hud"><b>Klassenspiel · Lehrkraft</b><div><div class="k">Runde</div><div class="v">${Math.min(N,t.r+1)}/${N}</div></div>
         ${liveOk?`<div><div class="k">Raumcode</div><div class="v mono">${esc(t.code)}</div></div><div class="small"><span class="live-dot"></span>${players.length} live verbunden</div>`:`<div><div class="k">Klassencode</div><div class="v mono">${t.decs.join('')||'–'}</div></div><div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`}
-        <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${anon()}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms">restart_alt</span>Neues Spiel</button></div>
-        <div id="reset-q" class="fb amb" hidden>Spiel neu starten? Der Raum bleibt offen, alle Spielstände beginnen von vorn. <button class="btn small primary" type="button" id="reset-y">Ja, neu starten</button> <button class="btn small text" type="button" id="reset-n">Abbrechen</button></div>
+        <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${anon()}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms" aria-hidden="true">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms" aria-hidden="true">restart_alt</span>Neues Spiel</button></div>
+        <div id="reset-q" class="fb amb"${confirmReset?'':' hidden'}>Spiel neu starten? Der Raum bleibt offen, alle Spielstände beginnen von vorn. <button class="btn small primary" type="button" id="reset-y">Ja, neu starten</button> <button class="btn small text" type="button" id="reset-n">Abbrechen</button></div>
         ${confirmClose?`<div class="fb bad">Raum ${esc(t.code)} beenden? Alle Daten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="close-y" ${busy?'disabled':''}>Raum löschen</button> <button class="btn small text" type="button" id="close-n">Abbrechen</button></div>`:''}`;
       if(t.ph==='lobby'){
         h+=`${lobbyLiveHTML()}${dashHTML()}<div class="panel stack"><h3>So läuft eine Runde</h3><ol style="margin:0;padding-left:1.2em"><li>Ereignis am Beamer zeigen, die Schüler lesen auf dem Handy, was es für ihre Figur bedeutet.</li><li>Debatte aus Sicht der Figuren.</li><li>Abstimmung ${liveOk?'auf den Handys – die Stimmen erscheinen hier live':'per Stimmkarte'}, dann Beschluss verkünden.</li></ol>
-        <div class="cta"><button class="btn primary" type="button" id="go">Runde 1 starten<span class="ms trail">arrow_forward</span></button></div></div>`;
+        <div class="cta"><button class="btn primary" type="button" id="go">Runde 1 starten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div></div>`;
       }else if(t.ph==='event'){
         h+=`${eventHead(R,'1.5rem')}
         ${LK.ereignis(t)}
         ${dashHTML()}
-        <div class="cta"><button class="btn primary" type="button" id="go">Abstimmung starten<span class="ms trail">arrow_forward</span></button></div>`;
+        <div class="cta"><button class="btn primary" type="button" id="go">Abstimmung starten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
       }else if(t.ph==='vote'){
         const lv=liveOk?liveVotes():{A:0,B:0,C:0};
         const tot={A:t.tally.A+lv.A,B:t.tally.B+lv.B,C:t.tally.C+lv.C};
         const details=LK.abstimmungDetails?LK.abstimmungDetails(t):'';
+        const mx=Math.max(tot.A,tot.B,tot.C),win=KEYS.filter(k=>tot[k]===mx&&mx>0);
         h+=`${head(R,esc(R.q),'1.3rem')}
         <div class="opts">${R.opts.map(o=>`<div class="opt" style="--oc:${OPTC[o.k]};cursor:default"><span class="lt"><span class="letter">${o.k}</span><b>${esc(o.t)}</b></span><span class="small">${esc(o.d)}</span><span>${LK.optionInfo?LK.optionInfo(o):''}</span>
-          <div class="tally"><button class="icon-btn" type="button" data-dn="${o.k}" aria-label="Stimme weniger für ${o.k}"><span class="ms">remove</span></button><span class="cnt">${tot[o.k]}</span><button class="icon-btn" type="button" data-up="${o.k}" aria-label="Stimme mehr für ${o.k}" style="background:var(--md-secondary-container);color:var(--md-on-secondary-container)"><span class="ms">add</span></button>${liveOk?`<span class="small muted">davon live: ${lv[o.k]}</span>`:''}</div></div>`).join('')}</div>
+          <div class="tally"><button class="icon-btn" type="button" data-dn="${o.k}" aria-label="Stimme weniger für ${o.k}"><span class="ms" aria-hidden="true">remove</span></button><span class="cnt">${tot[o.k]}</span><button class="icon-btn" type="button" data-up="${o.k}" aria-label="Stimme mehr für ${o.k}" style="background:var(--md-secondary-container);color:var(--md-on-secondary-container)"><span class="ms" aria-hidden="true">add</span></button>${liveOk?`<span class="small muted">davon live: ${lv[o.k]}</span>`:''}</div></div>`).join('')}</div>
         ${dashHTML()}
         ${details?`<details class="panel" ${t.show?'open':''} id="who"><summary><b>Wer gewinnt, wer verliert?</b> <span class="small muted">(erst nach der Debatte aufklappen)</span></summary>${details}</details>`:''}
-        <div class="cta" id="dec"></div>`;
+        <div class="cta" id="dec">${!mx?'<span class="small muted">Noch keine Stimmen.</span>':win.length===1?`<button class="btn primary" type="button" data-win="${win[0]}">Beschluss verkünden: ${win[0]}<span class="ms trail" aria-hidden="true">arrow_forward</span></button>`:`<span class="small">Gleichstand – du entscheidest:</span>${win.map(k=>`<button class="btn primary" type="button" data-win="${k}">${k}</button>`).join('')}`}</div>`;
       }else if(t.ph==='result'){
         const o=R.opts.find(x=>x.k===t.decs[t.r]);
         const hinweis=liveOk?'':`<div class="fb neu" style="margin-top:8px">Die Schüler tippen jetzt <b>${o.k}</b> ein. Wer eine Runde verpasst hat, gibt den Klassencode ein: <span class="code">${t.decs.join('')}</span></div>`;
@@ -350,15 +373,17 @@ export function mountPlanspiel(app,spiel){
         ${dashHTML()}
         ${LK.auswertung||''}`;
       }
-      app.innerHTML=h;bindPhoto(app);
-      $('#bk',app).addEventListener('click',()=>{cleanup();menu()});
-      $('#reset',app).addEventListener('click',()=>{$('#reset-q',app).hidden=false});
-      $('#reset-n',app).addEventListener('click',()=>{$('#reset-q',app).hidden=true});
-      $('#reset-y',app).addEventListener('click',()=>{t=newT();persist();pushState();render()});
+      // Jede Teilnehmeränderung ruft render() auf: nur neu zeichnen, wenn sich etwas geändert hat, Fokus und offene Details bleiben
+      if(!neuZeichnen(app,h,KOPF))return gesprungen();
+      bindPhoto(app);
+      $('#bk',app).addEventListener('click',()=>{cleanup();zumMenu()});
+      $('#reset',app).addEventListener('click',()=>{confirmReset=true;render()});
+      $('#reset-n',app).addEventListener('click',()=>{confirmReset=false;render();$('#reset',app).focus()});
+      $('#reset-y',app).addEventListener('click',()=>{t=newT();confirmReset=false;persist();pushState();render();top()});
       $('#mkroom',app)?.addEventListener('click',createRoom);
       $('#anon',app)?.addEventListener('click',()=>raum.setBeamer(!anon()));
       $('#close',app)?.addEventListener('click',()=>{confirmClose=true;render()});
-      $('#close-n',app)?.addEventListener('click',()=>{confirmClose=false;render()});
+      $('#close-n',app)?.addEventListener('click',()=>{confirmClose=false;render();$('#close',app)?.focus()});
       $('#close-y',app)?.addEventListener('click',closeRoom);
       $$('[data-kick]',app).forEach(b=>b.addEventListener('click',()=>live.kick(t.code,b.dataset.kick).catch(e=>console.warn(e))));
       const go=$('#go',app);
@@ -368,14 +393,10 @@ export function mountPlanspiel(app,spiel){
         $$('[data-up]',app).forEach(b=>b.addEventListener('click',()=>{t.tally[b.dataset.up]++;persist();render()}));
         $$('[data-dn]',app).forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.dn;t.tally[k]=Math.max(0,t.tally[k]-1);persist();render()}));
         $('#who',app)?.addEventListener('toggle',e=>{t.show=e.target.open;persist()});
-        const lv=liveOk?liveVotes():{A:0,B:0,C:0};
-        const tot={A:t.tally.A+lv.A,B:t.tally.B+lv.B,C:t.tally.C+lv.C};
-        const mx=Math.max(tot.A,tot.B,tot.C),win=KEYS.filter(k=>tot[k]===mx&&mx>0);
-        const dec=$('#dec',app);
-        dec.innerHTML=!mx?'<span class="small muted">Noch keine Stimmen.</span>':win.length===1?`<button class="btn primary" type="button" data-win="${win[0]}">Beschluss verkünden: ${win[0]}<span class="ms trail">arrow_forward</span></button>`:`<span class="small">Gleichstand – du entscheidest:</span>${win.map(k=>`<button class="btn primary" type="button" data-win="${k}">${k}</button>`).join('')}`;
-        $$('[data-win]',dec).forEach(b=>b.addEventListener('click',()=>{t.decs[t.r]=b.dataset.win;t.decs=t.decs.slice(0,t.r+1);t.ph='result';persist();pushState();render();top()}));
+        $$('[data-win]',app).forEach(b=>b.addEventListener('click',()=>{t.decs[t.r]=b.dataset.win;t.decs=t.decs.slice(0,t.r+1);t.ph='result';persist();pushState();render();top()}));
       }
       if(t.ph==='result')go.addEventListener('click',()=>{t.r++;t.ph=t.r>=N?'end':'event';persist();pushState();render();top()});
+      gesprungen();
     }
     // Lernraum im Dashboard geöffnet oder beendet, Beamer-Modus umgeschaltet
     unsub.push(raum.on(art=>{
@@ -389,5 +410,6 @@ export function mountPlanspiel(app,spiel){
   }
 
   menu();
-  if(pendingJoin){waiting('Verbinde mit dem Klassenraum …');connect().then(L=>{if(document.body.contains(app))player('schueler',L)})}
+  // Beitritt per QR-Link: wie im Lernraum gleich mit dem Cursor im Feld Spitzname
+  if(pendingJoin){springen=true;waiting('Verbinde mit dem Klassenraum …');connect().then(L=>{if(document.body.contains(app))player('schueler',L)})}
 }

@@ -248,7 +248,7 @@ function figTrack(f,decs,ch,chx){
 }
 const eur=(n,d=0)=>fmt(n,d)+' €';
 const sgnE=n=>(n>0?'+':n<0?'−':'±')+fmt(Math.abs(Math.round(n)),0)+' €';
-function postHTML(R){return `<div class="post"><div class="who"><span class="av"><span class="ms sm">person</span></span><span>@${esc(R.post.h)}</span></div><div>${esc(R.post.txt)}</div><div class="meta"><span class="ms sm">favorite</span>${R.post.likes} · fiktiver Beitrag</div></div>`}
+function postHTML(R){return `<div class="post"><div class="who"><span class="av"><span class="ms sm" aria-hidden="true">person</span></span><span>@${esc(R.post.h)}</span></div><div>${esc(R.post.txt)}</div><div class="meta"><span class="ms sm" aria-hidden="true">favorite</span>${R.post.likes}<span class="sr-only"> Likes</span> · fiktiver Beitrag</div></div>`}
 function hexPillsHTML(h){return ORDER.filter(k=>h&&h[k]).map(k=>`<span class="pill ${h[k]>0?'ok':'bad'}">${G[k].short} ${h[k]>0?'+':'−'}${Math.abs(h[k])}</span>`).join(' ')}
 function partsHTML(m){if(!m.parts.length)return '<p class="small muted">Keine Veränderung gegenüber dem Start.</p>';
   return `<p class="small muted">Tippe auf eine Zeile: Warum ändert sich das?</p><div class="tbl-wrap"><table><tbody>${m.parts.slice().sort((a,b)=>a[1]-b[1]).map(([l,v,w])=>`<tr><td><details class="why"><summary>${esc(l)}</summary><p class="small">${esc(w)}</p></details></td><td class="r num ${v>0?'pos':'neg'}" style="vertical-align:top">${sgnE(v)}</td></tr>`).join('')}<tr><td><b>Summe pro Monat</b></td><td class="r num ${m.sum>=0?'pos':'neg'}"><b>${sgnE(m.sum)}</b></td></tr></tbody></table></div>`}
@@ -331,7 +331,7 @@ export const SPIEL={
         <div class="grid2"><div class="stack">${photo(t.r)}${postHTML(R)}<p style="font-size:1.1rem">${esc(R.txt)}</p><p class="small">Auswirkung aufs Sechseck: ${hexPillsHTML(R.ops.hex)}</p></div>
         <div class="panel"><h3>So trifft es die Figuren</h3>${figsTableHTML(t.decs.concat(['A']),t.r,false)}</div></div>`;
     },
-    optionInfo:o=>`${hexPillsHTML(o.ops.hex)}${o.ops.debt>0?' <span class="pill amb"><span class="ms">trending_up</span>Schulden</span>':''}`,
+    optionInfo:o=>`${hexPillsHTML(o.ops.hex)}${o.ops.debt>0?' <span class="pill amb"><span class="ms" aria-hidden="true">trending_up</span>Schulden</span>':''}`,
     abstimmungDetails:t=>optMatrixHTML(t.decs,t.r),
     ergebnis(t,hinweis){
       const R=ROUNDS[t.r],rd=simulate(t.decs)[t.r],o=R.opts.find(x=>x.k===rd.d);

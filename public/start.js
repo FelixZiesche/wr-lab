@@ -4,16 +4,18 @@ import { THEMEN } from './themen.js';
 
 const STUFEN = [9, 10, 11, 12];
 
-const karte = t => `<a class="topic" href="${t.id}/">
+// Barrierefrei als Karte mit einem Link: Der Link sitzt im Titel (kurzer Name, Beschreibung per aria-describedby)
+// und deckt über ::after die ganze Karte ab, damit sie überall antippbar bleibt (m3.css .topic-link).
+const karte = t => `<article class="topic">
   <figure class="topic-img"><img src="${t.bild}" alt="${esc(t.alt)}" loading="lazy"><figcaption>Foto: ${esc(t.foto)}</figcaption></figure>
   <div class="topic-body">
     <span class="eyebrow">${esc(t.bereich)}</span>
-    <h4 class="title-l">${esc(t.titel)}</h4>
-    <p class="body-m muted">${esc(t.text)}</p>
+    <h4 class="title-l"><a class="topic-link" href="${t.id}/" aria-describedby="thema-${t.id}-d">${esc(t.titel)}</a></h4>
+    <p class="body-m muted" id="thema-${t.id}-d">${esc(t.text)}</p>
     <ul class="topic-tags">${t.stichworte.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
-    <span class="go">Thema öffnen<span class="ms sm">arrow_forward</span></span>
+    <span class="go" aria-hidden="true">Thema öffnen<span class="ms sm">arrow_forward</span></span>
   </div>
-</a>`;
+</article>`;
 
 document.getElementById('themen').innerHTML = STUFEN.map(k => {
   const liste = THEMEN.filter(t => t.stufe === k);

@@ -39,7 +39,7 @@ test('Alle Werkstätten öffnen sich ohne Fehler', async ({ page }) => {
     expect(ids).toEqual(tools);
     for (const id of tools) {
       const card = page.locator(`#view [data-tool="${id}"]`);
-      const title = (await card.locator('h4').textContent()).trim();
+      const title = (await card.locator('h3').textContent()).trim();
       await card.click();
       await expect(page.locator('#modal')).toBeVisible();
       await expect(page.locator('#modal-title')).toHaveText(title);
@@ -48,6 +48,32 @@ test('Alle Werkstätten öffnen sich ohne Fehler', async ({ page }) => {
       await expect(page.locator('#modal')).toBeHidden();
     }
   }
+});
+
+test('Barrierefreiheit: Phillips-Jahresleiste und Ecken des Sechsecks per Tastatur', async ({ page }) => {
+  await page.goto(SECHSECK + '#phillips');
+  // Jahresleiste statt winziger Punkte, Ansage über role=status, Fokus bleibt auf dem Knopf
+  const jahr = page.getByRole('group', { name: 'Jahr wählen' }).getByRole('button', { name: '2022' });
+  await jahr.focus();
+  await page.keyboard.press(' ');
+  await expect(jahr).toHaveAttribute('aria-pressed', 'true');
+  await expect(jahr).toBeFocused();
+  await expect(page.getByRole('status').filter({ hasText: 'Energiepreisschock' })).toBeVisible();
+  // Punkt im Diagramm antippen markiert dasselbe Jahr in der Leiste
+  await page.locator('#ph-svg .hexcorner[data-i="0"]').click();
+  await expect(page.locator('#ph-info')).toContainText('2015');
+  await expect(page.locator('#ph-jahre button[data-i="0"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(jahr).toHaveAttribute('aria-pressed', 'false');
+  await page.keyboard.press('Escape');
+
+  // Ecken tragen den sichtbaren Kurznamen im Namen, der Fokus bleibt nach dem Neuzeichnen auf der Ecke
+  await page.goto('about:blank');
+  await page.goto(SECHSECK + '#beziehungen');
+  const ecke = page.getByRole('button', { name: 'U Umwelt auswählen' });
+  await ecke.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#zb-svg .hexcorner[data-k="U"]')).toBeFocused();
+  await expect(page.locator('#zb-svg .hexcorner[data-k="U"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('Erkenntnis aufdecken, Wissen sammeln, Glossar und große Schrift', async ({ page }) => {

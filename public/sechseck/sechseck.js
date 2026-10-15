@@ -108,7 +108,7 @@ function wrapText(str,max){const w=str.split(' ');const out=[];let cur='';w.forE
 function heroHex(){
   const W=660,H=480,cx=330,cy=240,r=145;
   const p=hexPts(cx,cy,r);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Magisches Sechseck mit sechs Zielen">`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Magisches Sechseck mit sechs Zielen">`;
   s+=`<polygon points="${ptsStr(hexPts(cx,cy,r))}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.5"/>`;
   for(let i=0;i<6;i++)for(let j=i+2;j<6;j++){ if(i===0&&j===5)continue; s+=`<line x1="${p[i][0]}" y1="${p[i][1]}" x2="${p[j][0]}" y2="${p[j][1]}" class="s-line" stroke-width="1" stroke-dasharray="3 5"/>`}
   s+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" class="t-fg" font-size="21" font-weight="700">Magisches</text><text x="${cx}" y="${cy+18}" text-anchor="middle" class="t-fg" font-size="21" font-weight="700">Sechseck</text>`;
@@ -120,11 +120,11 @@ function heroHex(){
     const sub=wrapText(G[k].name,24); if(G[k].since==='Erweiterung') sub.push('(Erweiterung)');
     const n=1+sub.length, lh=15;
     const top= i===0 ? lp[1]-(n-1)*lh-2 : i===3 ? lp[1]+12 : lp[1]-((n-1)*lh)/2+5;
-    s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-label="${esc(G[k].name)}: Steckbrief öffnen">
+    s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-label="${k} ${esc(G[k].short)} – ${esc(G[k].name)}: Steckbrief öffnen">
       <circle class="dot" cx="${x}" cy="${y}" r="17" fill="${gc(k)}" stroke="var(--surface)" stroke-width="3"/>
       <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="14" font-weight="700">${k}</text>
       <text x="${lx}" y="${top}" text-anchor="${anchor}" fill="${gc(k)}" font-size="16" font-weight="700">${esc(G[k].short)}</text>
-      ${sub.map((ln,li)=>`<text x="${lx}" y="${top+(li+1)*lh}" text-anchor="${anchor}" class="t-mu" font-size="12">${esc(ln)}</text>`).join('')}
+      ${sub.map((ln,li)=>`<text x="${lx}" y="${top+(li+1)*lh}" text-anchor="${anchor}" class="t-mu" font-size="12">${esc(ln)}</text>`).join(' ')}
     </g>`;
   });
   s+='</svg>';
@@ -199,19 +199,19 @@ init(root){
   const draw=()=>{
     const W=500,H=380,cx=250,cy=188,r=120,p=hexPts(cx,cy,r);
     const vis=six?ORDER:['P','B','W','A'];
-    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${six?'Magisches Sechseck':'Magisches Viereck'}">`;
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${six?'Magisches Sechseck':'Magisches Viereck'}">`;
     const poly=ORDER.map((k,i)=>vis.includes(k)?p[i]:null).filter(Boolean);
     s+=`<polygon points="${ptsStr(poly)}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.5" style="transition:all .4s"/>`;
     ORDER.forEach((k,i)=>{
       const on=vis.includes(k);const [x,y]=p[i];const lp=hexPts(cx,cy,r+28)[i];const a=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');
-      s+=`<g class="hexcorner" tabindex="${on?0:-1}" role="button" data-k="${k}" opacity="${on?1:.28}" aria-label="${esc(G[k].name)}">
+      s+=`<g class="hexcorner" tabindex="${on?0:-1}" role="button" data-k="${k}" opacity="${on?1:.28}" aria-pressed="${sel===k}"${on?'':' aria-disabled="true"'} aria-label="${k} ${esc(G[k].short)} – ${esc(G[k].name)}">
         <circle class="dot" cx="${x}" cy="${y}" r="${sel===k?19:15}" fill="${on?gc(k):'none'}" stroke="${on?'var(--surface)':'var(--muted)'}" stroke-width="3" ${on?'':'stroke-dasharray="4 3"'}/>
         <text x="${x}" y="${y+5}" text-anchor="middle" fill="${on?'var(--md-on-g-'+k+')':'var(--muted)'}" font-size="13" font-weight="700">${k}</text>
         <text x="${lp[0]}" y="${lp[1]+(i===0?-4:i===3?14:5)}" text-anchor="${a}" fill="${on?gc(k):'var(--muted)'}" font-size="14" font-weight="700">${G[k].short}</text></g>`;
     });
     s+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" class="t-fg" font-size="17" font-weight="700">${six?'6 Ziele':'4 Ziele'}</text></svg>`;
     $('#gl-svg',root).innerHTML=s;
-    $$('.hexcorner',root).forEach(g=>{const f=()=>{if(!six&&['U','V'].includes(g.dataset.k))return;sel=g.dataset.k;draw()};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})});
+    $$('.hexcorner',root).forEach(g=>{const f=()=>{if(!six&&['U','V'].includes(g.dataset.k))return;sel=g.dataset.k;draw()};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();$(`#gl-svg .hexcorner[data-k="${g.dataset.k}"]`,root)?.focus()}})}); // neu gezeichnet: Fokus zurück auf die Ecke
     $('#gl-sb',root).innerHTML=steckbriefHTML(sel);
     $('#gl-h',root).textContent=six?'Heute: Das magische Sechseck':'1967: Das magische Viereck';
     $('#gl-toggle',root).textContent=six?'Zurück zum Viereck':'Zum Sechseck erweitern';
@@ -242,7 +242,7 @@ html(){return `
   <div class="panel"><h3>Unser Warenkorb <span class="small muted">(Beispielpreise – ersetzt sie durch eure!)</span></h3>
   <div class="tbl-wrap"><table><thead><tr><th>Gut</th><th class="r">Menge/Monat</th><th class="r">Preis 2025 (€)</th><th class="r">Preis 2026 (€)</th><th class="r">Änderung</th></tr></thead><tbody id="pr-body"></tbody></table></div>
   <p class="small muted" style="margin-top:6px">Tankfüllung: Super E10 im Monatsmittel September 2025 und September 2026 (ADAC). Seit dem 1. Oktober 2026 macht der Tankrabatt den Liter um bis zu 17 Cent billiger.</p>
-  <div class="row" style="margin-top:8px"><button class="btn small" id="pr-add" type="button"><span class="ms">add</span>Eigenes Gut</button><button class="btn small" id="pr-reset" type="button"><span class="ms">refresh</span>Beispielwerte laden</button></div></div>
+  <div class="row" style="margin-top:8px"><button class="btn small" id="pr-add" type="button"><span class="ms" aria-hidden="true">add</span>Eigenes Gut</button><button class="btn small" id="pr-reset" type="button"><span class="ms" aria-hidden="true">refresh</span>Beispielwerte laden</button></div></div>
   <div class="stack">
     <div class="panel"><p class="eyebrow">Euer Preisindex (2025 = 100)</p><div class="big-num" id="pr-idx">–</div>
     <p>Persönliche Inflationsrate: <b id="pr-rate" class="num">–</b></p>
@@ -677,17 +677,17 @@ init(root){
   const alle=()=>alleAuf&&raum.istLehrkraft(), offen=key=>seen.has(key)||alle();
   const draw=()=>{
     const W=520,H=400,cx=260,cy=200,r=136,p=hexPts(cx,cy,r);
-    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beziehungsnetz der sechs Ziele">`;
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Beziehungsnetz der sechs Ziele">`;
     s+=`<polygon points="${ptsStr(p)}" fill="none" class="s-line" stroke-width="1.5"/>`;
     Object.keys(REL).forEach(key=>{const [a,b]=key.split('-');const ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);const on=offen(key);
       s+=`<line x1="${p[ia][0]}" y1="${p[ia][1]}" x2="${p[ib][0]}" y2="${p[ib][1]}" stroke="${on?RELC[REL[key][0]][1]:'var(--line)'}" stroke-width="${on?4:1.5}" ${on?'':'stroke-dasharray="3 5"'} stroke-linecap="round"/>`});
     ORDER.forEach((k,i)=>{const [x,y]=p[i];const lp=hexPts(cx,cy,r+30)[i];const a=Math.abs(lp[0]-cx)<5?'middle':(lp[0]>cx?'start':'end');const sel=pick.includes(k);
-      s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-pressed="${sel}" aria-label="${G[k].short} auswählen"><circle class="dot" cx="${x}" cy="${y}" r="${sel?21:16}" fill="${gc(k)}" stroke="${sel?'var(--fg)':'var(--surface)'}" stroke-width="3"/>
+      s+=`<g class="hexcorner" tabindex="0" role="button" data-k="${k}" aria-pressed="${sel}" aria-label="${k} ${G[k].short} auswählen"><circle class="dot" cx="${x}" cy="${y}" r="${sel?21:16}" fill="${gc(k)}" stroke="${sel?'var(--fg)':'var(--surface)'}" stroke-width="3"/>
       <text x="${x}" y="${y+5}" text-anchor="middle" fill="var(--md-on-g-${k})" font-size="13" font-weight="700">${k}</text>
       <text x="${lp[0]}" y="${lp[1]+(i===0?-4:i===3?14:5)}" text-anchor="${a}" fill="${gc(k)}" font-size="14" font-weight="700">${G[k].short}</text></g>`});
     $('#zb-svg',root).innerHTML=s+'</svg>';
     $('#zb-cnt',root).textContent=alle()?'(alle aufgedeckt)':`(${seen.size}/15 aufgeklärt)`;
-    $$('.hexcorner',root).forEach(g=>{const f=()=>clickK(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})});
+    $$('.hexcorner',root).forEach(g=>{const f=()=>clickK(g.dataset.k);g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();$(`#zb-svg .hexcorner[data-k="${g.dataset.k}"]`,root)?.focus()}})}); // neu gezeichnet: Fokus zurück auf die Ecke
   };
   const panel=$('#zb-panel',root);
   const clickK=k=>{
@@ -695,7 +695,7 @@ init(root){
     pick.push(k);guess=null;draw();
     if(pick.length===1){panel.innerHTML=`<p>${hexDot(k)} <b>${G[k].short}</b> gewählt. Jetzt die zweite Ecke anklicken.</p>`;return}
     const key=relKey(pick[0],pick[1]);
-    panel.innerHTML=`<h3>${hexDot(pick[0])} ${G[pick[0]].short} <span class="ms sm">sync_alt</span> ${hexDot(pick[1])} ${G[pick[1]].short}</h3>
+    panel.innerHTML=`<h3>${hexDot(pick[0])} ${G[pick[0]].short} <span class="ms sm" aria-hidden="true">sync_alt</span><span class="sr-only">und</span> ${hexDot(pick[1])} ${G[pick[1]].short}</h3>
       <p>Eure Vermutung:</p><div class="choice" id="zb-ch">${Object.entries(RELC).map(([c,v])=>`<button type="button" data-c="${c}">${v[2]}</button>`).join('')}</div>
       <button class="btn primary" id="zb-rev" type="button" ${offen(key)?'':'disabled'}>Lösung aufdecken</button><div id="zb-sol"></div>`;
     $$('#zb-ch button',panel).forEach(b=>b.addEventListener('click',()=>{guess=b.dataset.c;$$('#zb-ch button',panel).forEach(x=>x.classList.toggle('sel',x===b));$('#zb-rev',panel).disabled=false}));
@@ -724,19 +724,23 @@ tool({id:'phillips',hinweise:HINWEISE.phillips,ch:3,goals:['P','B'],title:'Phill
 html(){return `
 <p class="task"><b>Auftrag:</b> Die Phillips-Kurve behauptet: Weniger Arbeitslosigkeit gibt es nur um den Preis höherer Inflation. Prüft die These mit den deutschen Jahreswerten 2015 bis 2025. Wo passt sie, wo nicht – und warum?</p>
 <div class="grid2 wide-left">
-  <div class="panel chart"><div id="ph-svg"></div>
+  <div class="panel chart stack"><div id="ph-svg"></div>
+   <div class="choice" id="ph-jahre" role="group" aria-label="Jahr wählen">${PH.map(([y],i)=>`<button type="button" data-i="${i}" aria-pressed="false">${y}</button>`).join('')}</div>
+   <div id="ph-info" class="fb neu small" role="status">Tippt auf ein Jahr oder einen Punkt für Details.</div>
    <div class="row"><button class="btn small" id="ph-theo" type="button" aria-pressed="false">Theoretische Kurve einblenden</button><button class="btn small" id="ph-stag" type="button" aria-pressed="false">Stagflation markieren</button></div></div>
   <div class="panel stack"><h3>Die Geschichte der Kurve</h3>
    <p><b>1958</b> fand A. W. Phillips für Großbritannien einen Zusammenhang zwischen niedriger Arbeitslosigkeit und schnell steigenden Löhnen. Samuelson und Solow übertrugen ihn 1960 auf die Inflation: Politik könne zwischen beiden Zielen wählen.</p>
    <p>Der Satz „Lieber 5 % Inflation als 5 % Arbeitslosigkeit“ wird Helmut Schmidt (1972) zugeschrieben. In den 1970er Jahren bekam Deutschland nach der Ölkrise beides: hohe Inflation <i>und</i> steigende Arbeitslosigkeit.</p>
-   <p><b>Erklärung:</b> Die Kurve gilt am ehesten bei Nachfrageschwankungen. Bei Angebotsschocks (teure Energie) steigen Kosten und Preise, während die Produktion sinkt: <b>Stagflation</b>. Außerdem passen Menschen ihre Inflationserwartungen an – dauerhaft lässt sich Arbeitslosigkeit nicht mit Inflation „kaufen“ (Friedman, Phelps).</p>
-   <div id="ph-info" class="fb neu small">Tippt auf einen Punkt für Details.</div></div>
+   <p><b>Erklärung:</b> Die Kurve gilt am ehesten bei Nachfrageschwankungen. Bei Angebotsschocks (teure Energie) steigen Kosten und Preise, während die Produktion sinkt: <b>Stagflation</b>. Außerdem passen Menschen ihre Inflationserwartungen an – dauerhaft lässt sich Arbeitslosigkeit nicht mit Inflation „kaufen“ (Friedman, Phelps).</p></div>
 </div>
 ${schreibfeld(WAND.phillips)}
 ${impuls(IMPULS.phillips)}
 ${erkHTML('phillips')}`},
 init(root){
-  let theo=false,stag=false;
+  // Jahrespunkte: Bedienung per Tastatur und Screenreader über die Jahresleiste, die Punkte im Diagramm sind zusätzlich antippbar
+  let theo=false,stag=false,sel=null;
+  const TXT={2020:'Corona: Nachfrageeinbruch, Mehrwertsteuersenkung.',2021:'Nachholeffekte, CO₂-Preis eingeführt, Mehrwertsteuer wieder normal.',2022:'Russlands Krieg gegen die Ukraine: Energiepreisschock. Die Preise steigen stark, aber die Arbeitslosigkeit sinkt noch, und die Wirtschaft wächst (+1,9 %).',2023:'Inflation bleibt hoch, die Wirtschaft schrumpft (−1,0 %), die Arbeitslosigkeit steigt: Stagflation.',2019:'Höchststand der Beschäftigung, niedrige Inflation – widerspricht dem Zielkonflikt.',2017:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2018:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2025:'Arbeitslosigkeit steigt bei moderater Inflation.'},info=$('#ph-info',root);
+  const zeige=(i,scroll)=>{sel=i;const [y,u,p]=PH[i];info.innerHTML=`<b>${y}</b>: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %. ${TXT[y]||''}`;draw();if(scroll)info.scrollIntoView({block:'nearest'})};
   const draw=()=>{
     const W=560,H=380,x0=56,x1=W-20,y0=320,yt=20,sx=v=>x0+(v-4.5)/(7-4.5)*(x1-x0),sy=v=>y0-v/8*(y0-yt);
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Phillips-Diagramm Deutschland 2015 bis 2025">`;
@@ -746,16 +750,18 @@ init(root){
     s+=`<line x1="${x0}" y1="${sy(2)}" x2="${x1}" y2="${sy(2)}" stroke="var(--ok)" stroke-dasharray="6 4"/><text x="${x1}" y="${sy(2)-5}" text-anchor="end" fill="var(--ok)" font-size="11">EZB-Ziel 2 %</text>`;
     if(theo){let d='';for(let u=4.6;u<=7;u+=0.05){const pi=0.9+ 3.2/(u-3.6)-0.4;d+=(d?'L':'M')+sx(u).toFixed(1)+','+sy(clamp(pi,0,8)).toFixed(1)}s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="2.5"/><text x="${sx(4.62)}" y="${sy(3.9)}" fill="var(--g-W)" font-size="11.5" font-weight="700">theoretische Phillips-Kurve</text>`}
     s+=`<polyline points="${PH.map(([,u,p])=>sx(u)+','+sy(p)).join(' ')}" fill="none" class="s-mu" stroke-width="1.2" stroke-dasharray="2 3"/>`;
-    PH.forEach(([y,u,p],i)=>{const st=stag&&y===2023,sch=stag&&y===2022;s+=`<g class="hexcorner" tabindex="0" role="button" data-i="${i}" aria-label="${y}: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %${st?', Stagflation':sch?', Angebotsschock':''}"><circle cx="${sx(u)}" cy="${sy(p)}" r="${st||sch?9:6.5}" fill="${st?'var(--bad)':sch?'var(--amb)':'var(--g-P)'}" stroke="var(--surface)" stroke-width="2"/>
-      ${st||sch?'':`<text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg" font-size="11">${y}</text>`}</g>`}); // markierte Jahre stehen in der Beschriftung
+    PH.forEach(([y,u,p],i)=>{const st=stag&&y===2023,sch=stag&&y===2022,on=sel===i;s+=`<g class="hexcorner" data-i="${i}"><circle cx="${sx(u)}" cy="${sy(p)}" r="21" fill="transparent"/><circle cx="${sx(u)}" cy="${sy(p)}" r="${st||sch||on?9:6.5}" fill="${st?'var(--bad)':sch?'var(--amb)':'var(--g-P)'}" stroke="${on?'var(--fg)':'var(--surface)'}" stroke-width="${on?3:2}"/>
+      ${st||sch?'':`<text x="${sx(u)+9}" y="${sy(p)-7}" class="t-fg" font-size="11"${on?' font-weight="700"':''}>${y}</text>`}</g>`}); // markierte Jahre stehen in der Beschriftung
     if(stag)s+=`<text x="${sx(5.3)+16}" y="${sy(6.9)-24}" class="t-fg" font-size="12" font-weight="700">2022: Angebotsschock</text><text x="${sx(5.3)+16}" y="${sy(6.9)-10}" class="t-mu" font-size="11">Preise steigen, Arbeitsmarkt noch stark</text>
       <text x="${sx(5.7)+16}" y="${sy(5.9)+10}" fill="var(--bad)" font-size="12" font-weight="700">2023: Stagflation</text><text x="${sx(5.7)+16}" y="${sy(5.9)+24}" class="t-mu" font-size="11">BIP −1,0 %, mehr Arbeitslose</text>`;
     $('#ph-svg',root).innerHTML=s+'</svg>';
-    $$('#ph-svg .hexcorner',root).forEach(g=>{const f=()=>{const [y,u,p]=PH[+g.dataset.i];$('#ph-info',root).innerHTML=`<b>${y}</b>: Arbeitslosenquote ${fmt(u)} %, Inflation ${fmt(p)} %. ${{2020:'Corona: Nachfrageeinbruch, Mehrwertsteuersenkung.',2021:'Nachholeffekte, CO₂-Preis eingeführt, Mehrwertsteuer wieder normal.',2022:'Russlands Krieg gegen die Ukraine: Energiepreisschock. Die Preise steigen stark, aber die Arbeitslosigkeit sinkt noch, und die Wirtschaft wächst (+1,9 %).',2023:'Inflation bleibt hoch, die Wirtschaft schrumpft (−1,0 %), die Arbeitslosigkeit steigt: Stagflation.',2019:'Höchststand der Beschäftigung, niedrige Inflation – widerspricht dem Zielkonflikt.',2017:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2018:'Aufschwung: weniger Arbeitslose, etwas mehr Inflation – passt zur Theorie.',2025:'Arbeitslosigkeit steigt bei moderater Inflation.'}[y]||''}`};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'){f()}})});
+    $$('#ph-svg .hexcorner',root).forEach(g=>g.addEventListener('click',()=>zeige(+g.dataset.i,true)));
+    $$('#ph-jahre button',root).forEach(b=>{const an=+b.dataset.i===sel;b.classList.toggle('sel',an);b.setAttribute('aria-pressed',an)});
   };
+  $$('#ph-jahre button',root).forEach(b=>b.addEventListener('click',()=>zeige(+b.dataset.i)));
   $('#ph-theo',root).addEventListener('click',e=>{theo=!theo;e.currentTarget.setAttribute('aria-pressed',theo);draw()});
-  $('#ph-stag',root).addEventListener('click',e=>{stag=!stag;e.currentTarget.setAttribute('aria-pressed',stag);draw();
-    if(stag)$('#ph-info',root).innerHTML='<b>2022</b> war ein Angebotsschock: Die Preise stiegen stark, die Arbeitslosigkeit sank aber noch, und die Wirtschaft wuchs. <b>2023</b> kam beides zusammen: Inflation 5,9 %, BIP −1,0 %, die Arbeitslosenquote stieg auf 5,7 %. Das ist Stagflation.'});
+  $('#ph-stag',root).addEventListener('click',e=>{stag=!stag;e.currentTarget.setAttribute('aria-pressed',stag);if(stag)sel=null;draw();
+    if(stag)info.innerHTML='<b>2022</b> war ein Angebotsschock: Die Preise stiegen stark, die Arbeitslosigkeit sank aber noch, und die Wirtschaft wuchs. <b>2023</b> kam beides zusammen: Inflation 5,9 %, BIP −1,0 %, die Arbeitslosenquote stieg auf 5,7 %. Das ist Stagflation.'});
   draw();bindErk(root);
 }});
 
@@ -810,7 +816,7 @@ init(root){
     $$('#ps-m .toggle-card',root).forEach(b=>{const sel=on.has(b.dataset.m);b.setAttribute('aria-pressed',sel);b.disabled=!sel&&on.size>=MAX;b.style.opacity=b.disabled?.5:1;$('.chain',b).hidden=!sel});
   };
   $('#ps-m',root).innerHTML=MEAS.map(m=>`<button class="toggle-card" type="button" data-m="${m.id}" aria-pressed="false"><span class="actor">${m.a}</span><b>${m.n}</b>
-    <span class="row" style="gap:4px">${ORDER.filter(k=>m.e[k]).map(k=>`<span class="pill ${m.e[k]>0?'ok':'bad'}">${k}<span class="ms">${Math.abs(m.e[k])>1?(m.e[k]>0?'keyboard_double_arrow_up':'keyboard_double_arrow_down'):(m.e[k]>0?'arrow_upward':'arrow_downward')}</span></span>`).join('')}</span><span class="chain" hidden>${m.c}</span></button>`).join('');
+    <span class="row" style="gap:4px">${ORDER.filter(k=>m.e[k]).map(k=>`<span class="pill ${m.e[k]>0?'ok':'bad'}"><span aria-hidden="true">${k}</span><span class="ms" aria-hidden="true">${Math.abs(m.e[k])>1?(m.e[k]>0?'keyboard_double_arrow_up':'keyboard_double_arrow_down'):(m.e[k]>0?'arrow_upward':'arrow_downward')}</span><span class="sr-only">${G[k].short} ${m.e[k]>0?'steigt':'sinkt'}${Math.abs(m.e[k])>1?' stark':''}</span></span>`).join('')}</span><span class="chain" hidden>${m.c}</span></button>`).join('');
   $$('#ps-m .toggle-card',root).forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.m;on.has(id)?on.delete(id):on.size<MAX&&on.add(id);calc()}));
   $$('[data-st]',root).forEach(b=>b.addEventListener('click',()=>{st=b.dataset.st;$$('[data-st]',root).forEach(x=>x.setAttribute('aria-pressed',x===b));$('#ps-st',root).textContent=START[st].t;calc()}));
   $('#ps-st',root).textContent=START[st].t;calc();bindErk(root);
@@ -900,6 +906,7 @@ init(){}});
 /* 13 Planspiel (Inhalte in leben.js, Ablauf in shared/js/planspiel.js) */
 tool({id:'leben',hinweise:HINWEISE.leben,ch:5,goals:ORDER,title:'Planspiel Sechseck-Leben',sub:'In die Rolle einer Person aus Thüringen schlüpfen, vier Jahre Wirtschaftspolitik erleben – allein oder als ganze Klasse',
 html(){return `
+<h2 class="sr-only">Das Spiel</h2><!-- Gliederung: Die Überschriften im Planspiel sind h3 -->
 <div id="lb-app" class="stack"></div>
 ${schreibfeld(WAND.leben)}
 ${impuls(IMPULS.leben)}
@@ -913,15 +920,15 @@ init(root){
 function startHTML(){
   return `<section class="banner"><img src="${PHOTOS[2]}" alt="Blick über das Saaletal auf Jena mit dem JenTower"><span class="credit">Foto: Lukas D. / Unsplash</span>
     <div class="banner-text"><p class="eyebrow">Stand der Daten: Oktober 2026</p><h2 style="font-size:clamp(1.5rem,3.6vw,2.25rem);line-height:1.2">Sechs Ziele sollen gleichzeitig gelten. Sie stehen sich gegenseitig im Weg.</h2></div></section>
-  <section class="hero"><div class="hero-hex" id="hero-hex" aria-label="Das magische Sechseck – Ecken antippen für Steckbriefe">${heroHex()}</div>
+  <section class="hero"><div class="hero-hex" id="hero-hex">${heroHex()}</div>
     <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Werkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
-    <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
+    <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}" aria-labelledby="lage-${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody" id="lage-${k}"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
     <p class="small muted">Fotos: ${ORDER.map(k=>esc(GOAL_IMG[k].credit)).join(', ')} / Unsplash</p>
     <p class="hint">Ecke im Sechseck oder Kennzahl antippen: Steckbrief bzw. passende Werkstatt öffnet sich.</p>
-    <div class="cta"><button class="fab" type="button" id="cta-leben"><span class="ms">sports_esports</span>Planspiel starten</button></div></div></section>
+    <div class="cta"><button class="fab" type="button" id="cta-leben"><span class="ms" aria-hidden="true">sports_esports</span>Planspiel starten</button></div></div></section>
   ${chapterHTML(1)}
   <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. In „Ziele“ nimmt sich jede Werkstatt ein Ziel vor und misst es mit echten Zahlen. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
-  <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
+  <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms" aria-hidden="true">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen und Datenstand (gerundet, Oktober 2026)</h3><ul>
   <li>Destatis: Verbraucherpreise September 2026 (Pressemitteilung Nr. 364 vom 13.10.2026), Jahresinflation 2025, Armutsgefährdung 2025; BIP 2019 bis 2025 und 2. Quartal 2026 nach der Sommerüberarbeitung 2026 (Pressemitteilungen Nr. 269 vom 30.07.2026 und Nr. 303 vom 25.08.2026); Außenhandel 2024; Baufertigstellungen 2023</li>
@@ -939,7 +946,7 @@ function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m
   <li>Alle Personen im Planspiel und in den Fällen sowie alle Social-Media-Posts sind erfunden (fiktiv).</li>
   <li>Fotos: engin akyurt, Jacob Meissner, Lukas D., Md. Hasanuzzaman Himel, Yosuke Ota, Remy Gieling, Artem Labunsky, Wolfgang Weiser, Karsten Würth, Marcel Strauß – alle über Unsplash (Unsplash-Lizenz)</li></ul>
   <p>Modellwerkzeuge (Simulator, Planspiel, Bewertungsskalen) sind didaktische Vereinfachungen und keine Prognosen. Spielstände und Merksätze werden nur in diesem Browser gespeichert.</p>
-  <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
-function wissenHTML(){return chapterHTML(6,`<button class="card" type="button" data-open="glossar"><span class="dots">${ORDER.map(hexDot).join('')}</span><h4>Begriffe nachschlagen</h4><p>${GLOSS.length} Fachbegriffe mit Suche</p><span class="go">Öffnen<span class="ms sm">arrow_forward</span></span></button><button class="card" type="button" data-open="wissen"><span class="dots">${ORDER.map(hexDot).join('')}</span><h4>Mein Sechseck-Wissen</h4><p>Alle Merksätze als Hefteintrag sammeln und kopieren</p><span class="go">Öffnen<span class="ms sm">arrow_forward</span></span></button>`)+sourcesHTML()}
+  <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms" aria-hidden="true">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
+function wissenHTML(){return chapterHTML(6,`<button class="card" type="button" data-open="glossar"><span class="dots">${ORDER.map(hexDot).join('')}</span><h3 class="title-m">Begriffe nachschlagen</h3><p>${GLOSS.length} Fachbegriffe mit Suche</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button><button class="card" type="button" data-open="wissen"><span class="dots">${ORDER.map(hexDot).join('')}</span><h3 class="title-m">Mein Sechseck-Wissen</h3><p>Alle Merksätze als Hefteintrag sammeln und kopieren</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button>`)+sourcesHTML()}
 
 W.start();

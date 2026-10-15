@@ -6,7 +6,7 @@
 // „Ihr seid das Gericht“: Die Lehrkraft startet eine Abstimmung (Raumfeld umfrage), die Handys zeigen sie in einem Fenster,
 // jede Stimme landet im eigenen Eintrag (Feld stimme), die Lehrkraft zählt und deckt auf.
 // Die Verbindung läuft ausschließlich über live.js. Eingebunden wird der Lernraum von werkstatt.js.
-import { $, $$, esc, store } from './ui.js';
+import { $, $$, esc, store, neuZeichnen } from './ui.js';
 import { connect } from './live.js';
 import { THEMEN } from '../../themen.js';
 
@@ -34,7 +34,8 @@ const speichern=()=>store(cfg.speicher+'-raum',s);
 function melde(art){hoerer.forEach(f=>{try{f(art)}catch(e){console.warn(e)}})}
 function abmelden(){abos.forEach(u=>{try{u()}catch(e){}});abos=[]}
 function ende(meldung){abmelden();s=null;speichern();z={raum:null,spieler:[],antworten:[]};melde('ende');if(meldung&&cfg.hinweis)cfg.hinweis(meldung)}
-function fehler(text,html){const e=new Error(text);e.html=!!html;return e}
+/** Fehler mit Text für die Seite; feld: 'code' oder 'nick', wenn ein Eingabefeld betroffen ist */
+function fehler(text,html,feld){const e=new Error(text);e.html=!!html;e.feld=feld||'';return e}
 
 async function anbinden(){
   if(!s)return;
@@ -89,19 +90,19 @@ export const raum={
   /** Schüler: mit Code und Spitznamen beitreten. Gibt die Raumdaten zurück, wirft bei Problemen einen Fehler mit Text. */
   async beitreten(code,nick){
     code=normCode(code);nick=String(nick||'').trim().replace(/\s+/g,' ').slice(0,20);
-    if(code.length!==6)throw fehler('Der Code hat sechs Zeichen, zum Beispiel K7Q2XM.');
-    if(!nick)throw fehler('Bitte gib einen Spitznamen ein.');
+    if(code.length!==6)throw fehler('Der Code hat sechs Zeichen, zum Beispiel K7Q2XM.',false,'code');
+    if(!nick)throw fehler('Bitte gib einen Spitznamen ein.',false,'nick');
     if(s&&s.rolle==='lk')throw fehler('Auf diesem Gerät ist schon ein Lernraum als Lehrkraft geöffnet.');
     L=await connect();
     if(!L)throw fehler('Der Live-Modus ist nicht eingerichtet.');
     const r=await L.getRoom(code);
-    if(!r||r.phase==='closed')throw fehler('Diesen Raum gibt es nicht (mehr). Prüfe den Code.');
+    if(!r||r.phase==='closed')throw fehler('Diesen Raum gibt es nicht (mehr). Prüfe den Code.',false,'code');
     if(r.topic&&r.topic!==cfg.thema){
       const th=THEMEN.find(x=>x.id===r.topic);
-      if(!th)throw fehler('Dieser Code gehört zu einem anderen Thema.');
-      throw fehler(`Dieser Code gehört zum Thema „${esc(th.titel)}“. <a href="../${th.id}/#raum=${code}">Dort beitreten</a>`,true);
+      if(!th)throw fehler('Dieser Code gehört zu einem anderen Thema.',false,'code');
+      throw fehler(`Dieser Code gehört zum Thema „${esc(th.titel)}“. <a href="../${th.id}/#raum=${code}">Dort beitreten</a>`,true,'code');
     }
-    if(!r.open)throw fehler('Dieser Raum nimmt gerade niemanden auf.');
+    if(!r.open)throw fehler('Dieser Raum nimmt gerade niemanden auf.',false,'code');
     const gleich=s&&s.rolle==='schueler'&&s.code===code;
     if(gleich)await L.updatePlayer(code,{nick});
     else await L.joinRoom(code,{nick,ort:String(cfg.ort?cfg.ort():'').slice(0,40)});
@@ -149,6 +150,25 @@ export const raum={
   oeffneDialog
 };
 
+/* ---------- Barrierefreiheit: Fehler an Feldern, Hintergrund sperren (neu zeichnen: neuZeichnen in ui.js) ---------- */
+/** Pause („Schau nach vorn“) und Abstimmungsfenster sind echt modal: alles dahinter wird inert (keine Tab-Stopps, kein Vorlesen). */
+export function sperreHintergrund(){
+  const p=$('#lr-pause'),u=$('#lr-umfrage'),pause=!!p&&!p.hidden,umf=!!u&&!u.hidden;
+  ['.app','#modal'].forEach(sel=>{const e=$(sel);if(e)e.inert=pause||umf});
+  if(u)u.inert=pause;
+}
+/** Fehlermeldung beim Beitreten zeigen (role=alert) und mit dem betroffenen Feld verknüpfen; felder = {code:'#…', nick:'#…'} */
+export function fehlerZeigen(root,box,err,felder){
+  if(err.html)box.innerHTML=err.message;else box.textContent=err.message;box.hidden=false;
+  const f=felder&&felder[err.feld]&&$(felder[err.feld],root);
+  if(f){f.setAttribute('aria-invalid','true');f.setAttribute('aria-describedby',box.id)}
+}
+/** Vor einem neuen Versuch: Meldung ausblenden, Felder wieder als gültig markieren (so wird ein erneuter Fehler wieder angesagt). */
+export function fehlerWeg(root,box,felder){
+  box.hidden=true;box.textContent='';
+  Object.values(felder||{}).forEach(sel=>{const f=$(sel,root);if(f){f.removeAttribute('aria-invalid');f.removeAttribute('aria-describedby')}});
+}
+
 /* ---------- Dialog: beitreten, öffnen, Dashboard ---------- */
 function ortName(id){const o=(cfg.orte?cfg.orte():[]).find(x=>x.id===id);return o?o.titel:(id||'–')}
 function gruppiert(){const g=new Map();z.antworten.forEach(a=>{if(!g.has(a.aufgabe))g.set(a.aufgabe,[]);g.get(a.aufgabe).push(a)});return g}
@@ -171,26 +191,28 @@ function startDialog(box,code){
       <p class="small muted">Gib den Code von vorn ein und wähle einen Spitznamen. Bitte nicht deinen vollen echten Namen.</p>
       <div class="ctrl"><label for="lr-code">Code</label><input id="lr-code" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(code||'')}" style="font-family:var(--mono);font-size:1.5rem;letter-spacing:.2em;text-transform:uppercase"></div>
       <div class="ctrl"><label for="lr-nick">Spitzname</label><input id="lr-nick" type="text" maxlength="20" autocomplete="off"></div>
-      <div class="fb bad" id="lr-jerr" hidden></div>
-      <div class="cta"><button class="btn primary" type="submit" id="lr-jgo"><span class="ms">login</span>Beitreten</button></div></form>
+      <div class="fb bad" id="lr-jerr" role="alert" hidden></div>
+      <div class="cta"><button class="btn primary" type="submit" id="lr-jgo"><span class="ms" aria-hidden="true">login</span>Beitreten</button></div></form>
     <div class="panel stack"><h3 class="title-l">Lehrkraft</h3>
       <p class="small muted">Öffne einen Raum für deine Klasse. Du siehst, wer gerade wo arbeitet, sammelst Antworten an der Wand, hältst alle Geräte an und gibst Werkstätten frei.</p>
-      <div class="fb bad" id="lr-oerr" hidden></div>
-      <div class="cta"><button class="btn" type="button" id="lr-open"><span class="ms">cast_for_education</span>Lernraum öffnen</button></div></div>
+      <div class="fb bad" id="lr-oerr" role="alert" hidden></div>
+      <div class="cta"><button class="btn" type="button" id="lr-open"><span class="ms" aria-hidden="true">cast_for_education</span>Lernraum öffnen</button></div></div>
   </div>
   <p class="small muted">Gespeichert werden nur der Spitzname, die gerade geöffnete Werkstatt und Antworten, die du abschickst. „Raum beenden“ löscht alles sofort, sonst nach 24 Stunden.</p>`;
-  const zeig=(id,e)=>{const el=$(id,box);if(e.html)el.innerHTML=e.message;else el.textContent=e.message;el.hidden=false};
-  $('#lr-join',box).addEventListener('submit',async e=>{e.preventDefault();const b=$('#lr-jgo',box);b.disabled=true;
+  const felder={code:'#lr-code',nick:'#lr-nick'},jerr=$('#lr-jerr',box),oerr=$('#lr-oerr',box);
+  // Wer ein markiertes Feld korrigiert, bekommt es wieder als gültig angezeigt
+  Object.values(felder).forEach(sel=>$(sel,box).addEventListener('input',e=>e.target.removeAttribute('aria-invalid')));
+  $('#lr-join',box).addEventListener('submit',async e=>{e.preventDefault();const b=$('#lr-jgo',box);b.disabled=true;fehlerWeg(box,jerr,felder);
     try{await raum.beitreten($('#lr-code',box).value,$('#lr-nick',box).value);if(cfg.hinweis)cfg.hinweis(`Du bist im Lernraum ${s.code}.`)}
-    catch(err){zeig('#lr-jerr',err)}finally{b.disabled=false}});
-  $('#lr-open',box).addEventListener('click',async e=>{const b=e.currentTarget;b.disabled=true;try{await raum.oeffnen()}catch(err){console.warn(err);zeig('#lr-oerr',err.message?err:fehler('Der Lernraum konnte nicht geöffnet werden.'))}finally{b.disabled=false}});
+    catch(err){fehlerZeigen(box,jerr,err,felder)}finally{b.disabled=false}});
+  $('#lr-open',box).addEventListener('click',async e=>{const b=e.currentTarget;b.disabled=true;fehlerWeg(box,oerr);try{await raum.oeffnen()}catch(err){console.warn(err);fehlerZeigen(box,oerr,err.message?err:fehler('Der Lernraum konnte nicht geöffnet werden.'))}finally{b.disabled=false}});
   if(!code)$('#lr-code',box).focus();else $('#lr-nick',box).focus();
 }
 
 function schuelerInfo(box){
   box.innerHTML=`<div class="panel stack" style="max-width:600px"><p class="title-m"><span class="live-dot"></span>Du bist im Lernraum <b class="mono">${esc(s.code)}</b> als ${esc(s.nick)}.</p>
     <p class="small muted">Schreibfelder haben jetzt den Knopf „Abschicken“. Deine Antwort erscheint dann bei deiner Lehrkraft an der Wand.</p>
-    <div class="cta"><button class="btn text" type="button" id="lr-leave"><span class="ms">logout</span>Raum verlassen</button></div>
+    <div class="cta"><button class="btn text" type="button" id="lr-leave"><span class="ms" aria-hidden="true">logout</span>Raum verlassen</button></div>
     <div class="fb amb" id="lr-leave-q" hidden>Raum wirklich verlassen? Deine Einträge in diesem Raum werden gelöscht. <button class="btn small primary" type="button" id="lr-leave-y">Verlassen</button> <button class="btn small text" type="button" id="lr-leave-n">Abbrechen</button></div></div>`;
   $('#lr-leave',box).addEventListener('click',()=>{$('#lr-leave-q',box).hidden=false});
   $('#lr-leave-n',box).addEventListener('click',()=>{$('#lr-leave-q',box).hidden=true});
@@ -203,15 +225,15 @@ function dashboard(box){
   box.innerHTML=`<div id="lr-dash" class="stack">
   <div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code lr-code">${esc(s.code)}</div>
     <p class="small">Seite öffnen → oben das Symbol <b>Lernraum</b> → Code eingeben. Oder QR-Code scannen.</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
-    <div class="row"><button class="btn small" type="button" id="lr-beamer" aria-pressed="${raum.beamer()}">Beamer-Modus</button><button class="btn text small" type="button" id="lr-ende"><span class="ms">delete</span>Raum beenden</button></div>
+    <div class="row"><button class="btn small" type="button" id="lr-beamer" aria-pressed="${raum.beamer()}">Beamer-Modus</button><button class="btn text small" type="button" id="lr-ende"><span class="ms" aria-hidden="true">delete</span>Raum beenden</button></div>
     <div class="fb bad" id="lr-ende-q" hidden>Lernraum ${esc(s.code)} beenden? Alle Einträge und Antworten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="lr-ende-y">Raum löschen</button> <button class="btn small text" type="button" id="lr-ende-n">Abbrechen</button></div></div>
     <div class="panel stack" style="align-items:center"><div class="lr-qr">${qrSVG(url)}</div><p class="small muted">QR-Code zum Beitreten</p></div></div>
   <section class="panel stack"><h3>Steuerung</h3>
     <div class="row"><button class="btn" type="button" id="lr-anhalten"></button><span class="small muted">Auf allen Handys erscheint „Schau nach vorn“.</span></div>
-    <div class="row"><label for="lr-ziel" class="small">Alle holen nach</label><select id="lr-ziel">${orte.map(o=>`<option value="${esc(o.id)}">${esc(o.titel)}</option>`).join('')}</select><button class="btn" type="button" id="lr-holen"><span class="ms">group</span>Alle dorthin</button></div>
+    <div class="row"><label for="lr-ziel" class="small">Alle holen nach</label><select id="lr-ziel">${orte.map(o=>`<option value="${esc(o.id)}">${esc(o.titel)}</option>`).join('')}</select><button class="btn" type="button" id="lr-holen"><span class="ms" aria-hidden="true">group</span>Alle dorthin</button></div>
     <details id="lr-frei"><summary class="small"><b>Werkstätten freigeben</b> – gesperrte Werkstätten können die Schüler nicht öffnen</summary>
       <div class="row" style="margin-top:8px" id="lr-frei-liste"></div>
-      <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="lr-alle-frei"><span class="ms">lock_open</span>Alle freigeben</button><button class="btn small" type="button" id="lr-alle-zu"><span class="ms">lock</span>Alle sperren</button></div></details>
+      <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="lr-alle-frei"><span class="ms" aria-hidden="true">lock_open</span>Alle freigeben</button><button class="btn small" type="button" id="lr-alle-zu"><span class="ms" aria-hidden="true">lock</span>Alle sperren</button></div></details>
   </section>
   <section class="panel stack" id="lr-teil"></section>
   <section class="panel stack" id="lr-wc" hidden></section>
@@ -227,6 +249,11 @@ function dashboard(box){
   const werk=orte.filter(o=>o.art==='werkstatt');
   $('#lr-alle-frei',box).addEventListener('click',()=>raum.sperren([]));
   $('#lr-alle-zu',box).addEventListener('click',()=>raum.sperren(werk.map(o=>o.id)));
+  // Knöpfe in den Teilen, die aktualisiere() neu zeichnet: Ereignisse per Delegation, damit nichts doppelt gebunden wird
+  $('#lr-dash',box).addEventListener('click',e=>{const b=e.target.closest('[data-lr-kick],[data-lr-wand],[data-lr-abst],#lr-druck');if(!b)return;
+    if(b.id==='lr-druck')return drucken();
+    if(b.dataset.lrKick)return raum.kick(b.dataset.lrKick).catch(e=>console.warn(e));
+    if(cfg.gehZu)cfg.gehZu(b.dataset.lrWand||b.dataset.lrAbst)});
   $('#lr-frei-liste',box).addEventListener('click',e=>{const b=e.target.closest('[data-frei]');if(!b)return;const id=b.dataset.frei,g=new Set((z.raum&&z.raum.gesperrt)||[]);g.has(id)?g.delete(id):g.add(id);raum.sperren([...g])});
   if($('#lr-ki',box)){
     const inp=$('#lr-ki-link',box),st=$('#lr-ki-st',box);
@@ -238,26 +265,26 @@ function dashboard(box){
   aktualisiere(box);
 }
 
+/** Aktualisiert das Dashboard bei jedem Ereignis im Raum. Neu gezeichnet wird nur, was sich geändert hat,
+ *  und der Fokus bleibt auf dem Knopf, den die Lehrkraft gerade bedient (Tastatur, Screenreader). */
 function aktualisiere(box){
   if(!$('#lr-dash',box))return;
   const r=z.raum||{},orte=cfg.orte?cfg.orte():[],gesperrt=new Set(r.gesperrt||[]),beamer=raum.beamer();
   $('#lr-beamer',box).setAttribute('aria-pressed',String(beamer));
-  $('#lr-anhalten',box).innerHTML=r.pause?'<span class="ms">play_arrow</span>Weiter':'<span class="ms">pause</span>Alle anhalten';
-  $('#lr-anhalten',box).classList.toggle('primary',!!r.pause);
-  $('#lr-frei-liste',box).innerHTML=orte.filter(o=>o.art==='werkstatt').map(o=>`<button class="btn small" type="button" data-frei="${esc(o.id)}" aria-pressed="${!gesperrt.has(o.id)}">${esc(o.titel)}</button>`).join('');
+  const an=$('#lr-anhalten',box),anH=r.pause?'<span class="ms" aria-hidden="true">play_arrow</span>Weiter':'<span class="ms" aria-hidden="true">pause</span>Alle anhalten';
+  if(an._html!==anH){an.innerHTML=anH;an._html=anH}
+  an.classList.toggle('primary',!!r.pause);
+  neuZeichnen($('#lr-frei-liste',box),orte.filter(o=>o.art==='werkstatt').map(o=>`<button class="btn small" type="button" data-frei="${esc(o.id)}" aria-pressed="${!gesperrt.has(o.id)}">${esc(o.titel)}</button>`).join(''));
   const n=z.spieler.length,antw=gruppiert();
   const anzahl=uid=>z.antworten.filter(a=>a.uid===uid).length;
-  $('#lr-teil',box).innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Teilnehmer</h3><span class="small muted">${n} ${n===1?'Person':'Personen'} im Raum</span></div>
-    ${n?`<div class="tbl-wrap"><table><thead><tr><th>${beamer?'Gerät':'Spitzname'}</th><th>Gerade in</th><th class="r">Antworten</th>${beamer?'':'<th></th>'}</tr></thead><tbody>${z.spieler.map(p=>`<tr><td>${esc(raum.name(p.uid))}</td><td>${esc(ortName(p.ort))}</td><td class="r num">${anzahl(p.uid)}</td>${beamer?'':`<td class="r"><button class="icon-btn" type="button" data-lr-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen"><span class="ms">person_remove</span></button></td>`}</tr>`).join('')}</tbody></table></div>`:'<p class="small muted">Noch niemand im Raum.</p>'}`;
-  $$('[data-lr-kick]',box).forEach(b=>b.addEventListener('click',()=>raum.kick(b.dataset.lrKick).catch(e=>console.warn(e))));
+  neuZeichnen($('#lr-teil',box),`<div class="row" style="justify-content:space-between"><h3 class="title-l">Teilnehmer</h3><span class="small muted">${n} ${n===1?'Person':'Personen'} im Raum</span></div>
+    ${n?`<div class="tbl-wrap"><table><thead><tr><th>${beamer?'Gerät':'Spitzname'}</th><th>Gerade in</th><th class="r">Antworten</th>${beamer?'':'<th><span class="sr-only">Entfernen</span></th>'}</tr></thead><tbody>${z.spieler.map(p=>`<tr><td>${esc(raum.name(p.uid))}</td><td>${esc(ortName(p.ort))}</td><td class="r num">${anzahl(p.uid)}</td>${beamer?'':`<td class="r"><button class="icon-btn" type="button" data-lr-kick="${esc(p.uid)}" aria-label="${esc(p.nick)} entfernen" title="Entfernen"><span class="ms" aria-hidden="true">person_remove</span></button></td>`}</tr>`).join('')}</tbody></table></div>`:'<p class="small muted">Noch niemand im Raum.</p>'}`,'h3');
   wissenscheck($('#lr-wc',box),beamer);
   abstimmungen($('#lr-abst',box));
   if($('#lr-ki-weg',box))$('#lr-ki-weg',box).hidden=!r.ki;
   const wand=[...AUFGABEN.values()].filter(a=>a.wand);
-  $('#lr-antw',box).innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Antworten an der Wand</h3><button class="btn small" type="button" id="lr-druck"><span class="ms">print</span>Alle Antworten drucken</button></div>
-    <div class="tbl-wrap"><table><tbody>${wand.map(a=>{const k=(antw.get(a.id)||[]).length;return `<tr><td>${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r num">${k}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-wand="${esc(a.tool)}">Zur Wand</button>`:''}</td></tr>`}).join('')}</tbody></table></div>`;
-  $$('[data-lr-wand]',box).forEach(b=>b.addEventListener('click',()=>cfg.gehZu&&cfg.gehZu(b.dataset.lrWand)));
-  $('#lr-druck',box).addEventListener('click',drucken);
+  neuZeichnen($('#lr-antw',box),`<div class="row" style="justify-content:space-between"><h3 class="title-l">Antworten an der Wand</h3><button class="btn small" type="button" id="lr-druck"><span class="ms" aria-hidden="true">print</span>Alle Antworten drucken</button></div>
+    <div class="tbl-wrap"><table><tbody>${wand.map(a=>{const k=(antw.get(a.id)||[]).length;return `<tr><td>${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r num">${k}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-wand="${esc(a.tool)}">Zur Wand</button>`:''}</td></tr>`}).join('')}</tbody></table></div>`,'h3');
 }
 
 /* ---------- Wissenscheck und KI-Coach im Dashboard ---------- */
@@ -272,58 +299,81 @@ function wissenscheck(el,beamer){
   const stufen=[1,2,3].map(k=>({k,...quote(mit,a=>a.afb===k)}));
   const schwer=A.map((a,i)=>({i,a,...quote(mit,(b,j)=>j===i)})).filter(x=>x.n).sort((x,y)=>x.q-y.q).slice(0,3).filter(x=>x.q<75);
   const zelle=(sp,k)=>{const r=quote([sp],a=>a.afb===k);return r.n?`${r.q} %`:'–'};
-  el.innerHTML=`<div class="row" style="justify-content:space-between"><h3 class="title-l">Wissenscheck</h3><span class="small muted">${mit.length} von ${z.spieler.length} haben Aufgaben bearbeitet</span></div>
+  neuZeichnen(el,`<div class="row" style="justify-content:space-between"><h3 class="title-l">Wissenscheck</h3><span class="small muted">${mit.length} von ${z.spieler.length} haben Aufgaben bearbeitet</span></div>
     ${mit.length?`<p class="small muted">Anteil der erreichten Punkte in den bearbeiteten Aufgaben</p>
     ${stufen.map(s=>`<div class="wc-erg"><div class="row" style="justify-content:space-between"><span class="title-s">${esc(N[s.k-1])}</span><span class="small num">${s.n?`${s.q} % · ${s.n} ${s.n===1?'Bearbeitung':'Bearbeitungen'}`:'noch nichts bearbeitet'}</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${s.q||0}%"></span></div></div>`).join('')}
     ${schwer.length?`<div><p class="title-s">Am schwierigsten</p><ul class="small">${schwer.map(x=>`<li>${esc(x.a.kurz)} … – ${x.q} %</li>`).join('')}</ul></div>`:''}
     ${beamer?'':`<div class="tbl-wrap"><table><thead><tr><th>Spitzname</th>${N.map(n=>`<th class="r">${esc(n)}</th>`).join('')}</tr></thead><tbody>${mit.map(sp=>`<tr><td>${esc(sp.nick)}</td>${[1,2,3].map(k=>`<td class="r num">${zelle(sp,k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}`
-    :'<p class="small muted">Sobald die Schüler im Wissenscheck Aufgaben prüfen, siehst du hier die Ergebnisse pro Stufe. Texte werden nicht übertragen.</p>'}`;
+    :'<p class="small muted">Sobald die Schüler im Wissenscheck Aufgaben prüfen, siehst du hier die Ergebnisse pro Stufe. Texte werden nicht übertragen.</p>'}`,'h3');
 }
 function abstimmungen(el){
   // Abstimmungen und Blitzrunden (deren Karten sind interne Abstimmungen <id>-k<Nummer>)
   const liste=[...AUFGABEN.values()].filter(a=>(a.umfrage&&!a.intern)||a.runde),u=raum.umfrage();
   const laeuft=a=>u.id===a.id||(a.runde&&String(u.id||'').startsWith(a.id+'-k'));
   el.hidden=!liste.length;if(!liste.length)return;
-  el.innerHTML=`<h3 class="title-l">Live-Abstimmungen</h3><p class="small muted">Ihr seid das Gericht und Blitzrunden als Klassenrunde: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
-    <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${a.runde?'Blitzrunde: ':''}${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${laeuft(a)?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
-  $$('[data-lr-abst]',el).forEach(b=>b.addEventListener('click',()=>cfg.gehZu&&cfg.gehZu(b.dataset.lrAbst)));
+  neuZeichnen(el,`<h3 class="title-l">Live-Abstimmungen</h3><p class="small muted">Ihr seid das Gericht und Blitzrunden als Klassenrunde: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
+    <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${a.runde?'Blitzrunde: ':''}${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${laeuft(a)?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`,'h3');
 }
 
 /* ---------- Live-Abstimmung: Fenster auf den Handys ---------- */
-let umfrageZu='';
+// Das Fenster ist modal: Solange es offen ist, ist alles dahinter inert. Esc schließt es,
+// danach geht der Fokus an die Stelle zurück, an der er vorher war.
+let umfrageZu='',umfrageVorher=null;
+function umfrageWeg(el,entfernen){
+  const war=!el.hidden;if(entfernen)el.remove();else el.hidden=true;
+  if(!war)return;sperreHintergrund();
+  const v=umfrageVorher,a=document.activeElement;umfrageVorher=null;
+  if((!a||a===document.body||!document.body.contains(a)||el.contains(a))&&v&&v!==document.body&&document.body.contains(v)&&!v.closest('[inert]'))v.focus();
+}
 function umfrageFenster(){
   let el=$('#lr-umfrage');
-  if(!raum.istSchueler()){if(el)el.remove();return}
+  if(!raum.istSchueler()){if(el)umfrageWeg(el,true);return}
   const u=raum.umfrage();
-  if(!u.id){if(el)el.hidden=true;return}
+  if(!u.id){if(el)umfrageWeg(el);return}
   let a=AUFGABEN.get(u.id);if((!a||!a.umfrage)&&cfg.vorbereiten){cfg.vorbereiten();a=AUFGABEN.get(u.id)}
   if(!a||!a.umfrage)return;
   const q=a.umfrage,w=s.stimme&&s.stimme.n===u.n?s.stimme.w:null,zustand=u.n+(u.auf?'a':'');
   if(u.auf&&w!=null&&!(s.urteile&&s.urteile[u.id]&&s.urteile[u.id].n===u.n)){s.urteile={...(s.urteile||{}),[u.id]:{w,n:u.n}};speichern();melde('urteil')}
-  if(umfrageZu===zustand){if(el)el.hidden=true;return}
-  const neu=!el||el.hidden;
-  if(!el){el=document.createElement('div');el.id='lr-umfrage';el.className='lr-umfrage';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','lr-umfrage-t');document.body.append(el)}
-  el.innerHTML=`<div class="lr-umfrage-karte stack"><div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm">${q.icon||'gavel'}</span> ${q.kopf||`Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}`}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms">close</span></button></div>
-    ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>
-    <div class="lr-umfrage-wahl" role="group" aria-label="Dein Urteil">${q.optionen.map((o,i)=>`<button class="btn${w===i?' primary':''}" type="button" data-u-w="${i}" aria-pressed="${w===i}"${u.auf?' disabled':''}>${o}</button>`).join('')}</div>
-    <p class="small" role="status">${u.auf?'':w==null?'Wie urteilst du? Tippe deine Antwort.':'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.'}</p>
-    ${u.auf?`<div class="fb ${w===q.r?'ok':'bad'}"><b>${w==null?'Du hast nicht abgestimmt.':w===q.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${q.optionen[q.r]}</b>. ${q.e||''}</div>`:''}</div>`;
-  el.hidden=false;
-  $$('[data-u-w]',el).forEach(b=>b.addEventListener('click',()=>raum.stimme(+b.dataset.uW).catch(e=>console.warn('Abstimmung',e))));
-  $('[data-u-zu]',el).addEventListener('click',()=>{umfrageZu=zustand;el.hidden=true});
-  if(neu)($('[data-u-w]:not(:disabled)',el)||$('[data-u-zu]',el)).focus();
+  if(umfrageZu===zustand){if(el)umfrageWeg(el);return}
+  const neu=!el||el.hidden,aufgedeckt=u.auf&&el&&el._zustand!==zustand,neueKarte=!neu&&el._n!==u.n;
+  if(!el){el=document.createElement('div');el.id='lr-umfrage';el.className='lr-umfrage';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','lr-umfrage-t');
+    // Die Statuszeile bleibt dasselbe Element (nur ihr Text wechselt), sonst sagen Screenreader „Deine Stimme ist abgegeben“ nicht an
+    el.innerHTML='<div class="lr-umfrage-karte stack"><div class="stack" data-u-oben></div><div class="lr-umfrage-wahl" role="group" aria-label="Dein Urteil" data-u-wahl></div><p class="small" role="status" data-u-status></p><div data-u-unten hidden></div></div>';document.body.append(el);
+    // Ereignisse per Delegation: Der Inhalt wird bei jeder Änderung neu gezeichnet
+    el.addEventListener('click',e=>{const b=e.target.closest('[data-u-w],[data-u-zu]');if(!b)return;
+      if(b.hasAttribute('data-u-zu')){umfrageZu=el._zustand;umfrageWeg(el)}else raum.stimme(+b.dataset.uW).catch(e=>console.warn('Abstimmung',e))})}
+  if(neu)umfrageVorher=document.activeElement;
+  el._zustand=zustand;el._n=u.n;
+  neuZeichnen($('[data-u-oben]',el),`<div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm" aria-hidden="true">${q.icon||'gavel'}</span> ${q.kopf||`Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}`}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms" aria-hidden="true">close</span></button></div>
+    ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>`);
+  // Antworten getrennt vom Fall: Eine Stimme oder das Auflösen zeichnet das Foto nicht neu (es würde kurz verschwinden)
+  neuZeichnen($('[data-u-wahl]',el),q.optionen.map((o,i)=>`<button class="btn${w===i?' primary':''}" type="button" data-u-w="${i}" aria-pressed="${w===i}"${u.auf?' disabled':''}>${o}</button>`).join(''));
+  const st=$('[data-u-status]',el),txt=u.auf?'':w==null?'Wie urteilst du? Tippe deine Antwort.':'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.';
+  if(st.textContent!==txt)st.textContent=txt;
+  const unten=$('[data-u-unten]',el);unten.hidden=!u.auf;
+  neuZeichnen(unten,u.auf?`<div class="fb ${w===q.r?'ok':'bad'}" data-u-urteil tabindex="-1"><b>${w==null?'Du hast nicht abgestimmt.':w===q.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${q.optionen[q.r]}</b>. ${q.e||''}</div>`:'');
+  el.hidden=false;sperreHintergrund();
+  // Beim Öffnen auf die erste Antwort (der Screenreader liest dabei den Namen des Fensters, die Frage),
+  // beim Auflösen auf das Urteil (die Antwortknöpfe sind dann gesperrt)
+  if(u.auf&&(neu||aufgedeckt)){const z=$('[data-u-urteil]',el);z.focus();z.scrollIntoView({block:'nearest'})}
+  else if(neu)($('[data-u-w]:not(:disabled)',el)||$('[data-u-zu]',el)).focus();
+  // Neue Frage im offenen Fenster (z. B. nächste Karte der Blitzrunde): Fokus auf die Frage, damit sie vorgelesen wird
+  else if(neueKarte){const t=$('#lr-umfrage-t',el);t.tabIndex=-1;t.focus()}
 }
 raum.on(art=>{if(['raum','start','verbunden','ende'].includes(art))umfrageFenster()});
+// Esc schließt zuerst das Abstimmungsfenster (Erfassungsphase, damit nicht die Werkstatt dahinter zugeht), nicht während der Pause
+document.addEventListener('keydown',e=>{const el=$('#lr-umfrage'),p=$('#lr-pause');
+  if(e.key!=='Escape'||!el||el.hidden||(p&&!p.hidden))return;e.stopPropagation();$('[data-u-zu]',el).click()},true);
 
 function kiHTML(){
   const chk=[...AUFGABEN.values()].find(a=>a.ki);if(!chk)return '';
   return `<section class="panel stack" id="lr-ki"><h3 class="title-l">KI-Coach mit AIS.chat</h3>
     <p class="small">Teilst du ein Lernszenario aus AIS.chat, erscheint bei den offenen Aufgaben im Wissenscheck der Knopf „KI-Coach“. Er kopiert die Antwort und öffnet AIS.chat. AIS.chat ist das KI-Angebot des Landes im Thüringer Schulportal.</p>
     <ol class="small"><li>Anweisung kopieren und in AIS.chat ein Lernszenario damit anlegen.</li><li>Das Lernszenario teilen und den Link hier einfügen.</li></ol>
-    <div class="row"><button class="btn small" type="button" data-kopiere="#lr-ki-text"><span class="ms">content_copy</span>Anweisung kopieren</button></div>
+    <div class="row"><button class="btn small" type="button" data-kopiere="#lr-ki-text"><span class="ms" aria-hidden="true">content_copy</span>Anweisung kopieren</button></div>
     <pre class="wc-ki" id="lr-ki-text" hidden>${esc(chk.ki)}</pre>
     <div class="row"><label for="lr-ki-link" class="small">Link zum Lernszenario</label><input id="lr-ki-link" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://…" value="${esc((z.raum&&z.raum.ki)||'')}" style="flex:1;min-width:200px"></div>
-    <div class="row"><button class="btn small primary" type="button" id="lr-ki-ok"><span class="ms">link</span>Link speichern</button><button class="btn text small" type="button" id="lr-ki-weg" hidden><span class="ms">link_off</span>Link entfernen</button><span class="small" id="lr-ki-st" role="status"></span></div></section>`;
+    <div class="row"><button class="btn small primary" type="button" id="lr-ki-ok"><span class="ms" aria-hidden="true">link</span>Link speichern</button><button class="btn text small" type="button" id="lr-ki-weg" hidden><span class="ms" aria-hidden="true">link_off</span>Link entfernen</button><span class="small" id="lr-ki-st" role="status"></span></div></section>`;
 }
 
 /** Druckansicht aller Antworten (im Browser „Als PDF speichern“). Im Beamer-Modus ohne Spitznamen. */

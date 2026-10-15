@@ -3,7 +3,7 @@
 // und der Lernraum (lernraum.js) mit Lehrerpanel. Aufgaben-Bausteine (aufgaben.js) werden automatisch gebunden.
 // Jedes Thema ruft createWerkstatt() mit seinen Inhalten auf, siehe sechseck/sechseck.js.
 import { $, $$, esc, store, zeigeHinweis } from './ui.js';
-import { raum, AUFGABEN, imTool, normCode } from './lernraum.js';
+import { raum, AUFGABEN, imTool, normCode, sperreHintergrund } from './lernraum.js';
 import { bindAufgaben } from './aufgaben.js';
 
 /**
@@ -41,12 +41,12 @@ export function createWerkstatt(cfg){
   </nav>
   <div class="pane">
     <header class="topbar" id="topbar">
-      <a class="icon-btn home-link" href="${cfg.start||'../'}" aria-label="Alle Themen im WR-Lab" title="Alle Themen im WR-Lab"><span class="ms">apps</span></a>
+      <a class="icon-btn home-link" href="${cfg.start||'../'}" aria-label="Alle Themen im WR-Lab" title="Alle Themen im WR-Lab"><span class="ms" aria-hidden="true">apps</span></a>
       <h1 id="view-title" data-kurz="${esc(DEST[0].kurz||DEST[0].label)}">${esc(DEST[0].title)}</h1>
-      <button class="chip hide-compact" type="button" id="btn-wissen"><span class="ms sm">lightbulb</span><span>Mein Wissen <span id="ms-count" class="num">0/0</span></span></button>
-      <button class="icon-btn lr-btn" type="button" id="btn-raum" data-raum-btn aria-label="Lernraum" title="Lernraum"><span class="ms">cast_for_education</span><span class="lr-dot" hidden></span></button>
-      <button class="icon-btn" type="button" id="btn-glossar" aria-label="Begriffe nachschlagen" title="Begriffe nachschlagen"><span class="ms">search</span></button>
-      <button class="icon-btn" type="button" id="btn-fs" aria-pressed="false" aria-label="Größere Schrift" title="Größere Schrift"><span class="ms">format_size</span></button>
+      <button class="chip hide-compact" type="button" id="btn-wissen"><span class="ms sm" aria-hidden="true">lightbulb</span><span>Mein Wissen <span id="ms-count" class="num">0/0</span></span></button>
+      <button class="icon-btn lr-btn" type="button" id="btn-raum" data-raum-btn aria-label="Lernraum" title="Lernraum"><span class="ms" aria-hidden="true">cast_for_education</span><span class="lr-dot" hidden></span></button>
+      <button class="icon-btn" type="button" id="btn-glossar" aria-label="Begriffe nachschlagen" title="Begriffe nachschlagen"><span class="ms" aria-hidden="true">search</span></button>
+      <button class="icon-btn" type="button" id="btn-fs" aria-pressed="false" aria-label="Größere Schrift" title="Größere Schrift"><span class="ms" aria-hidden="true">format_size</span></button>
     </header>
     <main id="view"></main>
   </div>
@@ -56,14 +56,14 @@ export function createWerkstatt(cfg){
 <div class="modal" id="modal" hidden>
   <div class="modal-card" role="region" aria-labelledby="modal-title">
     <div class="modal-head">
-      <button class="icon-btn" id="modal-close" type="button" aria-label="Zurück"><span class="ms">arrow_back</span></button>
+      <button class="icon-btn" id="modal-close" type="button" aria-label="Zurück"><span class="ms" aria-hidden="true">arrow_back</span></button>
       <h2 id="modal-title"></h2>
-      <button class="icon-btn lr-btn" type="button" data-raum-btn aria-label="Lernraum" title="Lernraum"><span class="ms">cast_for_education</span><span class="lr-dot" hidden></span></button>
+      <button class="icon-btn lr-btn" type="button" data-raum-btn aria-label="Lernraum" title="Lernraum"><span class="ms" aria-hidden="true">cast_for_education</span><span class="lr-dot" hidden></span></button>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
-<div class="lr-pause" id="lr-pause" hidden role="alertdialog" aria-modal="true" aria-labelledby="lr-pause-t" tabindex="-1"><span class="ms">co_present</span><p class="headline-s" id="lr-pause-t">Schau nach vorn</p><p class="body-l">Deine Lehrkraft hat alle Geräte kurz angehalten.</p></div>`);
+<div class="lr-pause" id="lr-pause" hidden role="alertdialog" aria-modal="true" aria-labelledby="lr-pause-t" tabindex="-1"><span class="ms" aria-hidden="true">co_present</span><p class="headline-s" id="lr-pause-t">Schau nach vorn</p><p class="body-l">Deine Lehrkraft hat alle Geräte kurz angehalten.</p></div>`);
 
   /* ---------- Erkenntnisse ---------- */
   function saveMs(){store(P+'-wissen',[...msGot]);updMs();if(!DEST.find(d=>d.id===curView)?.tool)renderView()}
@@ -75,25 +75,38 @@ export function createWerkstatt(cfg){
 
   /* ---------- Modal ---------- */
   const modal=$('#modal'), mBody=$('#modal-body'), mTitle=$('#modal-title');
-  let lastFocus=null;
+  let lastFocus=null, lastTool=null;
+  // Solange das Fenster offen ist, ist .pane (Kopfleiste und Ansicht dahinter) inert: weder Tab noch Screenreader
+  // gelangen dorthin. Rail und Navigation Bar liegen außerhalb und bleiben bedienbar, deshalb kein aria-modal.
   function openModal(title,html,init){
-    lastFocus=document.activeElement;offenesTool=null;
-    mTitle.innerHTML=title; mBody.innerHTML=html; modal.hidden=false;
+    // Wird ein Fenster im Fenster geöffnet (z. B. Lernraum), bleibt die Rücksprungstelle die ursprüngliche
+    if(modal.hidden){lastFocus=document.activeElement;lastTool=lastFocus&&lastFocus.closest?lastFocus.closest('[data-tool]')?.dataset.tool||null:null}
+    offenesTool=null;
+    mTitle.innerHTML=title; mBody.innerHTML=html; $('.pane').inert=true; modal.hidden=false;
     document.body.style.overflow='hidden';
     modal.scrollTop=0;
     if(init) init(mBody);
     nurLk(mBody);
-    $('#modal-close').focus();
+    // Den Fokus aus init (z. B. Suchfeld, Code-Feld) nicht überschreiben
+    if(!mBody.contains(document.activeElement))$('#modal-close').focus();
   }
-  function closeModal(silent){modal.hidden=true;document.body.style.overflow='';mBody.innerHTML='';offenesTool=null;raum.sendeOrt(aktuellerOrt());try{history.replaceState(null,'','#'+curView)}catch(e){} if(!silent&&lastFocus&&document.body.contains(lastFocus)) lastFocus.focus()}
+  function closeModal(silent){
+    $('.pane').inert=false;modal.hidden=true;document.body.style.overflow='';mBody.innerHTML='';offenesTool=null;raum.sendeOrt(aktuellerOrt());try{history.replaceState(null,'','#'+curView)}catch(e){}
+    if(silent)return;
+    // Zurück zum auslösenden Knopf; wurde die Ansicht inzwischen neu gezeichnet, zur Karte derselben Werkstatt
+    const z=lastFocus&&lastFocus!==document.body&&document.body.contains(lastFocus)?lastFocus:lastTool?$(`#view [data-tool="${CSS.escape(lastTool)}"]`):null;
+    if(z)z.focus();
+  }
   modal.addEventListener('scroll',()=>modal.classList.toggle('scrolled',modal.scrollTop>4));
-  $('#modal-close').addEventListener('click',closeModal);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeModal()});
+  $('#modal-close').addEventListener('click',()=>closeModal());
+  // Esc schließt das Werkstatt-Fenster, aber nicht während der Pause („Schau nach vorn“).
+  // Das Abstimmungsfenster fängt Esc selbst ab (lernraum.js).
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden&&$('#lr-pause').hidden)closeModal()});
 
   function erkHTML(tool){
     return `<div class="erk" data-erk="${tool}">
-    <div class="row" style="justify-content:space-between"><span class="erk-h"><span class="ms">lightbulb</span>Erkenntnis</span>
-    <button class="btn small primary" type="button" data-erk-btn><span class="ms">visibility</span>Erkenntnis aufdecken</button></div>
+    <div class="row" style="justify-content:space-between"><span class="erk-h"><span class="ms" aria-hidden="true">lightbulb</span>Erkenntnis</span>
+    <button class="btn small primary" type="button" data-erk-btn><span class="ms" aria-hidden="true">visibility</span>Erkenntnis aufdecken</button></div>
     <div data-erk-body hidden><ul>${MS[tool].map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
     <p class="small muted">Gespeichert in „${esc(cfg.wissenTitel)}“.</p></div></div>`;
   }
@@ -102,7 +115,8 @@ export function createWerkstatt(cfg){
       const t=box.dataset.erk, btn=$('[data-erk-btn]',box), body=$('[data-erk-body]',box);
       const show=()=>{body.hidden=false;btn.hidden=true};
       if(MS[t].every((_,i)=>msGot.has(t+'-'+i))) show();
-      btn.addEventListener('click',()=>{MS[t].forEach((_,i)=>msGot.add(t+'-'+i));saveMs();show()});
+      // Der Knopf verschwindet: Fokus auf die Merksätze, damit Tastatur und Screenreader dort weitermachen
+      btn.addEventListener('click',()=>{MS[t].forEach((_,i)=>msGot.add(t+'-'+i));saveMs();show();body.tabIndex=-1;body.focus()});
     });
   }
 
@@ -130,11 +144,11 @@ export function createWerkstatt(cfg){
 
   /* ---------- Navigation und Views ---------- */
   const destOfTool=id=>{const t=TOOLS.find(x=>x.id===id);return t?(DEST.find(d=>(d.ch||[1]).includes(t.ch))||DEST[0]).id:'start'};
-  function navHTML(){return DEST.map(d=>`<button class="nav-item" type="button" data-dest="${d.id}" ${d.id===curView?'aria-current="page"':''}><span class="ind"><span class="ms">${d.icon}</span></span><span>${d.label}</span></button>`).join('')}
+  function navHTML(){return DEST.map(d=>`<button class="nav-item" type="button" data-dest="${d.id}" ${d.id===curView?'aria-current="page"':''}><span class="ind"><span class="ms" aria-hidden="true">${d.icon}</span></span><span>${d.label}</span></button>`).join('')}
   function renderNav(){['#rail-items','#nav-bar'].forEach(sel=>{const el=$(sel);el.innerHTML=navHTML();$$('[data-dest]',el).forEach(b=>b.addEventListener('click',()=>go(b.dataset.dest)))})}
   function cardHTML(x){const done=MS[x.id]&&MS[x.id].every((_,i)=>msGot.has(x.id+'-'+i)),zu=raum.gesperrt(x.id);
-    return `<button class="card${zu?' gesperrt':''}" type="button" data-tool="${x.id}"${zu?' aria-disabled="true"':''}><span class="dots">${cfg.punkte(x)}</span><h4>${x.title}</h4><p>${x.sub}</p>${done?'<span class="done"><span class="ms sm">check_circle</span>Erkenntnis gesichert</span>':''}${zu?'<span class="go"><span class="ms sm">lock</span>Noch gesperrt</span>':'<span class="go">Werkstatt öffnen<span class="ms sm">arrow_forward</span></span>'}</button>`}
-  function chapterHTML(c,extra){const [h,t]=CH[c];return `<section class="chapter"><div class="chapter-h"><h3>${h}</h3><span class="tag">${t}</span></div><div class="cards">${TOOLS.filter(x=>x.ch==c).map(cardHTML).join('')}${extra||''}</div></section>`}
+    return `<button class="card${zu?' gesperrt':''}" type="button" data-tool="${x.id}"${zu?' aria-disabled="true"':''}><span class="dots">${cfg.punkte(x)}</span><h3 class="title-m">${x.title}</h3><p>${x.sub}</p>${done?'<span class="done"><span class="ms sm" aria-hidden="true">check_circle</span>Erkenntnis gesichert</span>':''}${zu?'<span class="go"><span class="ms sm" aria-hidden="true">lock</span>Noch gesperrt</span>':'<span class="go">Werkstatt öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span>'}</button>`}
+  function chapterHTML(c,extra){const [h,t]=CH[c];return `<section class="chapter"><div class="chapter-h"><h2 class="title-l">${h}</h2><span class="tag">${t}</span></div><div class="cards">${TOOLS.filter(x=>x.ch==c).map(cardHTML).join('')}${extra||''}</div></section>`}
   function renderView(){
     const v=$('#view'),d=DEST.find(x=>x.id===curView)||DEST[0],h1=$('#view-title');
     h1.textContent=d.title;h1.dataset.kurz=d.kurz||d.label;
@@ -163,13 +177,14 @@ export function createWerkstatt(cfg){
     const dest=destOfTool(id);if(dest!==curView){curView=dest;renderNav();renderView()}
     const html=imTool(t.id,()=>t.html());
     openModal(esc(t.title),lehrerpanelHTML(t)+html,root=>{t.init(root);bindAufgaben(root)});
+    if(!lastTool)lastTool=id; // z. B. direkt über die Adresse geöffnet: beim Schließen auf die Karte
     offenesTool=id;raum.sendeOrt(id);
     try{history.replaceState(null,'','#'+id)}catch(e){}
   }
 
   /* ---------- Lernraum ---------- */
   const aktuellerOrt=()=>offenesTool||DEST.find(d=>d.id===curView)?.tool||curView;
-  const gesperrtHTML=()=>`<div class="panel stack" style="max-width:560px"><p class="title-m"><span class="ms">lock</span> Noch gesperrt</p><p>Deine Lehrkraft hat diesen Bereich noch nicht freigegeben.</p></div>`;
+  const gesperrtHTML=()=>`<div class="panel stack" style="max-width:560px"><p class="title-m"><span class="ms" aria-hidden="true">lock</span> Noch gesperrt</p><p>Deine Lehrkraft hat diesen Bereich noch nicht freigegeben.</p></div>`;
   function orte(){return [
     ...DEST.filter(d=>!d.tool).map(d=>({id:d.id,titel:d.title,art:'bereich'})),
     ...TOOLS.map(t=>({id:t.id,titel:t.title,art:'werkstatt'}))]}
@@ -178,13 +193,13 @@ export function createWerkstatt(cfg){
     if(!t||!raum.istLehrkraft()||raum.beamer())return '';
     const auf=[...AUFGABEN.values()].filter(a=>a.tool===t.id&&!a.intern),hw=t.hinweise||[];
     if(!hw.length&&!auf.length)return '';
-    return `<details class="lehrerpanel"><summary><span class="ms sm">co_present</span>Lehrerpanel <span class="small muted">nur auf deinem Gerät, im Beamer-Modus ausgeblendet</span></summary><div class="stack">
+    return `<details class="lehrerpanel"><summary><span class="ms sm" aria-hidden="true">co_present</span>Lehrerpanel <span class="small muted">nur auf deinem Gerät, im Beamer-Modus ausgeblendet</span></summary><div class="stack">
       ${hw.length?`<div><p class="title-s">Hinweise</p><ul>${hw.map(h=>`<li>${h}</li>`).join('')}</ul></div>`:''}
       ${auf.length?`<div class="stack"><p class="title-s">Erwartungshorizont und Lösungen</p>${auf.map(a=>`<div><p class="small"><b>${a.frage}</b></p><ul class="small">${a.loesung.map(l=>`<li>${l}</li>`).join('')}</ul></div>`).join('')}</div>`:''}
       ${auf.filter(a=>a.ki).map(a=>`<div class="stack"><p class="title-s">KI-Coach mit AIS.chat</p>
         <ol class="small"><li>Anweisung kopieren und in AIS.chat ein Lernszenario damit anlegen.</li><li>Das Lernszenario teilen und den Link im Lernraum-Dashboard unter „KI-Coach“ einfügen.</li><li>Dann erscheint bei den offenen Aufgaben der Knopf „KI-Coach“.</li></ol>
-        <details class="hilfe"><summary><span class="ms sm">smart_toy</span>Anweisung anzeigen</summary><pre class="wc-ki" id="ki-${esc(a.id)}">${esc(a.ki)}</pre></details>
-        <div class="row"><button class="btn small" type="button" data-kopiere="#ki-${esc(a.id)}"><span class="ms">content_copy</span>Anweisung kopieren</button></div></div>`).join('')}</div></details>`;
+        <details class="hilfe"><summary><span class="ms sm" aria-hidden="true">smart_toy</span>Anweisung anzeigen</summary><pre class="wc-ki" id="ki-${esc(a.id)}">${esc(a.ki)}</pre></details>
+        <div class="row"><button class="btn small" type="button" data-kopiere="#ki-${esc(a.id)}"><span class="ms" aria-hidden="true">content_copy</span>Anweisung kopieren</button></div></div>`).join('')}</div></details>`;
   }
   function aktualisiereLehrerpanel(){
     const imModal=!modal.hidden&&offenesTool,d=DEST.find(x=>x.id===curView);
@@ -193,11 +208,13 @@ export function createWerkstatt(cfg){
     ziel.querySelector(':scope > .lehrerpanel')?.remove();
     const h=lehrerpanelHTML(t);if(h)ziel.insertAdjacentHTML('afterbegin',h);
   }
-  let sperreAlt='';
+  let sperreAlt='',pauseVorher=null;
   function raumGeaendert(art){
     const s=raum.sitzung(),txt=s?(s.rolle==='lk'?`Lernraum ${s.code} (Lehrkraft)`:`Lernraum ${s.code} – du bist ${s.nick}`):'Lernraum';
     $$('[data-raum-btn]').forEach(b=>{$('.lr-dot',b).hidden=!s;b.setAttribute('aria-label',txt);b.title=txt});
-    const p=$('#lr-pause'),pause=raum.pausiert();if(p.hidden===pause){p.hidden=!pause;if(pause)p.focus()}
+    // Pause: Hintergrund sperren, danach zurück an die vorherige Stelle
+    const p=$('#lr-pause'),pause=raum.pausiert();
+    if(p.hidden===pause){if(pause)pauseVorher=document.activeElement;p.hidden=!pause;sperreHintergrund();if(pause)p.focus();else{const v=pauseVorher;pauseVorher=null;if(v&&v!==document.body&&document.body.contains(v)&&!v.closest('[inert]'))v.focus();else if(!modal.hidden&&!modal.inert)$('#modal-close').focus()}}
     const z=raum.zustand().raum,sperre=raum.istSchueler()&&z?JSON.stringify(z.gesperrt||[]):'[]';
     if(sperre!==sperreAlt){sperreAlt=sperre;const d=DEST.find(x=>x.id===curView);if(!d||!d.tool||raum.gesperrt(d.tool)||zeigtSperre)renderView()}
     if(['start','ende','verbunden','beamer'].includes(art))aktualisiereLehrerpanel();

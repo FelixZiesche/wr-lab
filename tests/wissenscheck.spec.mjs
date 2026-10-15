@@ -24,6 +24,7 @@ test.describe('ohne Lernraum', () => {
     await a(0).locator('label', { hasText: 'Grundgesetz' }).click();
     await a(0).locator('[data-wc-pruefen]').click();
     await expect(a(0).locator('.fb')).toContainText('Nicht ganz. Art. 20a GG kam erst 1994');
+    await expect(a(0).locator('.fb')).toBeFocused(); // Tastatur und Screenreader landen auf der Rückmeldung
     await expect(a(0).locator('.wc-eh')).toContainText('§ 1 StabG nennt');
     await expect(a(0).locator('[data-gehzu="grundlagen"]')).toContainText('Sechseck-Baukasten');
     await expect(a(0).locator('input').first()).toBeDisabled();
@@ -96,6 +97,7 @@ test.describe('ohne Lernraum', () => {
     await w.locator('[data-wc-hinweis]').click();
     const h = w.locator('[data-wc-hinweise]');
     await expect(h).toContainText('Deine Antwort ist noch sehr kurz');
+    await expect(h.locator('.title-s')).toBeFocused();
     await expect(h).toContainText('Welche Ziele des Sechsecks sind betroffen?');
     await expect(h).toContainText('ohne KI');
     await expect(h).not.toContainText('Wägt Pro und Contra ab');
@@ -108,6 +110,7 @@ test.describe('ohne Lernraum', () => {
     await expect(h).toContainText('Das steckt schon drin');
     await w.locator('[data-wc-fertig]').click();
     await expect(h).toBeHidden();
+    await expect(w.locator('[data-wc-fb] .wc-eh .title-s')).toBeFocused();
     const haken = w.locator('[data-wc-fb] input[type=checkbox]');
     await expect(haken).toHaveCount(4);
     for (let j = 0; j < 4; j++) await expect(haken.nth(j)).toBeChecked();

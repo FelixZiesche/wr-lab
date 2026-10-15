@@ -13,9 +13,18 @@ test('Lückentext: prüfen, Fehler markieren, Lösungen zeigen', async ({ page }
   for (const [i, a] of antworten.entries()) await felder.nth(i).fill(a);
   await felder.nth(1).fill('1968');
   await box.locator('[data-pruefen]').click();
-  await expect(box.locator('[data-ergebnis]')).toHaveText('12 von 13 richtig');
+  await expect(box.locator('[data-ergebnis]')).toHaveText('12 von 13 richtig – falsche Lücken sind mit einem Kreuz markiert.');
   await expect(felder.nth(1)).toHaveClass(/wrong/);
+  // Nicht nur über die Farbe: Kreuz hinter der Lücke und aria-invalid
+  await expect(felder.nth(1)).toHaveAttribute('aria-invalid', 'true');
+  await expect(felder.nth(0)).toHaveAttribute('aria-invalid', 'false');
+  await expect(box.locator('.lt-mark')).toHaveCount(13);
+  await expect(box.locator('.lt-mark.bad')).toHaveText('close');
+  await felder.nth(1).fill('196');
+  await expect(felder.nth(1)).not.toHaveAttribute('aria-invalid');
+  await expect(box.locator('.lt-mark')).toHaveCount(12);
   await box.locator('[data-zeigen]').click();
+  await expect(box.locator('[data-pruefen]')).toBeFocused();
   await expect(felder.nth(1)).toHaveValue('1967');
   await box.locator('[data-pruefen]').click();
   await expect(box.locator('[data-ergebnis]')).toHaveText('13 von 13 richtig');
@@ -30,6 +39,7 @@ test('Zuordnen: antippen, ziehen, prüfen', async ({ page }) => {
   await expect(box.locator('.zu-karte[data-k="0"]')).toHaveAttribute('aria-pressed', 'true');
   await box.locator('.zu-ziel[data-ziel="B"]').click();
   await expect(box.locator('.zu-fach[data-fach="B"] .zu-karte[data-k="0"]')).toBeVisible();
+  await expect(box.locator('[data-ergebnis]')).toHaveText(/^Karte liegt jetzt bei „.+“\.$/);
   await box.locator('[data-pruefen]').click();
   await expect(box.locator('[data-ergebnis]')).toHaveText('0 von 12 richtig – 11 noch nicht zugeordnet');
   await expect(box.locator('.zu-karte[data-k="0"]')).toHaveClass(/wrong/);
@@ -56,6 +66,7 @@ test('Test: ein Versuch, Auswertung, noch einmal', async ({ page }) => {
   for (const [i, j] of [1, 0, 0, 1].entries()) await box.locator(`input[name="t-sichern-test-${i}"][value="${j}"]`).check();
   await pruefen.click();
   await expect(box.locator('[data-ergebnis]')).toHaveText('3 von 4 richtig');
+  await expect(box.locator('[data-neu]')).toBeFocused();
   await expect(box.locator('input[type=radio]').first()).toBeDisabled();
   await expect(box.locator('.test-opt.wrong')).toHaveCount(1);
   await expect(box.locator('.test-erkl').nth(2)).toBeVisible();
@@ -63,6 +74,7 @@ test('Test: ein Versuch, Auswertung, noch einmal', async ({ page }) => {
   await expect(page.locator('[data-test="sichern-test"] [data-ergebnis]')).toHaveText('3 von 4 richtig');
   await page.locator('[data-test="sichern-test"] [data-neu]').click();
   await expect(page.locator('[data-test="sichern-test"] input[type=radio]').first()).toBeEnabled();
+  await expect(page.locator('[data-test="sichern-test"] input[type=radio]').first()).toBeFocused();
 });
 
 test('Schreibfeld ohne Lernraum: ins Heft, Entwurf bleibt gespeichert, keine Lösungen sichtbar', async ({ page }) => {
@@ -78,4 +90,30 @@ test('Schreibfeld ohne Lernraum: ins Heft, Entwurf bleibt gespeichert, keine Lö
   await expect(page.locator('[data-schreib="sichern-wand"] textarea')).toHaveValue('Mir ist Umweltschutz am wichtigsten.');
   await expect(page.locator('.lehrerpanel')).toHaveCount(0);
   await expect(page.getByText('Persönliche Gewichtung mit Bezug')).toHaveCount(0);
+});
+
+test('Tastatur: nach „Prüfen“ und „Weiter“ springt der Fokus auf die Rückmeldung bzw. den Anfang der Stufe', async ({ page }) => {
+  await page.goto(`${SECHSECK}#wissenscheck`);
+  const a = page.locator('[data-wc="wissenscheck"] .wc-a[data-wc-i="0"]');
+  await a.locator('input').first().check();
+  await a.locator('[data-wc-pruefen]').press('Enter');
+  await expect(a.locator('[data-wc-fb] .fb')).toBeFocused();
+  // „Weiter“ am Ende einer Stufe: Fokus an den Anfang der neuen Stufe, nicht auf die Seite
+  await page.locator('[data-wc-stufe="1"] > .row [data-wc-tab="2"]').press('Enter');
+  await expect(page.locator('[data-wc-stufe="2"] > p').first()).toBeFocused();
+});
+
+test('Tastatur: Erklärung eines Infopunkts bekommt den Fokus, „Schließen“ führt zum Punkt zurück', async ({ page }) => {
+  await page.goto(`${SECHSECK}#spiel`);
+  await page.locator('.mode-card[data-m="solo"]').click();
+  await page.locator('[data-f="mia"]').click();
+  const punkt = page.locator('.photo .hotspot').first();
+  await punkt.press('Enter');
+  const info = page.locator('[data-hsi]');
+  await expect(info).toBeFocused();
+  await expect(info).toHaveAttribute('role', 'group');
+  await expect(punkt).toHaveAttribute('aria-controls', await info.getAttribute('id'));
+  await info.getByRole('button', { name: 'Infopunkt schließen' }).press('Enter');
+  await expect(info).toBeHidden();
+  await expect(punkt).toBeFocused();
 });
