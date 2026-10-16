@@ -18,7 +18,7 @@ export const OPERATOREN={
   'erläutern':{afb:2,was:'Erkläre den Zusammenhang und mach ihn an einem konkreten Beispiel anschaulich.'},
   'vergleichen':{afb:2,was:'Stell Gemeinsamkeiten und Unterschiede nach Kriterien gegenüber.'},
   'beurteilen':{afb:3,was:'Prüfe eine Aussage oder Maßnahme an fachlichen Kriterien: Was spricht dafür, was dagegen? Komm am Ende zu einem begründeten Urteil.'},
-  'bewerten':{afb:3,was:'Wie beurteilen, aber mit deinem eigenen Wertmaßstab: Was ist dir wichtiger und warum? Nenne deinen Maßstab.'},
+  'bewerten':{afb:3,was:'Wie beim Beurteilen, aber mit deinem eigenen Wertmaßstab: Was ist dir wichtiger und warum? Nenne deinen Maßstab.'},
   'Stellung nehmen':{afb:3,was:'Wäge Argumente dafür und dagegen ab und vertritt am Ende deine eigene, begründete Meinung.'}
 };
 

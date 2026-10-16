@@ -12,9 +12,9 @@ test.describe('ohne Lernraum', () => {
     await expect(page.locator('#modal-title')).toHaveText('Wissenscheck');
     const wc = page.locator('[data-wc="wissenscheck"]');
     const a = i => aufgabe(page, i);
-    await expect(wc.locator('.wc-a')).toHaveCount(31);
-    await expect(wc.locator('.wc-a:visible')).toHaveCount(12);
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('0 von 64 Punkten');
+    await expect(wc.locator('.wc-a')).toHaveCount(36);
+    await expect(wc.locator('.wc-a:visible')).toHaveCount(15);
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('0 von 73 Punkten');
     // Vor der Antwort kein Erwartungshorizont
     await expect(wc.locator('.wc-eh')).toHaveCount(0);
     await expect(page.getByText('§ 1 StabG nennt')).toHaveCount(0);
@@ -24,6 +24,7 @@ test.describe('ohne Lernraum', () => {
     await a(0).locator('label', { hasText: 'Grundgesetz' }).click();
     await a(0).locator('[data-wc-pruefen]').click();
     await expect(a(0).locator('.fb')).toContainText('Nicht ganz. Art. 20a GG kam erst 1994');
+    await expect(a(0).locator('.fb')).toBeFocused(); // Tastatur und Screenreader landen auf der Rückmeldung
     await expect(a(0).locator('.wc-eh')).toContainText('§ 1 StabG nennt');
     await expect(a(0).locator('[data-gehzu="grundlagen"]')).toContainText('Sechseck-Baukasten');
     await expect(a(0).locator('input').first()).toBeDisabled();
@@ -49,8 +50,8 @@ test.describe('ohne Lernraum', () => {
     await a(4).locator('label', { hasText: 'falsch' }).click();
     await a(4).locator('[data-wc-pruefen]').click();
     await expect(a(4).locator('.fb')).toContainText('Richtig.');
-    await expect(wc.locator('[data-wc-n="1"]')).toHaveText('4/12');
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('3,5 von 64 Punkten');
+    await expect(wc.locator('[data-wc-n="1"]')).toHaveText('4/15');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('3,5 von 73 Punkten');
 
     // Anwenden: Rechnen mit typischem Fehler, Komma und Prozentzeichen
     await wc.locator('.wc-tabs [data-wc-tab="2"]').click();
@@ -78,7 +79,7 @@ test.describe('ohne Lernraum', () => {
     await page.reload();
     await expect(aufgabe(page, 13)).toBeVisible();
     await expect(aufgabe(page, 13).locator('.fb')).toContainText('Richtig.');
-    await expect(page.locator('[data-wc-gesamt]')).toHaveText('7,5 von 64 Punkten');
+    await expect(page.locator('[data-wc-gesamt]')).toHaveText('7,5 von 73 Punkten');
   });
 
   test('Offene Aufgabe: Feedback ohne KI, Erwartungshorizont abhaken, überarbeiten; Auswertung, wiederholen, neu starten', async ({ page }) => {
@@ -96,6 +97,7 @@ test.describe('ohne Lernraum', () => {
     await w.locator('[data-wc-hinweis]').click();
     const h = w.locator('[data-wc-hinweise]');
     await expect(h).toContainText('Deine Antwort ist noch sehr kurz');
+    await expect(h.locator('.title-s')).toBeFocused();
     await expect(h).toContainText('Welche Ziele des Sechsecks sind betroffen?');
     await expect(h).toContainText('ohne KI');
     await expect(h).not.toContainText('Wägt Pro und Contra ab');
@@ -108,6 +110,7 @@ test.describe('ohne Lernraum', () => {
     await expect(h).toContainText('Das steckt schon drin');
     await w.locator('[data-wc-fertig]').click();
     await expect(h).toBeHidden();
+    await expect(w.locator('[data-wc-fb] .wc-eh .title-s')).toBeFocused();
     const haken = w.locator('[data-wc-fb] input[type=checkbox]');
     await expect(haken).toHaveCount(4);
     for (let j = 0; j < 4; j++) await expect(haken.nth(j)).toBeChecked();
@@ -133,14 +136,14 @@ test.describe('ohne Lernraum', () => {
     await wc.locator('.wc-tabs [data-wc-tab="0"]').click();
     const aus = wc.locator('[data-wc-stufe="0"]');
     await expect(aus).toContainText('4 von 22 Punkten · 2/6 bearbeitet');
-    await expect(aus).toContainText('Gesamt: 4 von 64 Punkten (6 %)');
-    await expect(aus).toContainText('Noch 29 Aufgaben sind offen.');
+    await expect(aus).toContainText('Gesamt: 4 von 73 Punkten (5 %)');
+    await expect(aus).toContainText('Noch 34 Aufgaben sind offen.');
     await expect(aus).toContainText('Tipp für „Beurteilen“');
 
     // Neu starten (mit Rückfrage)
     await aus.locator('[data-wc-neu]').click();
     await aus.locator('[data-wc-neu-n]').click();
-    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('4 von 64 Punkten');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText('4 von 73 Punkten');
 
     // „Wiederholen“ öffnet die passende Werkstatt
     await aus.locator('[data-gehzu="politik"]').click();
@@ -152,9 +155,74 @@ test.describe('ohne Lernraum', () => {
     await expect(page.locator('[data-wc-stufe="0"]')).toBeVisible();
     await page.locator('[data-wc-neu]').click();
     await page.locator('[data-wc-neu-y]').click();
-    await expect(page.locator('[data-wc-gesamt]')).toHaveText('0 von 64 Punkten');
+    await expect(page.locator('[data-wc-gesamt]')).toHaveText('0 von 73 Punkten');
     await expect(aufgabe(page, 0)).toBeVisible();
     await expect(aufgabe(page, 0).locator('input:checked')).toHaveCount(0);
+  });
+
+  test('Speicherung pro Aufgabe: neue Aufgabe oder geänderte Frage löschen die anderen Antworten nicht, alter Stand wird übernommen', async ({ page }) => {
+    const SCHLUESSEL = 'ms6-wc-wissenscheck';
+    let umbauen = false;
+    // Dieselbe Seite mit geändertem Wissenscheck: neue Aufgabe vorn, Frage der ersten Auswahlaufgabe geändert
+    await page.route('**/sechseck/wissenscheck.js', async route => {
+      const res = await route.fetch();
+      let body = await res.text();
+      if (umbauen) body += `\n{const i=WISSENSCHECK.aufgaben.findIndex(a=>a.afb===1&&a.art==='wahl');WISSENSCHECK.aufgaben[i].f+=' (geändert)';
+WISSENSCHECK.aufgaben.unshift({afb:1,art:'richtigfalsch',f:'Diese Aufgabe ist neu.',r:true,e:'Neu ergänzt.'});}`;
+      await route.fulfill({ response: res, body });
+    });
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    const wc = page.locator('[data-wc="wissenscheck"]');
+    // Die ersten beiden Auswahlaufgaben der Grundlagen: die erste richtig, die zweite falsch beantworten
+    const info = await page.evaluate(async () => {
+      const { WISSENSCHECK: W } = await import('/sechseck/wissenscheck.js');
+      const idx = W.aufgaben.map((a, i) => ({ a, i })).filter(x => x.a.afb === 1 && x.a.art === 'wahl').slice(0, 2);
+      return { n: W.aufgaben.length, n1: W.aufgaben.filter(a => a.afb === 1).length, max: W.aufgaben.reduce((s, a) => s + (a.p ?? (a.art === 'offen' ? a.erwartung.length : a.afb)), 0),
+        auf: idx.map(x => ({ i: x.i, r: x.a.r, falsch: x.a.r === 0 ? 1 : 0, p: x.a.p ?? 1 })) };
+    });
+    const [e1, e2] = info.auf;
+    await aufgabe(page, e1.i).locator(`input[value="${e1.r}"]`).check();
+    await aufgabe(page, e1.i).locator('[data-wc-pruefen]').click();
+    await aufgabe(page, e2.i).locator(`input[value="${e2.falsch}"]`).check();
+    await aufgabe(page, e2.i).locator('[data-wc-pruefen]').click();
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`${e1.p} von ${info.max} Punkten`);
+
+    // Neu ausgeliefert mit geändertem Blatt: Alles rückt um eine Position, die geänderte Frage ist offen, die andere bleibt
+    umbauen = true;
+    await page.goto('about:blank');
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    await expect(wc.locator('.wc-a')).toHaveCount(info.n + 1);
+    await expect(aufgabe(page, 0)).toContainText('Diese Aufgabe ist neu.');
+    await expect(aufgabe(page, e1.i + 1)).toContainText('(geändert)');
+    await expect(aufgabe(page, e1.i + 1).locator('input:checked')).toHaveCount(0);
+    await expect(aufgabe(page, e1.i + 1).locator('.fb')).toHaveCount(0);
+    await expect(aufgabe(page, e2.i + 1).locator(`input[value="${e2.falsch}"]`)).toBeChecked();
+    await expect(aufgabe(page, e2.i + 1).locator('.fb')).toContainText('Nicht ganz.');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`0 von ${info.max + 1} Punkten`);
+    await expect(wc.locator('[data-wc-n="1"]')).toHaveText(`1/${info.n1 + 1}`);
+
+    // Alter Stand (Antworten nach Position, Fingerabdruck über das ganze Blatt): passt er zum Blatt, wird er übernommen
+    umbauen = false;
+    const alt = await page.evaluate(async ({ SCHLUESSEL, e1 }) => {
+      const { WISSENSCHECK: W } = await import('/sechseck/wissenscheck.js?alt');
+      const streuwert = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+      const fp = streuwert(JSON.stringify(W.aufgaben.map(a => [a.art, a.f, a.o, a.r, a.schritte, a.karten && a.karten.map(k => k.t), a.erwartung && a.erwartung.length])));
+      localStorage.setItem(SCHLUESSEL, JSON.stringify({ v: fp, a: { [e1.i]: { w: e1.r, f: true, p: e1.p } }, tab: 1 }));
+      return fp;
+    }, { SCHLUESSEL, e1 });
+    await page.goto('about:blank');
+    await page.goto(`${SECHSECK}#wissenscheck`);
+    await expect(aufgabe(page, e1.i).locator('.fb')).toContainText('Richtig.');
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`${e1.p} von ${info.max} Punkten`);
+    const neu = await page.evaluate(k => JSON.parse(localStorage.getItem(k)), SCHLUESSEL);
+    expect(neu.a).toBeUndefined();
+    expect(Object.values(neu.k).filter(x => x.f)).toEqual([{ w: e1.r, f: true, p: e1.p }]);
+
+    // Passt der alte Fingerabdruck nicht mehr, lassen sich die Antworten keiner Aufgabe zuordnen: Sie fallen weg
+    await page.evaluate(({ SCHLUESSEL, e1, alt }) => localStorage.setItem(SCHLUESSEL, JSON.stringify({ v: alt + 1, a: { [e1.i]: { w: e1.r, f: true, p: e1.p } }, tab: 1 })), { SCHLUESSEL, e1, alt });
+    await page.reload();
+    await expect(wc.locator('[data-wc-gesamt]')).toHaveText(`0 von ${info.max} Punkten`);
+    await expect(aufgabe(page, e1.i).locator('input:checked')).toHaveCount(0);
   });
 });
 
@@ -198,7 +266,7 @@ test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.cha
   // In der Datenbank stehen nur Punkte, ein Zeichen pro Aufgabe
   const uid = await s.evaluate(async () => (await import('/shared/js/lernraum.js')).raum.live().uid);
   const eintrag = await readDoc(`rooms/${code}/players/${uid}`);
-  expect(eintrag.fields.wc.stringValue).toBe('a-0' + '-'.repeat(28));
+  expect(eintrag.fields.wc.stringValue).toBe('a-0' + '-'.repeat(33));
   // Beamer-Modus: keine Spitznamen
   await lk.locator('#lr-beamer').click();
   await expect(wcBox.locator('table')).toHaveCount(0);
@@ -249,6 +317,8 @@ test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.cha
 });
 
 // Gilt für jedes Thema mit <id>/wissenscheck.js: Regeln aus CLAUDE.md und Stimmigkeit der Lösungen
+// Punkteanteile der Stufen I/II/III nach Klassenstufe (Richtwert aus CLAUDE.md, erlaubt sind ±10 Prozentpunkte)
+const RICHTWERT = { 9: [40, 40, 20], 10: [40, 40, 20], 11: [25, 45, 30], 12: [25, 45, 30] };
 test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Formate, Lösungen passen zum Erwartungshorizont', async ({ page }) => {
   await page.goto('/');
   const berichte = await page.evaluate(async () => {
@@ -275,10 +345,20 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
         if (a.art === 'wahl' && !(a.r >= 0 && a.r < a.o.length)) fehler.push(`${n}: r außerhalb`);
         if (a.art === 'mehrfach' && a.r.some(j => j >= a.o.length)) fehler.push(`${n}: r außerhalb`);
         if (a.art === 'wahl' && a.fehler && a.fehler[a.r]) fehler.push(`${n}: Fehlertext an der richtigen Antwort`);
+        // Jede falsche Antwort bekommt eine eigene Erklärung, jede Rechenaufgabe typische Rechenfehler
+        if (a.art === 'wahl') a.o.forEach((o, j) => { if (j !== a.r && !(a.fehler && a.fehler[j])) fehler.push(`${n}: Erklärung zur falschen Antwort „${o}“ fehlt in fehler`); });
+        if (a.art === 'zahl' && !(a.fehler && a.fehler.length)) fehler.push(`${n}: typische Rechenfehler (fehler) fehlen`);
         if (a.art === 'zuordnen' && a.karten.some(k => !a.faecher.some(f => f.id === k.f))) fehler.push(`${n}: Karte ohne passendes Fach`);
         if (['wahl', 'mehrfach', 'richtigfalsch', 'zahl', 'reihe', 'zuordnen'].includes(a.art) && !a.e) fehler.push(`${n}: Erklärung e fehlt`);
+        if (a.id !== undefined && (!/^[a-z0-9-]{1,40}$/.test(a.id) || W.aufgaben.some((b, j) => j !== i && b.id === a.id))) fehler.push(`${n}: id ungültig oder doppelt`);
       });
-      out.push({ id: t.id, n: W.aufgaben.length, stufen: [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).length), formate: new Set(W.aufgaben.map(a => a.art)).size, fehler });
+      // Tipps für die Auswertung: nur für die Stufen 1 bis 3
+      Object.entries(W.tipps || {}).forEach(([k, v]) => { if (!['1', '2', '3'].includes(k) || typeof v !== 'string' || !v) fehler.push(`${t.id}: Tipp ${k} ungültig`); });
+      // Punkte wie im Baustein: p, sonst bei offenen Aufgaben die Zahl der Erwartungen, sonst die Stufe
+      const punkte = [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).reduce((x, a) => x + (a.p ?? (a.art === 'offen' ? a.erwartung.length : a.afb)), 0));
+      // Werkstätten zum Wiederholen (Aufgabe und Karten beim Zuordnen)
+      const werkstaetten = [...new Set(W.aufgaben.flatMap(a => [a.werkstatt, ...(a.karten || []).map(k => k.werkstatt)]).filter(Boolean))];
+      out.push({ id: t.id, stufe: t.stufe, n: W.aufgaben.length, stufen: [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).length), punkte, werkstaetten, formate: new Set(W.aufgaben.map(a => a.art)).size, fehler });
     }
     return out;
   });
@@ -286,7 +366,18 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
     expect(b.fehlt, `${b.id}: wissenscheck.js fehlt`).toBeUndefined();
     expect(b.fehler, b.id).toEqual([]);
     expect(b.n, `${b.id}: Aufgaben`).toBeGreaterThanOrEqual(20);
+    // Ein Zeichen pro Aufgabe im Feld wc: Ab der 61. Aufgabe kämen die Punkte nicht mehr im Dashboard an
+    expect(b.n, `${b.id}: höchstens 60 Aufgaben, sonst firestore.rules (d.wc.size() <= 60) und lernraum.js (slice(0,60)) anpassen`).toBeLessThanOrEqual(60);
     expect(b.stufen.every(x => x > 0), `${b.id}: alle drei Stufen`).toBe(true);
     expect(b.formate, `${b.id}: Formate`).toBeGreaterThanOrEqual(5);
+    const summe = b.punkte.reduce((x, y) => x + y, 0), anteile = b.punkte.map(p => Math.round(p / summe * 100));
+    RICHTWERT[b.stufe].forEach((r, k) => expect(Math.abs(anteile[k] - r), `${b.id} (Klasse ${b.stufe}): Punkteanteil Stufe ${'I'.repeat(k + 1)} ${anteile[k]} %, Richtwert ${r} % ± 10`).toBeLessThanOrEqual(10));
+  }
+  // Jede Werkstatt zum Wiederholen gibt es wirklich: Über ihre Adresse öffnet sich das Werkstatt-Fenster
+  for (const b of berichte) for (const w of b.werkstaetten) {
+    await page.goto('about:blank');
+    await page.goto(`/${b.id}/#${w}`);
+    await expect(page.locator('#modal'), `${b.id}: Werkstatt ${w}`).toBeVisible();
+    await expect(page.locator('#modal-title'), `${b.id}: Werkstatt ${w}`).not.toBeEmpty();
   }
 });

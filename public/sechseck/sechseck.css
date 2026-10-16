@@ -20,3 +20,19 @@
 .hexcorner:hover circle.dot,.hexcorner:focus circle.dot{stroke-width:5}
 .bar.debt{position:relative}
 .bar.debt::after{content:"";position:absolute;left:82%;top:0;bottom:0;width:3px;background:var(--md-on-surface)}
+
+/* Warenkorb: Auf dem Handy schmale Felder, kurze Spaltenköpfe, feste erste Spalte und ein Hinweis zum Wischen */
+.pr-gut{width:100%;min-width:9em}
+.th-kurz{display:none}
+.pr-wisch{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+@media (max-width:599px){
+  #pr-tab :is(th,td){padding:6px 4px}
+  #pr-tab .th-lang{display:none}
+  #pr-tab .th-kurz{display:inline}
+  #pr-tab :is(th,td):first-child{position:sticky;left:0;z-index:1;background:var(--md-surface-container-low);padding-left:0}
+  #pr-body .pr-gut{min-width:0;width:8.5em;font-size:.875rem;padding:6px 8px}
+  #pr-body input[type=number]{width:4.4em;font-size:.875rem;padding:6px}
+  #pr-body input[data-f="q"]{width:3.3em}
+  #pr-body .pr-gut:focus{padding:5px 7px}
+  #pr-body input[type=number]:focus{padding:5px}
+}

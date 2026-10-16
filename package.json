@@ -1,7 +1,7 @@
 {
   "name": "wr-lab",
   "private": true,
-  "description": "WR-Lab: Lernwerkstätten für Wirtschaft und Recht (Oberstufe, Thüringen)",
+  "description": "WR-Lab: interaktive Lernwerkstätten für Wirtschaft und Recht, Klasse 9 bis 12 in Thüringen",
   "scripts": {
     "dev": "firebase emulators:start --project demo-wr-lab",
     "test": "firebase emulators:exec --project demo-wr-lab --only auth,firestore,hosting \"playwright test && node --test tests/rules.test.mjs\"",
@@ -9,6 +9,7 @@
     "test:rules": "firebase emulators:exec --project demo-wr-lab --only firestore \"node --test tests/rules.test.mjs\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@playwright/test": "1.56.1",
     "firebase": "10.12.2",

@@ -1,5 +1,5 @@
 // Grunddaten und Grafiken des magischen Sechsecks, gemeinsam für Werkstätten und Planspiel.
-import { esc, clamp } from '../shared/js/ui.js';
+import { esc, clamp, svgMass, svgHandy } from '../shared/js/ui.js';
 
 /* ---------- Grunddaten ---------- */
 export const ORDER=['P','B','W','A','U','V'];
@@ -7,38 +7,38 @@ export const G={
   P:{name:'Stabilität des Preisniveaus',short:'Preisniveau',since:'1967',law:'§ 1 StabG; für die EZB vorrangig: Art. 127 AEUV',
      ind:'Verbraucherpreisindex (VPI), im Euroraum der Harmonisierte VPI (HVPI); Veränderung zum Vorjahr = Inflationsrate',
      target:'Inflationsrate von 2 % auf mittlere Sicht (EZB-Strategie seit 2021, symmetrisch: Abweichungen nach oben und unten sind gleich unerwünscht)',
-     now:'3,3 % im September 2026 (vorläufig), getrieben von Energie (+14,9 %); Kerninflation 2,4 %. Jahresdurchschnitt 2025: 2,2 %',
+     now:'3,3 % im September 2026, getrieben von Energie (+14,9 %): Sprit +37,1 %, Heizöl +74,9 %, Strom und Gas dagegen billiger als vor einem Jahr. Kerninflation 2,4 %. Jahresdurchschnitt 2025: 2,2 %',
      who:'Vor allem die Europäische Zentralbank (Geldpolitik), daneben Tarifpartner (Löhne) und Staat (Steuern, Abgaben, administrierte Preise)',
      risk:'Inflation: Kaufkraftverlust, Umverteilung zulasten von Sparern und Geringverdienern, Gefahr einer Lohn-Preis-Spirale. Deflation: Kaufzurückhaltung, Investitionsstau, steigende reale Schuldenlast',
      tool:'preis', chip:'3,3 %', chipLab:'Inflation Sept. 2026'},
   B:{name:'Hoher Beschäftigungsstand',short:'Beschäftigung',since:'1967',law:'§ 1 StabG',
      ind:'Arbeitslosenquote der Bundesagentur für Arbeit (registrierte Arbeitslose bezogen auf alle zivilen Erwerbspersonen); ergänzend ILO-Erwerbslosenquote und Unterbeschäftigung',
      target:'Keine gesetzliche Zahl. Faustregel: Unter etwa 3 % spricht man von Vollbeschäftigung, weil Sucharbeitslosigkeit immer bleibt',
-     now:'6,4 % im September 2026 (2,994 Mio. Arbeitslose); Unterbeschäftigung 3,6 Mio. Thüringen: 6,5 % (Juli 2026)',
+     now:'6,4 % im September 2026 (knapp 3,0 Mio. Arbeitslose); Unterbeschäftigung 3,6 Mio. Thüringen: 6,3 % (September 2026)',
      who:'Staat (Fiskal-, Bildungs-, Arbeitsmarktpolitik), Bundesagentur für Arbeit, Tarifpartner, Unternehmen',
      risk:'Einkommensverlust und Armutsrisiko, Ausfälle bei Steuern und Sozialbeiträgen, Entwertung von Qualifikationen, gesellschaftliche Folgen wie Ausgrenzung',
      tool:'beschaeftigung', chip:'6,4 %', chipLab:'Arbeitslosenquote Sept. 2026'},
   W:{name:'Stetiges und angemessenes Wirtschaftswachstum',short:'Wachstum',since:'1967',law:'§ 1 StabG',
      ind:'Veränderungsrate des realen (preisbereinigten) Bruttoinlandsprodukts gegenüber dem Vorjahr',
      target:'Keine feste Zahl. „Stetig“ heißt ohne starke Schwankungen, „angemessen“ heißt: das Produktionspotenzial auslasten. Das Potenzialwachstum liegt in Deutschland wegen der schrumpfenden Erwerbsbevölkerung derzeit deutlich unter 1 %',
-     now:'2025: +0,2 % nach zwei Rezessionsjahren (2023: −0,9 %, 2024: −0,5 %). 2. Quartal 2026: +0,3 % zum Vorquartal. Prognose 2026: +1,3 %',
+     now:'2025: +0,2 %. 2023 schrumpfte die Wirtschaft um 1,0 %, 2024 stagnierte sie (0,0 %; von Destatis im Juli 2026 korrigiert, vorher −0,5 %). 2. Quartal 2026: +0,3 % zum Vorquartal. Prognose 2026: +1,3 %',
      who:'Staat (Investitionen, Steuern, Rahmenbedingungen), indirekt die EZB über Zinsen, Unternehmen und Haushalte über Investitionen und Konsum',
      risk:'Zu wenig: Rezession, Arbeitslosigkeit, sinkende Steuereinnahmen. Zu viel: Überhitzung, Inflation, Ressourcenverbrauch',
      tool:'wachstum', chip:'+1,3 %', chipLab:'BIP-Prognose 2026'},
   A:{name:'Außenwirtschaftliches Gleichgewicht',short:'Außenwirtschaft',since:'1967',law:'§ 1 StabG',
      ind:'Saldo der Leistungsbilanz in Prozent des BIP (Handel mit Waren und Dienstleistungen plus Primär- und Sekundäreinkommen)',
      target:'Annähernd ausgeglichene Leistungsbilanz. Die EU-Frühwarnschwellen liegen bei mehr als +6 % oder weniger als −4 % des BIP (Dreijahresdurchschnitt)',
-     now:'2025: Überschuss von rund 200 Mrd. € bzw. 4,4 % des BIP; Prognose 2026: 4,7 %',
+     now:'2025: Überschuss von rund 200 Mrd. €, das sind 4,4 % des BIP; Prognose 2026: 4,7 %',
      who:'Bundesregierung, EU (Handelspolitik ist EU-Kompetenz), Wechselkurs des Euro (frei schwankend)',
      risk:'Überschuss: Abhängigkeit vom Export, Handelskonflikte und Zölle, Risiko für die im Ausland angelegten Ersparnisse. Defizit: wachsende Auslandsverschuldung',
      tool:'aussen', chip:'+4,4 %', chipLab:'Leistungsbilanz 2025 (in % BIP)'},
   U:{name:'Schutz der natürlichen Lebensgrundlagen',short:'Umwelt',since:'Erweiterung',law:'Art. 20a GG (seit 1994), Bundes-Klimaschutzgesetz',
      ind:'Treibhausgasemissionen in Mio. t CO₂-Äquivalente; ergänzend Anteil erneuerbarer Energien, Flächenverbrauch, Artenvielfalt',
      target:'Klimaschutzgesetz: −65 % bis 2030 und −88 % bis 2040 gegenüber 1990, Netto-Treibhausgasneutralität bis 2045',
-     now:'2025: rund 649 Mio. t, das sind etwa 48 % weniger als 1990. Für 2030 sind rund 438 Mio. t erlaubt',
+     now:'2025: rund 649 Mio. t, das sind etwa 48 % weniger als 1990. Für 2030 sind rund 438 Mio. t erlaubt. Das Umweltbundesamt erwartet mit der heutigen Politik bis 2030 nur −62,6 %, zum Ziel fehlen rund 30 Mio. t (Projektion März 2026)',
      who:'Bund und EU (Emissionshandel, CO₂-Preis, Ordnungsrecht), Länder und Kommunen, Unternehmen und Haushalte',
      risk:'Klimafolgeschäden, Kosten für künftige Generationen. Das Bundesverfassungsgericht hat 2021 geurteilt, dass zu spätes Handeln die Freiheit künftiger Generationen verletzt',
-     tool:'umwelt', chip:'−48 %', chipLab:'Treibhausgase ggü. 1990'},
+     tool:'umwelt', chip:'−48 %', chipLab:'Treibhausgase seit 1990'},
   V:{name:'Gerechte Einkommens- und Vermögensverteilung',short:'Verteilung',since:'Erweiterung',law:'Sozialstaatsprinzip, Art. 20 Abs. 1 GG',
      ind:'Gini-Koeffizient, Armutsgefährdungsquote (Anteil der Menschen mit weniger als 60 % des mittleren Einkommens), Verhältnis oberstes zu unterstem Fünftel (S80/S20)',
      target:'Politisch umstritten, denn „gerecht“ ist eine Wertfrage: Leistungs-, Bedarfs- oder Chancengerechtigkeit?',
@@ -54,12 +54,24 @@ export function hexPts(cx,cy,r,n=6){return Array.from({length:n},(_,i)=>{const a
 export const ptsStr=p=>p.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ');
 export function hexDot(k){return `<svg class="hexdot" viewBox="0 0 12 12" aria-hidden="true"><polygon points="6,0.5 11,3.3 11,8.7 6,11.5 1,8.7 1,3.3" fill="${gc(k)}"/></svg>`}
 
+/** Beschriftung an Ecke i eines Sechsecks (Punkt auf Radius r, Text mit Abstand ab davon). Breit: nach außen wie bisher.
+ *  Handy: mittig über (obere Ecken) bzw. unter dem Punkt, damit lange Namen wie „Beschäftigung“ nicht aus dem Bild ragen. */
+export function eckPos(i,cx,cy,r,ab,{handy,fs,W,txt=''}){
+  if(handy){const [x,y]=hexPts(cx,cy,r)[i],oben=i<2||i===5,hw=txt.length*fs*.3+2;
+    return {x:clamp(x,hw,W-hw),y:oben?y-ab:y+ab+fs*.75,a:'middle'}}
+  const [x,y]=hexPts(cx,cy,r+ab)[i],a=Math.abs(x-cx)<5?'middle':x>cx?'start':'end';
+  return {x,y:y+(i===0?-4:i===3?fs*.8:fs*.36),a};
+}
+
 /* ---------- Radar ---------- */
+// opt.el: Element, in das das Radar kommt (für die Schriftgröße, siehe svgMass). Ohne el (Planspiel, als Text gebaut)
+// wird die Breite geschätzt: auf dem Handy die Fensterbreite, sonst die Vorlage.
 export function radar(series,opt={}){
-  const W=opt.w||520,H=opt.h||380,cx=W/2,cy=H/2+4,r=opt.r||130;
+  const Wv=opt.w||520,handy=svgHandy(),m=opt.el?svgMass(opt.el,Wv):{W:handy?Math.max(260,Math.min(Wv,innerWidth-64)):Wv,handy,fs:f=>handy?Math.max(f,12):Math.max(f,16.5)};
+  const W=m.W,f=m.fs,fl=f(13),r=m.handy?Math.min(130,(W/2-fl*3.3)/.866):(opt.r||130),H=m.handy?Math.round(2*r+4*fl+40):(opt.h||380),cx=W/2,cy=H/2+(m.handy?fl*.4:4);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label||'Zielerreichung als Sechseck')}">`;
   [25,50,75,100].forEach(v=>{s+=`<polygon points="${ptsStr(hexPts(cx,cy,r*v/100))}" fill="none" class="s-line" stroke-width="1"/>`});
-  s+=`<text x="${cx+4}" y="${cy-r-4}" class="t-mu" font-size="10">100</text><text x="${cx+4}" y="${cy-r/2-3}" class="t-mu" font-size="10">50</text>`;
+  s+=`<text x="${cx+4}" y="${cy-r-4}" class="t-mu" font-size="${f(10)}">100</text><text x="${cx+4}" y="${cy-r/2-3}" class="t-mu" font-size="${f(10)}">50</text>`;
   const outer=hexPts(cx,cy,r);
   outer.forEach(([x,y])=>{s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="s-line"/>`});
   series.forEach(se=>{
@@ -67,8 +79,7 @@ export function radar(series,opt={}){
     s+=`<polygon points="${ptsStr(pts)}" fill="${se.fill||'none'}" fill-opacity="${se.fo??0.18}" stroke="${se.stroke}" stroke-width="${se.sw||2.5}" ${se.dash?`stroke-dasharray="${se.dash}"`:''}/>`;
     if(!se.dash) pts.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="4.5" fill="${gc(ORDER[i])}"/>`});
   });
-  const lab=hexPts(cx,cy,r+20);
-  ORDER.forEach((k,i)=>{const [x,y]=lab[i];const a=Math.abs(x-cx)<5?'middle':(x>cx?'start':'end');s+=`<text x="${x}" y="${y+(i===0?-2:i===3?10:4)}" text-anchor="${a}" fill="${gc(k)}" font-size="13" font-weight="700">${G[k].short}</text>`});
+  ORDER.forEach((k,i)=>{const p=eckPos(i,cx,cy,r,m.handy?(i===0?f(10)+16:10):20,{handy:m.handy,fs:fl,W,txt:G[k].short});s+=`<text x="${p.x}" y="${p.y}" text-anchor="${p.a}" fill="${gc(k)}" font-size="${fl}" font-weight="700">${G[k].short}</text>`});
   return s+'</svg>';
 }
 

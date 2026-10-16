@@ -149,6 +149,7 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
    - `icon_names` (alle verwendeten Icons, alphabetisch)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
    - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
+   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
 4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
    - IDs von Bereichen und Werkstätten dürfen nicht gleich sein, sonst führen Adressen wie `#faelle` und Knöpfe zum Wiederholen an die falsche Stelle.
