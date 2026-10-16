@@ -82,7 +82,7 @@ const ROUNDS=[
   fig:{mia:'Snacks und Brötchen werden teurer.',jonas:'Der Wocheneinkauf wird teurer, Mensa-Preise steigen.',sabine:'Sprit wird wieder teurer – die Pendelstrecke frisst ihr Budget.',tobias:'Mehl wird teurer, und er muss die Brötchenpreise erhöhen.',daniel:'Heizen und Tanken werden teurer.',gisela:'Lebensmittel und Gas belasten ihre kleine Rente.',lea:'Merkt die höheren Preise kaum.',paul:'Die Ernte ist eingebrochen, Diesel kostet mehr: das schwerste Jahr seit Langem.'},
   q:'Wie reagiert die Politik auf Dürre und CO₂-Preis?',
   opts:[
-   {k:'A',t:'Klimageld verdoppeln',d:'Die CO₂-Einnahmen gehen als Klimageld zurück: zusätzlich 300 € pro Kopf und Jahr (25 € im Monat).',ops:{T:25,hex:{V:5,U:3}}},
+   {k:'A',t:'Klimageld aus dem CO₂-Preis',d:'Die zusätzlichen CO₂-Einnahmen gehen als Klimageld an alle zurück: 300 € pro Kopf und Jahr (25 € im Monat). Gibt es schon ein Klimageld, kommt der Betrag obendrauf.',ops:{T:25,hex:{V:5,U:3}}},
    {k:'B',t:'Spritsteuer senken + Agrardiesel-Hilfe',d:'Die Energiesteuer auf Benzin und Diesel sinkt für ein Jahr, Landwirte bekommen Dieselhilfen.',ops:{tmp:{S:0.92},umsatz:{agrar:1.05},hex:{P:3,U:-6,V:-1},debt:2}},
    {k:'C',t:'Investitionsprogramm Klimaanpassung',d:'Kreditfinanziert: Bewässerung, Waldumbau, Schiene, Hitzeschutz – und Dürrehilfen für Bauern.',ops:{umsatz:{agrar:1.12},hex:{U:5,W:3,B:3,P:-2},debt:3}}],
   choice:{q:'Ein Finfluencer auf TikTok verspricht mit dem Memecoin „$SIXSEVEN“ 670 % Gewinn. Was machst du?',opts:[
@@ -250,8 +250,8 @@ function figTrack(f,decs,ch,chx){
   const done=rows.length,last=done?rows[done-1].m.sum:0,prog=Math.round(konto+(4-done)*12*(f.base+last));
   return {konto:Math.round(konto),mood,policy:Math.round(policy),rows,start:f.spar,prog,goalOk:konto>=f.goal.amt};
 }
-const eur=(n,d=0)=>fmt(n,d)+' €';
-const sgnE=n=>(n>0?'+':n<0?'−':'±')+fmt(Math.abs(Math.round(n)),0)+' €';
+const eur=(n,d=0)=>fmt(n,d)+'\u00a0€';
+const sgnE=n=>(n>0?'+':n<0?'−':'±')+fmt(Math.abs(Math.round(n)),0)+'\u00a0€';
 function postHTML(R){return `<div class="post"><div class="who"><span class="av"><span class="ms sm" aria-hidden="true">person</span></span><span>@${esc(R.post.h)}</span></div><div>${esc(R.post.txt)}</div><div class="meta"><span class="ms sm" aria-hidden="true">favorite</span>${R.post.likes}<span class="sr-only"> Likes</span> · fiktiver Beitrag</div></div>`}
 function hexPillsHTML(h){return ORDER.filter(k=>h&&h[k]).map(k=>`<span class="pill ${h[k]>0?'ok':'bad'}">${G[k].short} ${h[k]>0?'+':'−'}${Math.abs(h[k])}</span>`).join(' ')}
 function partsHTML(m){if(!m.parts.length)return '<p class="small muted">Keine Veränderung gegenüber dem Start.</p>';

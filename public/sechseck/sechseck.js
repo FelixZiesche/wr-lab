@@ -648,7 +648,7 @@ ${impuls(IMPULS.verteilung)}
 ${erkHTML('verteilung')}`},
 init(root){
   let cur=LZ.verf.v.slice();
-  const gini=s=>{const t=s.reduce((a,b)=>a+b,0)||1;let cum=0,prev=0,A=0;s.forEach(v=>{cum+=v/t;A+=(prev+cum)*0.2;prev=cum});return 1-A};
+  const gini=s=>{const t=s.reduce((a,b)=>a+b,0)||1;let cum=0,prev=0,A=0;s.forEach(v=>{cum+=v/t;A+=(prev+cum)*0.2;prev=cum});return Math.max(0,1-A)}; // max: Rundungsrest bei Gleichverteilung (sonst „−0,00“)
   const draw=()=>{
     const t=cur.reduce((a,b)=>a+b,0)||1;
     [1,2,3,4,5].forEach(i=>{$('#lz'+i,root).value=cur[i-1];$('#lz'+i+'o',root).textContent=fmt(cur[i-1]/t*100,1)+' %'});

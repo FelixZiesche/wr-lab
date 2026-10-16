@@ -8,7 +8,7 @@
 //   thema: 'sechseck',                 Ordnername des Themas, wird im Live-Raum gespeichert
 //   speicher: 'ms6-leben',             Präfix für Spielstände im Browser
 //   figuren: [{id, n, a, ort, job}],   id: Kleinbuchstaben, Ziffern, Bindestrich (max. 24 Zeichen)
-//   runden: [{y, t, real, q, opts: [{k: 'A'|'B'|'C', t, d}], choice: {q, opts: [{t, l}]}}]
+//   runden: [{y, t, real, q, opts: [{k: 'A'|'B'|'C', t, d}], choice: {q, opts: [{t, l}]}}]   choice.opts: höchstens 3 (firestore.rules)
 //   portrait(f)                        → SVG der Figur
 //   einleitung, figurenTitel           → Texte im Startmenü
 //   figurInfo(f)                       → Zusatzzeilen bei der Figurenwahl (HTML)
@@ -19,7 +19,7 @@
 //   check(r, o)                        → {frage, optionen: [{txt, ok}], warum} Fachbegriff-Check
 //   privat: {wurf(o), rueckmeldung(o, x)} optional: Zufall bei der privaten Entscheidung
 //   bilanz(f, g, live)                 → Abschlussbilanz (HTML)
-//   werte(f, g)                        → Kennzahlen fürs Dashboard, z. B. {konto, mood}
+//   werte(f, g)                        → Kennzahlen fürs Dashboard, z. B. {konto, mood}: höchstens 30, klein halten
 //   texte: {beschluss}                 optional, z. B. 'Der Bundestag beschließt'
 //   lehrkraft: {ereignis(t), optionInfo(o), abstimmungDetails(t), ergebnis(t, hinweis), bilanz(t), auswertung,
 //               dashKopf, dashZeile(p, f), dashHinweis}

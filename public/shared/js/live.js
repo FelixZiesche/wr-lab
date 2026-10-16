@@ -73,7 +73,9 @@ async function init() {
       F = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
     } catch (e) { e.laden = true; throw e; }
     const app = initializeApp(cfg);
-    const auth = A.getAuth(app);
+    // initializeAuth statt getAuth: ohne popupRedirectResolver (Anmelden per Popup braucht die Seite nicht).
+    // Sonst lädt Firebase auf Handys und in Safari von sich aus apis.google.com und ein unsichtbares iframe nach.
+    const auth = A.initializeAuth(app, { persistence: [A.indexedDBLocalPersistence, A.browserLocalPersistence] });
     const db = F.getFirestore(app);
     if (cfg.projectId.startsWith('demo-')) { // nur lokal mit `npm run dev` und in den Tests
       A.connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });

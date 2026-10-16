@@ -1,4 +1,5 @@
 // Lernraum: ein Raum für die ganze Lernwerkstatt (Werkstätten und Planspiel).
+import { devices } from '@playwright/test';
 import { test, expect, device, readDoc, writeDoc, SECHSECK } from './helpers.mjs';
 
 async function raumOeffnen(lk) {
@@ -479,4 +480,49 @@ test('Keine Verbindung beim Beitreten: ehrliche Meldung, neuer Versuch möglich,
   await expect(k.locator('#lr-oerr')).toContainText('Der Lernraum ist nicht eingerichtet.');
 
   for (const p of [s, o, k]) { expect(p.errors).toEqual([]); await p.context().close(); }
+});
+
+// Sicherheitsvorgaben aus firebase.json: Die vollständige Content-Security-Policy läuft vorerst nur beobachtend
+// (Report-Only). Chrome meldet jeden Verstoß in der Konsole, auch Report-Only. Im Emulator verbindet sich die Seite
+// mit 127.0.0.1:9099 (Anmeldung) und 127.0.0.1:8080 (Firestore) statt mit *.googleapis.com: Nur diese Meldungen
+// (connect-src) sind erlaubt, jede andere zeigt eine Quelle, die auch auf wr-lab.web.app blockiert würde.
+test('Sicherheitsvorgaben: Lernraum mit Handy ohne Verstoß gegen die Content-Security-Policy, kein apis.google.com', async ({ page: lk, browser }) => {
+  test.setTimeout(90_000);
+  const EMULATOR = /Refused to connect to '(https?|wss?):\/\/127\.0\.0\.1:(9099|8080)\//;
+  const meldungen = [], fremd = [];
+  const beobachte = page => {
+    page.on('console', m => { if (/Content.Security.Policy/i.test(m.text()) && !EMULATOR.test(m.text())) meldungen.push(m.text().slice(0, 300)); });
+    page.on('request', r => { if (/^https:\/\/apis\.google\.com\/|\/__\/auth\/iframe/.test(r.url())) fremd.push(r.url()); });
+  };
+  beobachte(lk);
+  const res = await lk.goto(SECHSECK);
+  const h = res.headers();
+  expect(h['content-security-policy']).toBe("frame-ancestors 'self'");
+  expect(h['x-frame-options']).toBe('SAMEORIGIN');
+  expect(h['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  expect(h['content-security-policy-report-only']).toContain("script-src 'self' https://www.gstatic.com;");
+  const code = await raumOeffnen(lk);
+
+  // Schüler mit Android-Handy: Firebase hat hier früher von sich aus apis.google.com nachgeladen
+  const s = await device(browser, { kontext: devices['Pixel 7'] });
+  beobachte(s);
+  await s.goto(`${SECHSECK}#raum=${code}`);
+  await s.locator('#lr-nick').fill('Handy');
+  await s.locator('#lr-jgo').click();
+  await expect(s.locator('#lr-dialog')).toContainText(`Du bist im Lernraum ${code} als Handy`);
+  await s.locator('#modal-close').click();
+  await werkstatt(s, 'ziele', 'preis');
+  const feld = s.locator('[data-schreib="preis-wand"]');
+  await feld.locator('textarea').fill('Sonst warten alle mit dem Kaufen.');
+  await feld.locator('[data-schreib-senden]').click();
+  await expect(feld.locator('[data-schreib-status]')).toContainText('Deine Antwort hängt an der Wand');
+  await expect(lk.locator('#lr-antw tr', { hasText: 'Die EZB strebt' })).toContainText('1');
+  // Das Planspiel lädt im Lernraum dieselben Quellen; ein Blick hinein genügt
+  await s.locator('#nav-bar [data-dest="spiel"]').click();
+  await expect(s.locator('#view h3').first()).toBeVisible();
+
+  expect(meldungen, 'Meldungen zur Content-Security-Policy').toEqual([]);
+  expect(fremd, 'Anfragen an apis.google.com oder das Anmelde-iframe').toEqual([]);
+  expect(s.errors).toEqual([]);
+  await s.context().close();
 });

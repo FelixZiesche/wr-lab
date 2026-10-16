@@ -8,6 +8,8 @@ rules_version = '2';
 // - Live-Abstimmung: Die Lehrkraft steuert die Umfrage im Raum, jede Stimme ist eine Zahl im eigenen Eintrag.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
+//   Ausnahme im Planspiel: Bei stats (Kennzahlen fürs Dashboard, je Thema verschieden) ist nur die Zahl der Schlüssel
+//   begrenzt, nicht Typ und Größe der Werte. Stimmen (votes), Checks und Entscheidungen (choices) sind fest begrenzt.
 // - Wer einen Raum, einen Eintrag oder eine Antwort anlegt, setzt ein Ablaufdatum (expireAt, für die TTL-Löschung).
 //   Die Obergrenze ist großzügig (72 Stunden), weil der Client mit der Uhr des Geräts rechnet.
 service cloud.firestore {
@@ -62,9 +64,11 @@ service cloud.firestore {
         && (!('fig' in d) || isSlug(d.fig, 24))
         && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
         && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))
-        && (!('votes' in d) || isSmallMap(d.votes))
-        && (!('checks' in d) || isSmallMap(d.checks))
-        && (!('choices' in d) || isSmallMap(d.choices))
+        // Planspiel, je Runde ein Eintrag: Stimme A, B oder C; Check richtig oder falsch;
+        // private Entscheidung als Index der Option (höchstens drei Optionen, siehe planspiel.js)
+        && (!('votes' in d) || (isSmallMap(d.votes) && d.votes.values().hasOnly(['A','B','C'])))
+        && (!('checks' in d) || (isSmallMap(d.checks) && d.checks.values().hasOnly([true,false])))
+        && (!('choices' in d) || (isSmallMap(d.choices) && d.choices.values().hasOnly([0,1,2])))
         && (!('stats' in d) || isSmallMap(d.stats))
         && (!('joinedAt' in d) || isTime(d.joinedAt))
         && (!('updatedAt' in d) || isTime(d.updatedAt))

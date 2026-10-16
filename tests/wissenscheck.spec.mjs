@@ -317,6 +317,8 @@ test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.cha
 });
 
 // Gilt für jedes Thema mit <id>/wissenscheck.js: Regeln aus CLAUDE.md und Stimmigkeit der Lösungen
+// Punkteanteile der Stufen I/II/III nach Klassenstufe (Richtwert aus CLAUDE.md, erlaubt sind ±10 Prozentpunkte)
+const RICHTWERT = { 9: [40, 40, 20], 10: [40, 40, 20], 11: [25, 45, 30], 12: [25, 45, 30] };
 test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Formate, Lösungen passen zum Erwartungshorizont', async ({ page }) => {
   await page.goto('/');
   const berichte = await page.evaluate(async () => {
@@ -343,13 +345,20 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
         if (a.art === 'wahl' && !(a.r >= 0 && a.r < a.o.length)) fehler.push(`${n}: r außerhalb`);
         if (a.art === 'mehrfach' && a.r.some(j => j >= a.o.length)) fehler.push(`${n}: r außerhalb`);
         if (a.art === 'wahl' && a.fehler && a.fehler[a.r]) fehler.push(`${n}: Fehlertext an der richtigen Antwort`);
+        // Jede falsche Antwort bekommt eine eigene Erklärung, jede Rechenaufgabe typische Rechenfehler
+        if (a.art === 'wahl') a.o.forEach((o, j) => { if (j !== a.r && !(a.fehler && a.fehler[j])) fehler.push(`${n}: Erklärung zur falschen Antwort „${o}“ fehlt in fehler`); });
+        if (a.art === 'zahl' && !(a.fehler && a.fehler.length)) fehler.push(`${n}: typische Rechenfehler (fehler) fehlen`);
         if (a.art === 'zuordnen' && a.karten.some(k => !a.faecher.some(f => f.id === k.f))) fehler.push(`${n}: Karte ohne passendes Fach`);
         if (['wahl', 'mehrfach', 'richtigfalsch', 'zahl', 'reihe', 'zuordnen'].includes(a.art) && !a.e) fehler.push(`${n}: Erklärung e fehlt`);
         if (a.id !== undefined && (!/^[a-z0-9-]{1,40}$/.test(a.id) || W.aufgaben.some((b, j) => j !== i && b.id === a.id))) fehler.push(`${n}: id ungültig oder doppelt`);
       });
       // Tipps für die Auswertung: nur für die Stufen 1 bis 3
       Object.entries(W.tipps || {}).forEach(([k, v]) => { if (!['1', '2', '3'].includes(k) || typeof v !== 'string' || !v) fehler.push(`${t.id}: Tipp ${k} ungültig`); });
-      out.push({ id: t.id, n: W.aufgaben.length, stufen: [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).length), formate: new Set(W.aufgaben.map(a => a.art)).size, fehler });
+      // Punkte wie im Baustein: p, sonst bei offenen Aufgaben die Zahl der Erwartungen, sonst die Stufe
+      const punkte = [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).reduce((x, a) => x + (a.p ?? (a.art === 'offen' ? a.erwartung.length : a.afb)), 0));
+      // Werkstätten zum Wiederholen (Aufgabe und Karten beim Zuordnen)
+      const werkstaetten = [...new Set(W.aufgaben.flatMap(a => [a.werkstatt, ...(a.karten || []).map(k => k.werkstatt)]).filter(Boolean))];
+      out.push({ id: t.id, stufe: t.stufe, n: W.aufgaben.length, stufen: [1, 2, 3].map(s => W.aufgaben.filter(a => a.afb === s).length), punkte, werkstaetten, formate: new Set(W.aufgaben.map(a => a.art)).size, fehler });
     }
     return out;
   });
@@ -357,7 +366,18 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
     expect(b.fehlt, `${b.id}: wissenscheck.js fehlt`).toBeUndefined();
     expect(b.fehler, b.id).toEqual([]);
     expect(b.n, `${b.id}: Aufgaben`).toBeGreaterThanOrEqual(20);
+    // Ein Zeichen pro Aufgabe im Feld wc: Ab der 61. Aufgabe kämen die Punkte nicht mehr im Dashboard an
+    expect(b.n, `${b.id}: höchstens 60 Aufgaben, sonst firestore.rules (d.wc.size() <= 60) und lernraum.js (slice(0,60)) anpassen`).toBeLessThanOrEqual(60);
     expect(b.stufen.every(x => x > 0), `${b.id}: alle drei Stufen`).toBe(true);
     expect(b.formate, `${b.id}: Formate`).toBeGreaterThanOrEqual(5);
+    const summe = b.punkte.reduce((x, y) => x + y, 0), anteile = b.punkte.map(p => Math.round(p / summe * 100));
+    RICHTWERT[b.stufe].forEach((r, k) => expect(Math.abs(anteile[k] - r), `${b.id} (Klasse ${b.stufe}): Punkteanteil Stufe ${'I'.repeat(k + 1)} ${anteile[k]} %, Richtwert ${r} % ± 10`).toBeLessThanOrEqual(10));
+  }
+  // Jede Werkstatt zum Wiederholen gibt es wirklich: Über ihre Adresse öffnet sich das Werkstatt-Fenster
+  for (const b of berichte) for (const w of b.werkstaetten) {
+    await page.goto('about:blank');
+    await page.goto(`/${b.id}/#${w}`);
+    await expect(page.locator('#modal'), `${b.id}: Werkstatt ${w}`).toBeVisible();
+    await expect(page.locator('#modal-title'), `${b.id}: Werkstatt ${w}`).not.toBeEmpty();
   }
 });

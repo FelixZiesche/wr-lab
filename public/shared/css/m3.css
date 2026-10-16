@@ -347,6 +347,9 @@ div.opt::before{display:none}
 .topic-tags li{font-size:.75rem;line-height:1rem;font-weight:500;padding:4px 10px;border-radius:var(--r-s);background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
 .topic .go{margin-top:auto;padding-top:8px;display:inline-flex;align-items:center;gap:4px;font-size:.875rem;font-weight:500;color:var(--md-primary)}
 .wr-foot{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--md-outline-variant);padding-top:16px;max-width:80ch}
+/* Fehlerseite (404.html) */
+.wr-fehler{padding-top:24px}
+.wr-fehler>.ms{font-size:56px;color:var(--md-primary)}
 @media (max-width:599px){.wr{padding:0 16px 32px;gap:24px}.wr-topics{grid-template-columns:1fr}}
 
 /* Lernraum */

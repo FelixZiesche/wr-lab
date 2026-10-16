@@ -1,4 +1,5 @@
 # Jeder Push auf main: erst testen, dann Seite und Firestore-Regeln veröffentlichen.
+# Von Hand (Run workflow) veröffentlicht nur main; von anderen Branches aus laufen nur die Tests.
 name: Veröffentlichen
 on:
   push:
@@ -18,6 +19,8 @@ jobs:
 
   deploy:
     needs: test
+    # Nur der Stand von main kommt auf wr-lab.web.app (auch bei „Run workflow“ mit einem anderen Branch)
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:

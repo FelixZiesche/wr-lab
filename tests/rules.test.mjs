@@ -84,6 +84,19 @@ test('Einträge lesen und entfernen: Schüler nur den eigenen, Lehrkraft alle', 
   await assertSucceeds(db('schueler').doc(`rooms/${CODE}/players/schueler`).delete());
 });
 
+test('Planspiel: Stimmen nur A, B oder C, Checks nur richtig oder falsch, Entscheidungen nur 0 bis 2', async () => {
+  const ich = db('schueler').doc(`rooms/${CODE}/players/schueler`);
+  // So schreibt planspiel.js: Schlüssel ist die Runde
+  await assertSucceeds(ich.set({ votes: { 0: 'A', 1: 'B', 2: 'C' }, checks: { 0: true, 1: false }, choices: { 0: 0, 1: 1, 2: 2 } }, { merge: true }));
+  await assertSucceeds(db('neu').doc(`rooms/${CODE}/players/neu`).set(player({ votes: { 0: 'C' }, checks: { 0: false }, choices: { 0: 2 } })));
+  for (const falsch of [
+    { votes: { 0: 'Ich stimme für A, weil die Preise sinken' } }, { votes: { 0: 'D' } }, { votes: { 0: 1 } }, { votes: { 0: 'a' } },
+    { checks: { 0: 'ja' } }, { checks: { 0: 1 } },
+    { choices: { 0: 3 } }, { choices: { 0: -1 } }, { choices: { 0: '1' } }, { choices: { 0: 1.5 } }
+  ]) await assertFails(ich.set(falsch, { merge: true }));
+  await assertFails(ich.set({ votes: Object.fromEntries(Array.from({ length: 31 }, (_, i) => [i, 'A'])) }, { merge: true }));
+});
+
 test('Lernraum: Steuerfelder nur für die Lehrkraft und mit gültigen Typen', async () => {
   await assertSucceeds(db('neu').doc('rooms/ABCDEP').set(room('neu', { pause: false, ziel: '', zielN: 0, gesperrt: [] })));
   await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ pause: true, ziel: 'preis', zielN: 3, gesperrt: ['phillips', 'quiz'] }));

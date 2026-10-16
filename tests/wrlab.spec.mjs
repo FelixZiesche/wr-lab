@@ -1,5 +1,27 @@
 // WR-Lab: Startseite, Navigation zwischen Themen und themenübergreifender Live-Klassenraum.
-import { test, expect, device, readDoc, writeDoc } from './helpers.mjs';
+import { readFile } from 'node:fs/promises';
+import { test, expect, device, readDoc, writeDoc, FIREBASE_VERSION } from './helpers.mjs';
+
+test('Firebase-SDK: live.js, package.json und das installierte Paket haben dieselbe Version', async () => {
+  // Weicht live.js ab, greift die Umleitung in helpers.mjs nicht mehr, und die Tests laden still das echte SDK
+  const datei = async f => readFile(new URL(`../${f}`, import.meta.url), 'utf8');
+  expect(FIREBASE_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+  expect(await datei('public/shared/js/live.js'), 'live.js: const V').toContain(`const V = '${FIREBASE_VERSION}';`);
+  expect(JSON.parse(await datei('node_modules/firebase/package.json')).version, 'node_modules/firebase (npm ci)').toBe(FIREBASE_VERSION);
+});
+
+test('Falsche Adresse: deutsche Fehlerseite mit Weg zur Startseite', async ({ page }) => {
+  for (const url of ['/gibtsnicht', '/sechseck/gibts/auch/nicht.html']) {
+    const res = await page.goto(url);
+    expect(res.status(), url).toBe(404);
+    await expect(page).toHaveTitle('Seite nicht gefunden – WR-Lab');
+    await expect(page.locator('h1')).toHaveText('Diese Seite gibt es nicht.');
+    // Auch tief in einem Ordner: Stil und Icons laden über absolute Pfade
+    expect(await page.locator('.wr-logo').evaluate(e => getComputedStyle(e).width), url).toBe('48px');
+  }
+  await page.getByRole('link', { name: 'Zur Startseite' }).click();
+  await expect(page).toHaveTitle('WR-Lab');
+});
 
 test('Startseite zeigt die Themen als Karten mit Foto und Bildnachweis', async ({ page }) => {
   await page.goto('/');

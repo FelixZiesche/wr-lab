@@ -9,6 +9,7 @@
     "test:rules": "firebase emulators:exec --project demo-wr-lab --only firestore \"node --test tests/rules.test.mjs\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@playwright/test": "1.56.1",
     "firebase": "10.12.2",

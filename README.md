@@ -126,7 +126,7 @@ Ohne TTL bleiben vergessene Räume liegen. Dagegen hilft: Mit **„Raum beenden�
 | --- | --- |
 | Push oder Merge auf `main` | Workflow **Veröffentlichen**: Zuerst laufen alle Tests. Wenn sie grün sind, werden Seite und Firestore-Regeln veröffentlicht. |
 | Pull Request öffnen oder aktualisieren | Workflow **Vorschau**: Zuerst laufen die Tests, dann bekommt der Pull Request eine eigene Vorschau-Adresse (7 Tage gültig) als Kommentar. |
-| Actions → Veröffentlichen → Run workflow | Veröffentlicht den aktuellen Stand von `main` von Hand. |
+| Actions → Veröffentlichen → Run workflow | Veröffentlicht den aktuellen Stand von `main` von Hand. Mit einem anderen Branch laufen nur die Tests, veröffentlicht wird nichts. |
 
 - **Vorschau:** Die Vorschau nutzt die echte Datenbank mit den Regeln von `main`. Neue Regeln aus einem Pull Request gelten erst nach dem Merge.
 - **Zurück zu einer alten Version:** In der Firebase-Konsole unter **Hosting → Versionsverlauf** bei einer älteren Version **Rollback** wählen.
@@ -165,6 +165,8 @@ npm test        # alle Tests: Werkstätten, Aufgaben, Planspiel, Lernraum (Playw
 ```
 
 `npm run dev` startet die Seite mit einer lokalen Datenbank (Demo-Projekt `demo-wr-lab`), es fließen keine echten Daten. Den Lernraum testest du mit zwei Browserfenstern, z. B. einem normalen und einem privaten Fenster.
+
+Auf dem Mac belegt der AirPlay-Empfänger Port 5000. Startet der Emulator nicht, unter **Systemeinstellungen → Allgemein → AirDrop & Handoff** den AirPlay-Empfänger ausschalten.
 
 Ohne Java geht es auch, dann aber ohne Lernraum:
 

@@ -49,7 +49,7 @@ test('Einzelspiel: ganze Partie, Spielstand bleibt nach dem Neuladen', async ({ 
   for (const [r, zug] of PARTIE.entries()) await spieleRunde(page, r, zug);
 
   await expect(page.getByText('Abschlussbilanz 2029')).toBeVisible();
-  await expect(page.locator('p', { hasText: 'startete mit' })).toHaveText(new RegExp(MIA_ENDE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '.*'));
+  await expect(page.locator('p', { hasText: 'startete mit' })).toHaveText(new RegExp(MIA_ENDE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s') + '.*')); // \s: vor „€“ steht ein geschütztes Leerzeichen
   await expect(page.locator('.chart svg')).toBeVisible();
 
   await page.reload();

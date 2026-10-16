@@ -6,8 +6,10 @@ const STUFEN = [9, 10, 11, 12];
 
 // Barrierefrei als Karte mit einem Link: Der Link sitzt im Titel (kurzer Name, Beschreibung per aria-describedby)
 // und deckt über ::after die ganze Karte ab, damit sie überall antippbar bleibt (m3.css .topic-link).
+// Das Foto der ersten Karte ist sofort zu sehen und lädt deshalb gleich, alle anderen erst beim Hinscrollen.
+let nr = 0;
 const karte = t => `<article class="topic">
-  <figure class="topic-img"><img src="${t.bild}" alt="${esc(t.alt)}" loading="lazy"><figcaption>Foto: ${esc(t.foto)}</figcaption></figure>
+  <figure class="topic-img"><img src="${t.bild}" alt="${esc(t.alt)}" ${nr++ ? 'loading="lazy"' : 'loading="eager" fetchpriority="high"'}><figcaption>Foto: ${esc(t.foto)}</figcaption></figure>
   <div class="topic-body">
     <span class="eyebrow">${esc(t.bereich)}</span>
     <h4 class="title-l"><a class="topic-link" href="${t.id}/" aria-describedby="thema-${t.id}-d">${esc(t.titel)}</a></h4>

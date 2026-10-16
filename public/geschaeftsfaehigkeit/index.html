@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Interaktive Lernwerkstatt zur Geschäftsfähigkeit für Klasse 10 – mit Rechts-Navi, Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“ und Lernraum für die ganze Klasse.">
 <title>Lernwerkstatt Geschäftsfähigkeit</title>
+<meta name="theme-color" content="#f8f9ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+<!-- Vorschau beim Teilen (Messenger, Schulportal): nur Fotos ohne Pflicht zur Namensnennung -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="WR-Lab">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Lernwerkstatt Geschäftsfähigkeit">
+<meta property="og:description" content="Interaktive Lernwerkstatt zur Geschäftsfähigkeit für Klasse 10 – mit Rechts-Navi, Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“ und Lernraum für die ganze Klasse.">
+<meta property="og:url" content="https://wr-lab.web.app/geschaeftsfaehigkeit/">
+<meta property="og:image" content="https://wr-lab.web.app/geschaeftsfaehigkeit/img/zwergspitz.jpg">
+<meta property="og:image:alt" content="Flauschiger Zwergspitz-Welpe mit hellbraunem Fell (Foto: Jiafei Slay Queen / Wikimedia Commons, CC0)">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +25,15 @@
 <link rel="stylesheet" href="../shared/css/m3.css">
 <link rel="stylesheet" href="geschaeftsfaehigkeit.css">
 <script src="../shared/vendor/qrcode.js" defer></script>
+<!-- Gemeinsame Module vorab laden, damit sie nicht erst nacheinander über die Import-Kette kommen -->
+<link rel="modulepreload" href="../shared/js/werkstatt.js">
+<link rel="modulepreload" href="../shared/js/lernraum.js">
+<link rel="modulepreload" href="../shared/js/aufgaben.js">
+<link rel="modulepreload" href="../shared/js/live.js">
+<link rel="modulepreload" href="../shared/js/ui.js">
+<link rel="modulepreload" href="../shared/js/feedback.js">
+<link rel="modulepreload" href="../shared/js/labyrinth.js">
+<link rel="modulepreload" href="../themen.js">
 <script type="module" src="geschaeftsfaehigkeit.js"></script>
 </head>
 <body>
