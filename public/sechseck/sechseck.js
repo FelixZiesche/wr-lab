@@ -47,8 +47,12 @@ const GLOSS=[
   ['Geldpolitik','Steuerung von Geldmenge und Zinsen durch die Zentralbank, im Euroraum durch die EZB.'],
   ['Gini-Koeffizient','Maß für Ungleichheit zwischen 0 (Gleichverteilung) und 1 (eine Person besitzt alles).'],
   ['HVPI','Harmonisierter Verbraucherpreisindex – europaweit vergleichbare Inflationsmessung; Grundlage für die EZB.'],
+  ['Inflation / Inflationsrate','Anhaltender Anstieg des Preisniveaus. Die Inflationsrate ist die Veränderung des Verbraucherpreisindex gegenüber dem Vorjahresmonat oder dem Vorjahr.'],
+  ['Kalte Progression','Steigt der Lohn nur so stark wie die Preise, rutscht man trotzdem in einen höheren Steuersatz. Real bleibt dann weniger übrig. Der Staat gleicht das von Zeit zu Zeit aus, indem er den Steuertarif anpasst.'],
   ['Kerninflation','Inflationsrate ohne die schwankungsanfälligen Bereiche Energie und Nahrungsmittel.'],
+  ['Klimageld','Idee: Die Einnahmen aus dem CO₂-Preis gehen als gleicher Betrag pro Kopf an alle zurück. Haushalte mit geringem Energieverbrauch profitieren davon. In Deutschland bisher nicht eingeführt.'],
   ['Konjunktur','Schwankungen der wirtschaftlichen Aktivität um den langfristigen Wachstumstrend.'],
+  ['Kurzarbeit','Betriebe verkürzen vorübergehend die Arbeitszeit, statt Beschäftigte zu entlassen. Die Bundesagentur für Arbeit ersetzt einen Teil des Lohnausfalls: Das Kurzarbeitergeld beträgt 60 % des ausgefallenen Nettolohns, mit Kind 67 %.'],
   ['Leistungsbilanz','Erfasst Waren- und Dienstleistungsverkehr sowie Primär- und Sekundäreinkommen mit dem Ausland.'],
   ['Leitzins','Zinssatz, zu dem sich Banken bei der Zentralbank Geld leihen oder anlegen. Die EZB hob ihn im Juni und im September 2026 um je 0,25 Prozentpunkte an. Der Einlagenzins liegt seit September 2026 bei 2,50 %.'],
   ['Lorenzkurve','Grafik, die kumulierte Bevölkerungsanteile den kumulierten Einkommens- oder Vermögensanteilen gegenüberstellt.'],
@@ -61,6 +65,7 @@ const GLOSS=[
   ['Produktionspotenzial','Wirtschaftsleistung bei normaler Auslastung aller Produktionsfaktoren.'],
   ['Reallohn','Lohn bereinigt um die Preisentwicklung; zeigt die tatsächliche Kaufkraft.'],
   ['Rezession','Rückgang der Wirtschaftsleistung; technische Rezession: zwei Quartale in Folge sinkendes BIP.'],
+  ['Schuldenbremse','Regel im Grundgesetz (Art. 109 und 115 GG), die neue Schulden von Bund und Ländern begrenzt. In normalen Zeiten darf der Bund höchstens 0,35 % des BIP an neuen Krediten aufnehmen, seit 2025 auch die Länder zusammen 0,35 %. Im Abschwung ist etwas mehr erlaubt, im Aufschwung weniger. Ausnahmen gelten in Notlagen wie der Corona-Krise und seit März 2025 für Verteidigungsausgaben über 1 % des BIP. Dazu kommt ein Sondervermögen von 500 Mrd. € für die Infrastruktur.'],
   ['Stabilitäts- und Wachstumsgesetz (StabG)','Gesetz von 1967, das Bund und Länder auf das gesamtwirtschaftliche Gleichgewicht verpflichtet.'],
   ['Stagflation','Gleichzeitig Stagnation (oder Rezession) und Inflation.'],
   ['Unterbeschäftigung','Registrierte Arbeitslose plus Menschen in Maßnahmen, Weiterbildung oder kurzfristiger Arbeitsunfähigkeit.'],
@@ -191,7 +196,7 @@ const NEWS={id:'news-blitz',werkstatt:'nachrichten',verdeckt:true,
     {t:'„Die EZB erhöht den Leitzins.“',r:'beides',e:'Das bremst die Inflation, macht aber Kredite teurer – den Autokredit genauso wie den Kredit einer Firma, die investieren will. Das Wachstum leidet.'},
     {t:'„Mehr Menschen in Thüringen sind armutsgefährdet.“',r:'schlecht',e:'Die Verteilung wird ungleicher, und der Zusammenhalt leidet. Ein klares Minus für das Ziel gerechte Verteilung.'},
     {t:'„Die Treibhausgase sinken, weil Fabriken wegen der Krise weniger produzieren.“',r:'beides',e:'Gut für das Klima, schlecht für Wachstum und Jobs. Genau so sieht ein Zielkonflikt aus.'}]};
-tool({id:'nachrichten',hinweise:HINWEISE.nachrichten,ch:1,goals:ORDER,title:'Gute Nachricht, schlechte Nachricht?',sub:'Acht Schlagzeilen, eine Sekunde pro Karte: Ist das gut für Deutschland? Die Auflösung kommt am Ende',
+tool({id:'nachrichten',hinweise:HINWEISE.nachrichten,ch:1,goals:ORDER,title:'Gute Nachricht, schlechte Nachricht?',sub:'Acht Schlagzeilen – entscheide so schnell du kannst: Ist das gut für Deutschland? Die Auflösung kommt am Ende',
 html(){return `<p class="task"><b>Auftrag:</b> Lies jede Schlagzeile und entscheide blitzschnell: gute Nachricht, schlechte Nachricht – oder kommt es darauf an? Nicht lange nachdenken! Ob du richtig lagst, erfährst du am Ende in „Hefteintrag und Kurztest“.</p>
 ${blitz(NEWS)}
 ${schreibfeld(WAND.nachrichten)}
@@ -338,7 +343,7 @@ init(root){
     const idx=c0>0?c1/c0*100:100, rate=idx-100;
     $('#pr-idx',root).textContent=fmt(idx,1);
     $('#pr-rate',root).textContent=sgn(rate)+' %';
-    $('#pr-cost',root).textContent=`Warenkorb kostet ${fmt(c0,2)} € (2025) bzw. ${fmt(c1,2)} € (2026) pro Monat: ${sgn(c1-c0,2)} €.`;
+    $('#pr-cost',root).textContent=`Warenkorb kostet ${fmt(c0,2)} € (2025) und ${fmt(c1,2)} € (2026) pro Monat: ${sgn(c1-c0,2)} €.`;
     $('#pr-thermo',root).innerHTML=thermo(rate,$('#pr-thermo',root));
     // Beiträge
     const contr=items.map(o=>({n:o.n,v:c0>0?o.q*(o.p1-o.p0)/c0*100:0})).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v));
@@ -654,7 +659,7 @@ init(root){
     const el=$('#lz-svg',root),m=svgMass(el,420),W=m.W,f=m.fs,fl=f(11),fa=f(11.5),x0=Math.max(56,fl*2.8+fa+8),S=Math.min(300,W-x0-fl*1.4),y0=20+S,H=y0+fl+fa+18,X=v=>x0+v*S,Y=v=>y0-v*S;
     let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Lorenzkurve, Gini ${fmt(g,2)}">`;
     [0,.2,.4,.6,.8,1].forEach(v=>{s+=`<line x1="${X(v)}" y1="${Y(0)}" x2="${X(v)}" y2="${Y(1)}" class="s-line"/><line x1="${X(0)}" y1="${Y(v)}" x2="${X(1)}" y2="${Y(v)}" class="s-line"/>
-      <text x="${X(v)}" y="${y0+fl+5}" text-anchor="middle" class="t-mu" font-size="${fl}">${v*100}%</text><text x="${x0-6}" y="${Y(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v*100}%</text>`});
+      <text x="${X(v)}" y="${y0+fl+5}" text-anchor="middle" class="t-mu" font-size="${fl}">${v*100} %</text><text x="${x0-6}" y="${Y(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v*100} %</text>`});
     let pts=[[0,0]],c=0;srt.forEach((v,i)=>{c+=v/t;pts.push([(i+1)*0.2,c])});
     const ps=pts.map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ');
     s+=`<polygon points="${X(0)},${Y(0)} ${X(1)},${Y(1)} ${pts.slice().reverse().map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ')}" fill="var(--g-V)" fill-opacity=".22"/>`;
@@ -684,7 +689,7 @@ ${kurztest({id:'umwelt-schaetzen',titel:'Erst schätzen, dann schieben: Wie schn
   {f:'2025 stieß Deutschland rund 649 Mio. t Treibhausgase aus. 2030 sollen es höchstens 438 Mio. t sein. Um wie viel muss Deutschland ab 2026 jedes Jahr senken?',o:['um rund 15 Mio. t','um rund 42 Mio. t','um rund 100 Mio. t'],r:1,
     e:'(649 − 438) ÷ 5 Jahre ≈ 42 Mio. t pro Jahr. Zum Vergleich: 2019 bis 2025 waren es im Schnitt rund 25 Mio. t, 2025 kaum noch etwas. Stellt den Regler unten auf 42 und auf 43: Ab wann klappt es?'}]})}
 <div class="panel chart"><h3>Treibhausgasemissionen Deutschland (Mio. t CO₂-Äquivalente)</h3><div id="th-svg"></div>
- <div class="legend" style="margin-bottom:6px"><span><i style="background:var(--g-U)"></i>Emissionen bis 2025</span><span><i style="background:var(--g-U);opacity:.5"></i>euer Pfad (gepunktet)</span><span><i style="background:var(--ok)"></i>Zielpfad Klimaschutzgesetz: 2030 → 438, 2040 → −88 %, 2045 → netto null</span></div>
+ <div class="legend" style="margin-bottom:6px"><span><i style="background:var(--g-U)"></i>Emissionen bis 2025</span><span><i style="background:var(--g-U);opacity:.5"></i>euer Pfad (gepunktet)</span><span><i style="background:var(--ok)"></i>Zielpfad Klimaschutzgesetz: 2030 höchstens 438 Mio. t (−65 %), 2040 −88 %, 2045 netto null</span></div>
  <div class="ctrl"><label for="th-r">Minderung pro Jahr ab 2026 <output id="th-ro"></output></label><input type="range" id="th-r" min="0" max="80" step="1" value="15"></div>
  <div id="th-fb" class="fb"></div></div>
 <div class="grid2">
@@ -723,7 +728,7 @@ init(root){
     el.innerHTML=s+'</svg>';
     const v30=Math.max(0,649-red*5),zero=red>0?2025+Math.ceil(649/red):null,fb=$('#th-fb',root);
     fb.className='fb '+(v30<=438?'ok':'bad');
-    fb.innerHTML=`2030 lägen die Emissionen bei <b>${fmt(v30,0)} Mio. t</b> (${sgn((v30/1251-1)*100,0)} % ggü. 1990). ${v30<=438?'Ziel 2030 erreicht.':`Ziel um ${fmt(v30-438,0)} Mio. t verfehlt.`} ${zero&&zero<=2100?`Klimaneutral wäre Deutschland ${zero<=2045?'bereits ':''}im Jahr ${zero}.`:'Klimaneutralität rückt in weite Ferne.'} <span class="muted">Zum Vergleich: 2019 bis 2025 sanken die Emissionen im Schnitt um rund 25 Mio. t pro Jahr, 2025 kaum noch. Das Umweltbundesamt erwartet mit der heutigen Politik bis 2030 nur −62,6 %, zum Ziel fehlen rund 30 Mio. t (Projektion März 2026).</span>`;
+    fb.innerHTML=`2030 lägen die Emissionen bei <b>${fmt(v30,0)} Mio. t</b> (${sgn((v30/1251-1)*100,0)} % gegenüber 1990). ${v30<=438?'Ziel 2030 erreicht.':`Ziel um ${fmt(v30-438,0)} Mio. t verfehlt.`} ${zero&&zero<=2100?`Klimaneutral wäre Deutschland ${zero<=2045?'bereits ':''}im Jahr ${zero}.`:'Klimaneutralität rückt in weite Ferne.'} <span class="muted">Zum Vergleich: 2019 bis 2025 sanken die Emissionen im Schnitt um rund 25 Mio. t pro Jahr, 2025 kaum noch. Das Umweltbundesamt erwartet mit der heutigen Politik bis 2030 nur −62,6 %, zum Ziel fehlen rund 30 Mio. t (Projektion März 2026).</span>`;
   };
   $('#th-r',root).addEventListener('input',draw);draw();beiBreite($('#th-svg',root),draw);
   const co=()=>{const p=+$('#co-p',root).value;$('#co-po',root).textContent=fmt(p,0)+' €';
@@ -848,7 +853,7 @@ init(root){
     [0,2,4,6,8].forEach(v=>s+=`<line x1="${x0}" y1="${sy(v)}" x2="${x1}" y2="${sy(v)}" class="s-line"/><text x="${x0-6}" y="${sy(v)+4}" text-anchor="end" class="t-mu" font-size="${fl}">${v} %</text>`);
     const xs=(sx(5)-sx(4.5))<fl*3.4?[4.5,5.5,6.5]:[4.5,5,5.5,6,6.5,7];
     xs.forEach(v=>s+=`<text x="${sx(v)}" y="${y0+fl+7}" text-anchor="middle" class="t-mu" font-size="${fl}">${fmt(v)} %</text>`);
-    s+=`<text x="${(x0+x1)/2}" y="${H-8}" text-anchor="middle" class="t-mu" font-size="${fa}">Arbeitslosenquote (BA)</text><text x="${fa+2}" y="${(y0+yt)/2}" text-anchor="middle" class="t-mu" font-size="${fa}" transform="rotate(-90 ${fa+2} ${(y0+yt)/2})">Inflationsrate (VPI)</text>`;
+    s+=`<text x="${(x0+x1)/2}" y="${H-8}" text-anchor="middle" class="t-mu" font-size="${fa}">${m.handy?'Arbeitslosenquote (Arbeitsagentur)':'Arbeitslosenquote (Bundesagentur für Arbeit)'}</text><text x="${fa+2}" y="${(y0+yt)/2}" text-anchor="middle" class="t-mu" font-size="${fa}" transform="rotate(-90 ${fa+2} ${(y0+yt)/2})">Inflationsrate (VPI)</text>`;
     s+=`<line x1="${x0}" y1="${sy(2)}" x2="${x1}" y2="${sy(2)}" stroke="var(--ok)" stroke-dasharray="6 4"/><text x="${x1}" y="${sy(2)+fl+3}" text-anchor="end" fill="var(--ok)" class="t-halo" font-size="${fl}">EZB-Ziel 2 %</text>`;
     if(theo){let d='';for(let u=4.6;u<=7;u+=0.05){const pi=0.9+ 3.2/(u-3.6)-0.4;d+=(d?'L':'M')+sx(u).toFixed(1)+','+sy(clamp(pi,0,8)).toFixed(1)}s+=`<path d="${d}" fill="none" stroke="var(--g-W)" stroke-width="2.5"/><text x="${sx(4.62)}" y="${sy(3.9)}" fill="var(--g-W)" class="t-halo" font-size="${f(11.5)}" font-weight="700">theoretische Phillips-Kurve</text>`}
     s+=`<polyline points="${PH.map(([,u,p])=>sx(u)+','+sy(p)).join(' ')}" fill="none" class="s-mu" stroke-width="1.2" stroke-dasharray="2 3"/>`;
@@ -966,7 +971,7 @@ ${erkHTML('check')}`},
 init(root){
   let a='2026*',b='2019';
   const score=(k,y)=>clamp(Math.round(SCORE[k].f(YEARS[y][k])),0,100);
-  const btns=(id,get,set)=>{$(id,root).innerHTML=Object.keys(YEARS).map(y=>`<button class="btn small" type="button" data-y="${y}" aria-pressed="${y===get()}">${y}</button>`).join('')+(id==='#ck-b'?`<button class="btn small" type="button" data-y="" aria-pressed="${!get()}">keins</button>`:'');
+  const btns=(id,get,set)=>{$(id,root).innerHTML=Object.keys(YEARS).map(y=>`<button class="btn small" type="button" data-y="${y}" aria-pressed="${y===get()}">${y}</button>`).join('')+(id==='#ck-b'?`<button class="btn small" type="button" data-y="" aria-pressed="${!get()}">kein Vergleich</button>`:'');
     $$(id+' button',root).forEach(x=>x.addEventListener('click',()=>{set(x.dataset.y);$$(id+' button',root).forEach(z=>z.setAttribute('aria-pressed',z===x));draw()}))};
   const draw=()=>{
     const sa={},sb={};ORDER.forEach(k=>{sa[k]=score(k,a);if(b)sb[k]=score(k,b)});
@@ -982,7 +987,7 @@ init(root){
 
 /* 12b Hefteintrag und Kurztest */
 tool({id:'sichern',ch:6,goals:ORDER,hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, Schlagzeilen zuordnen, ein Test mit einem Versuch und der Vergleich mit deinem Bauchgefühl vom Anfang',
-html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Pro Frage habt ihr nur einen Versuch. Schaut dann, wie gut euer Bauchgefühl bei den Nachrichten am Anfang war, und beantwortet die Leitfrage.</p>
+html(){return `<p class="task"><b>Auftrag:</b> Sichert das Wichtigste: Füllt den Hefteintrag aus, ordnet die Schlagzeilen den Zielen zu und macht den Kurztest. Jeder Durchgang wird nur einmal geprüft, danach seht ihr die Lösungen. Schaut dann, wie gut euer Bauchgefühl bei den Nachrichten am Anfang war, und beantwortet die Leitfrage.</p>
 ${lueckentext({id:'sichern-heft',titel:'Hefteintrag: Das magische Sechseck',saetze:[
   'Das [Stabilitäts- und Wachstumsgesetz|Stabilitätsgesetz|StabG] von [1967] nennt vier Ziele: ein stabiles [Preisniveau], einen hohen [Beschäftigungsstand|Beschäftigung], ein außenwirtschaftliches [Gleichgewicht] und ein stetiges und angemessenes [Wirtschaftswachstum|Wachstum].',
   'Später kamen eine gerechte [Einkommens- und Vermögensverteilung|Verteilung|Einkommensverteilung] und der Schutz der natürlichen [Lebensgrundlagen|Umwelt] hinzu.',
@@ -1006,8 +1011,8 @@ ${erkHTML('sichern')}`},
 init(root){bindErk(root)}});
 
 /* 12c Wissenscheck (Aufgaben in wissenscheck.js) */
-tool({id:'wissenscheck',ch:6,goals:ORDER,hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Erwartungshorizont und Auswertung`,
-html(){return `<p class="task"><b>Auftrag:</b> Prüft, was ihr könnt. Fangt bei den Grundlagen an und arbeitet euch bis zum Beurteilen vor. Den Erwartungshorizont seht ihr erst, nachdem ihr geantwortet habt. Am Ende zeigt die Auswertung, was ihr noch wiederholen solltet.</p>
+tool({id:'wissenscheck',ch:6,goals:ORDER,hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Lösungen, Erwartungshorizont und Auswertung`,
+html(){return `<p class="task"><b>Auftrag:</b> Prüf, was du kannst. Fang bei den Grundlagen an und arbeite dich bis zum Beurteilen vor. Die Lösung und bei offenen Aufgaben den Erwartungshorizont – also was in eine gute Antwort gehört – siehst du erst, nachdem du geantwortet hast. Am Ende zeigt dir die Auswertung, was du noch wiederholen solltest.</p>
 ${wissenscheck(WISSENSCHECK)}
 ${schreibfeld(WAND.wissenscheck)}
 ${impuls(IMPULS.wissenscheck)}`},
@@ -1031,10 +1036,10 @@ function startHTML(){
   return `<section class="banner"><img src="${PHOTOS[2]}" alt="Blick über das Saaletal auf Jena mit dem JenTower"><span class="credit">Foto: Lukas D. / Unsplash</span>
     <div class="banner-text"><p class="eyebrow">Klasse 11 · Soziale Marktwirtschaft · Daten: Oktober 2026</p><h2>Inflation 3,3 %, fast 3 Millionen Arbeitslose, Treibhausgase erst −48 % statt −65 %: Warum kann die Politik nicht einfach alles gleichzeitig reparieren?</h2></div></section>
   <section class="hero"><div class="hero-hex" id="hero-hex">${heroHex(null)}</div>
-    <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Werkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
+    <div class="hero-text"><p class="body-l">Das Stabilitätsgesetz von 1967 verpflichtet Bund und Länder auf vier Ziele, Sozialstaat und Umweltschutz kommen als fünftes und sechstes hinzu. In dieser Lernwerkstatt messt ihr jedes Ziel selbst, deckt Zielkonflikte auf und steuert die deutsche Wirtschaftspolitik.</p>
     <div class="lage">${ORDER.map(k=>`<button class="chip media" type="button" style="--gc:${gc(k)}" data-k="${k}" aria-labelledby="lage-${k}"><img src="${GOAL_IMG[k].src}" alt="${esc(GOAL_IMG[k].alt)}"><span class="cbody" id="lage-${k}"><span class="lbl">${hexDot(k)}${G[k].short}</span><b>${G[k].chip}</b><span class="sub">${G[k].chipLab}</span></span></button>`).join('')}</div>
     <p class="small muted">Fotos: ${ORDER.map(k=>esc(GOAL_IMG[k].credit)).join(', ')} / Unsplash</p>
-    <p class="hint">Ecke im Sechseck oder Kennzahl antippen: Steckbrief bzw. passende Werkstatt öffnet sich.</p>
+    <p class="hint">Tippt auf eine Ecke, um ihren Steckbrief zu öffnen, oder auf eine Kennzahl, um zur passenden Werkstatt zu springen.</p>
     <div class="cta"><button class="fab" type="button" data-gehzu="nachrichten"><span class="ms" aria-hidden="true">bolt</span>Blitzrunde starten</button><button class="btn outlined" type="button" id="cta-leben"><span class="ms" aria-hidden="true">sports_esports</span>Planspiel starten</button></div></div></section>
   <section class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="lernziele">
     <li><span class="ms" aria-hidden="true">check_circle</span><span>Die sechs Ziele der Wirtschaftspolitik nennen und mit Kennzahlen messen</span></li>
@@ -1043,7 +1048,7 @@ function startHTML(){
     <li><span class="ms" aria-hidden="true">check_circle</span><span>Wirtschaftspolitische Maßnahmen mit ihren Haupt- und Nebenwirkungen beurteilen</span></li>
     <li><span class="ms" aria-hidden="true">check_circle</span><span>Die Leitfrage beantworten: Warum muss die Politik Ziele gewichten?</span></li></ul></section>
   ${chapterHTML(1)}
-  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. In „Ziele“ nimmt sich jede Werkstatt ein Ziel vor und misst es mit echten Zahlen. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
+  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf. In „Ziele“ nimmt sich jede Werkstatt ein Ziel vor und misst es mit echten Zahlen. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Sechseck-Wissen“ landet – gesammelt ergibt das den Hefteintrag.</p></section>
   <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms" aria-hidden="true">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen und Datenstand (gerundet, Oktober 2026)</h3><ul>

@@ -2,7 +2,7 @@
 // Bereiche, Werkstatt-Karten, Detailansicht, Erkenntnisse („Mein Wissen“), Glossar, Schriftgröße
 // und der Lernraum (lernraum.js) mit Lehrerpanel. Aufgaben-Bausteine (aufgaben.js) werden automatisch gebunden.
 // Jedes Thema ruft createWerkstatt() mit seinen Inhalten auf, siehe sechseck/sechseck.js.
-import { $, $$, esc, store, zeigeHinweis } from './ui.js';
+import { $, $$, esc, store, zeigeHinweis, suchtext } from './ui.js';
 import { raum, AUFGABEN, imTool, normCode, sperreHintergrund } from './lernraum.js';
 import { bindAufgaben } from './aufgaben.js';
 
@@ -137,7 +137,11 @@ export function createWerkstatt(cfg){
   /* ---------- Glossar und Wissen ---------- */
   function openGlossar(){
     openModal('Begriffe nachschlagen',`<input type="search" id="gs" placeholder="Begriff suchen …" aria-label="Begriff suchen" style="width:100%;padding:9px 12px"><dl class="glossary panel" id="gl"></dl>`,root=>{
-      const r=q=>{$('#gl',root).innerHTML=GLOSS.filter(([t,d])=>(t+d).toLowerCase().includes(q.toLowerCase())).map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join('')||'<p class="muted">Kein Treffer.</p>'};
+      // Suche ohne Rücksicht auf Groß- und Kleinschreibung, Leerzeichen, Bindestriche und Umlaute (suchtext in ui.js)
+      const N=GLOSS.map(([t,d])=>[suchtext(t),suchtext(d)]);
+      // Treffer im Begriff selbst stehen vor Treffern in der Erklärung
+      const r=q=>{const s=suchtext(q),im=i=>N[i][0].includes(s)?0:N[i][1].includes(s)?1:2;
+        $('#gl',root).innerHTML=GLOSS.map((g,i)=>[g,im(i)]).filter(x=>x[1]<2).sort((a,b)=>a[1]-b[1]).map(([[t,d]])=>`<dt>${t}</dt><dd>${d}</dd>`).join('')||'<p class="muted">Kein Treffer.</p>'};
       $('#gs',root).addEventListener('input',e=>r(e.target.value));r('');$('#gs',root).focus()});
   }
   function openWissen(){

@@ -122,7 +122,7 @@ export const raum={
   /** Lehrkraft: neuen Raum öffnen. Ein alter, noch offener Raum dieses Geräts im selben Thema wird dabei beendet. */
   async oeffnen(){
     L=await connect();
-    if(!L)throw ohneVerbindung('','Der Live-Modus ist nicht eingerichtet. Wie du ihn einschaltest, steht in der README im GitHub-Projekt.');
+    if(!L)throw ohneVerbindung('','Der Lernraum ist nicht eingerichtet. Wie du ihn einschaltest, steht in der README im GitHub-Projekt.');
     const alt=eigenerRaum();
     if(alt&&!(s&&s.code===alt)){const st=await L.raumStatus(alt);if(st.raum&&st.raum.owner===L.uid)await L.closeRoom(alt).catch(e=>console.warn('Alter Raum',e))}
     let code;
@@ -137,7 +137,7 @@ export const raum={
     if(!nick)throw fehler('Bitte gib einen Spitznamen ein.',false,'nick');
     if(s&&s.rolle==='lk')throw fehler('Auf diesem Gerät ist schon ein Lernraum als Lehrkraft geöffnet.');
     L=await connect();
-    if(!L)throw ohneVerbindung('raum='+code,'Der Live-Modus ist nicht eingerichtet.');
+    if(!L)throw ohneVerbindung('raum='+code,'Der Lernraum ist nicht eingerichtet.');
     const st=await L.raumStatus(code);
     if(st.fehler)throw netzFehler();
     const r=st.raum;
@@ -444,14 +444,16 @@ function umfrageFenster(){
       if(b.hasAttribute('data-u-zu')){umfrageZu=el._zustand;umfrageWeg(el)}else raum.stimme(+b.dataset.uW).catch(e=>console.warn('Abstimmung',e))})}
   if(neu)umfrageVorher=document.activeElement;
   el._zustand=zustand;el._n=u.n;
+  // Blitzrunde als Klassenrunde: keine Wörter aus dem Gericht („Dein Urteil“), es geht um Alltagsfragen
+  const blitz=q.art==='blitz';$('[data-u-wahl]',el).setAttribute('aria-label',blitz?'Deine Antwort':'Dein Urteil');
   neuZeichnen($('[data-u-oben]',el),`<div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm" aria-hidden="true">${q.icon||'gavel'}</span> ${q.kopf||`Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}`}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms" aria-hidden="true">close</span></button></div>
     ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>`);
   // Antworten getrennt vom Fall: Eine Stimme oder das Auflösen zeichnet das Foto nicht neu (es würde kurz verschwinden)
   neuZeichnen($('[data-u-wahl]',el),q.optionen.map((o,i)=>`<button class="btn${w===i?' primary':''}" type="button" data-u-w="${i}" aria-pressed="${w===i}"${u.auf?' disabled':''}>${o}</button>`).join(''));
-  const st=$('[data-u-status]',el),txt=u.auf?'':w==null?'Wie urteilst du? Tippe deine Antwort.':'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.';
+  const st=$('[data-u-status]',el),txt=u.auf?'':w==null?(blitz?'Was meinst du? Tippe deine Antwort.':'Wie urteilst du? Tippe deine Antwort.'):'Deine Stimme ist abgegeben. Bis zur Auflösung kannst du sie noch ändern.';
   if(st.textContent!==txt)st.textContent=txt;
   const unten=$('[data-u-unten]',el);unten.hidden=!u.auf;
-  neuZeichnen(unten,u.auf?`<div class="fb ${w===q.r?'ok':'bad'}" data-u-urteil tabindex="-1"><b>${w==null?'Du hast nicht abgestimmt.':w===q.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${q.optionen[q.r]}</b>. ${q.e||''}</div>`:'');
+  neuZeichnen(unten,u.auf?`<div class="fb ${w===q.r?'ok':'bad'}" data-u-urteil tabindex="-1"><b>${w==null?'Du hast nicht abgestimmt.':w===q.r?(blitz?'Richtig!':'Richtig geurteilt!'):(blitz?'Nicht ganz.':'Das Gericht entscheidet anders.')}</b> Richtig ist: <b>${q.optionen[q.r]}</b>. ${q.e||''}</div>`:'');
   el.hidden=false;sperreHintergrund();
   // Beim Öffnen auf die erste Antwort (der Screenreader liest dabei den Namen des Fensters, die Frage),
   // beim Auflösen auf das Urteil (die Antwortknöpfe sind dann gesperrt)

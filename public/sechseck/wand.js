@@ -55,7 +55,7 @@ export const HINWEISE={
     'Pro Figur zwei bis vier Schüler, damit sich in der Debatte Interessengruppen bilden. Die Verteilung siehst du in der Lobby.',
     'Pro Runde rund 10 Minuten: Ereignis und Infopunkte (2) – Wirkung auf die eigene Figur prüfen (2) – Debatte aus Sicht der Figuren (4) – Abstimmung auf den Handys und Beschluss (2). Vier Runden passen in eine Doppelstunde.',
     'Beamer-Modus: blendet Spitznamen aus und zeigt nur Figuren. Unpassende Spitznamen kannst du in der Lobby entfernen.',
-    'Ohne eingerichteten Live-Modus: Die Schüler halten ihre Stimmkarte hoch, du zählst per Klick; den Beschluss tippen die Schüler als Buchstaben ein.',
+    'Ohne eingerichteten Lernraum: Die Schüler halten ihre Stimmkarte hoch, du zählst per Klick; den Beschluss tippen die Schüler als Buchstaben ein.',
     'Die Tabelle „Wer gewinnt?“ in der Abstimmungsphase zunächst verdeckt lassen und erst nach der Debatte zeigen.',
     'Nach der Stunde: „Raum beenden“ löscht alle Daten sofort. Sonst laufen Räume nach 24 Stunden ab.',
     'Hinweis: Runde 1 beruht auf echten Daten (Verbraucherpreise September 2026), Option A ist der echte Tankrabatt vom 1. Oktober bis 31. Dezember 2026. Die Runden 2 bis 4 sind plausible, aber erfundene Szenarien. Echt ist dort der Preis des Deutschlandtickets ab 2027 (66,80 €, Beschluss vom 30.09.2026), den Mia ab Runde 2 zahlt, und der Industriestrompreis im Kasten „Das gab es wirklich“. Alle Figuren und Social-Media-Posts sind fiktiv.']

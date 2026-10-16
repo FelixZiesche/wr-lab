@@ -46,7 +46,7 @@ test('Lernraum: beitreten, Ort sehen, Antwort an die Wand, Lehrerpanel nur für 
   await expect(feld.locator('[data-schreib-senden]')).toBeVisible();
   await feld.locator('textarea').fill('Bei 0 % droht Deflation, dann warten alle mit dem Kaufen.');
   await feld.locator('[data-schreib-senden]').click();
-  await expect(feld.locator('[data-schreib-status]')).toContainText('An der Wand');
+  await expect(feld.locator('[data-schreib-status]')).toContainText('Deine Antwort hängt an der Wand');
   await expect(lk.locator('#lr-antw tr', { hasText: 'Die EZB strebt' })).toContainText('1');
 
   // Schüler sehen weder Lehrerpanel noch Erwartungshorizont
@@ -188,7 +188,7 @@ test('Lernraum: anhalten, alle holen, Werkstätten sperren, drucken, beenden', a
   await s.locator('#view [data-tool="politik"]').click();
   await s.locator('[data-schreib="politik-wand"] textarea').fill('Jede Maßnahme hat Nebenwirkungen.');
   await s.locator('[data-schreib="politik-wand"] [data-schreib-senden]').click();
-  await expect(s.locator('[data-schreib="politik-wand"] [data-schreib-status]')).toContainText('An der Wand');
+  await expect(s.locator('[data-schreib="politik-wand"] [data-schreib-status]')).toContainText('Deine Antwort hängt an der Wand');
   await expect(lk.locator('#lr-antw tr', { hasText: 'Warum schafft es kein Maßnahmenpaket' })).toContainText('1');
   await lk.locator('#lr-druck').click();
   await expect(lk.locator('#druck')).toContainText('Jede Maßnahme hat Nebenwirkungen.');
@@ -261,7 +261,7 @@ const antwortSchicken = async (s, bereich, tool, text) => {
   const feld = s.locator(`[data-schreib="${tool}-wand"]`);
   await feld.locator('textarea').fill(text);
   await feld.locator('[data-schreib-senden]').click();
-  await expect(feld.locator('[data-schreib-status]')).toContainText('An der Wand');
+  await expect(feld.locator('[data-schreib-status]')).toContainText('Deine Antwort hängt an der Wand');
   await s.locator('#modal-close').click();
 };
 
@@ -474,9 +474,9 @@ test('Keine Verbindung beim Beitreten: ehrliche Meldung, neuer Versuch möglich,
   await k.goto(`${SECHSECK}#raum=${code}`);
   await k.locator('#lr-nick').fill('Mia');
   await k.locator('#lr-jgo').click();
-  await expect(k.locator('#lr-jerr')).toHaveText('Der Live-Modus ist nicht eingerichtet.');
+  await expect(k.locator('#lr-jerr')).toHaveText('Der Lernraum ist nicht eingerichtet.');
   await k.locator('#lr-open').click();
-  await expect(k.locator('#lr-oerr')).toContainText('Der Live-Modus ist nicht eingerichtet.');
+  await expect(k.locator('#lr-oerr')).toContainText('Der Lernraum ist nicht eingerichtet.');
 
   for (const p of [s, o, k]) { expect(p.errors).toEqual([]); await p.context().close(); }
 });

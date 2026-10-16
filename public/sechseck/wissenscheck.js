@@ -10,7 +10,7 @@ export const WISSENSCHECK={
   thema:'Magisches Sechseck (Ziele der Wirtschaftspolitik)',
   stufe:11,
   // Tipp in der Auswertung für die schwächste Stufe (I, II, III)
-  tipps:{1:'Wiederhole die Merksätze in „Mein Wissen“ und schlag Fachbegriffe wie Inflationsrate, Leistungsbilanz oder Gini-Koeffizient im Glossar nach.',
+  tipps:{1:'Wiederhole die Merksätze in „Mein Sechseck-Wissen“ und schlag Fachbegriffe wie Inflationsrate, Leistungsbilanz oder Gini-Koeffizient unter „Begriffe nachschlagen“ nach.',
     2:'Beim Anwenden hilft es, zuerst die Formel (z. B. Arbeitslosenquote, Inflationsrate, Reallohn) oder die Wirkungskette aufzuschreiben: Maßnahme → Wirkung → Ziel.',
     3:'Beim Beurteilen hilft das Schema: Kriterien nennen (z. B. die betroffenen Ziele), Zielkonflikte und Pro und Contra abwägen, dann begründet urteilen.'},
   aufgaben:[

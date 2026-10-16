@@ -86,7 +86,7 @@ function aktualisiereSchreibfeld(box){
   if(!raum.istSchueler()){btn.hidden=true;st.textContent='Ab ins Heft. Läuft ein Lernraum, schickst du deine Antwort mit „Abschicken“ an die Wand.';return}
   btn.hidden=false;
   btn.innerHTML=gesendet!=null?'<span class="ms" aria-hidden="true">send</span>Erneut abschicken':'<span class="ms" aria-hidden="true">send</span>Abschicken';
-  st.textContent=gesendet==null?'':gesendet===text?'An der Wand. Du kannst sie noch ändern und erneut abschicken.':'Geändert – noch nicht abgeschickt.';
+  st.textContent=gesendet==null?'':gesendet===text?'Deine Antwort hängt an der Wand. Du kannst sie noch ändern und erneut abschicken.':'Geändert – noch nicht abgeschickt.';
 }
 function bindSchreibfeld(box){
   const id=box.dataset.schreib,ta=$('textarea',box),btn=$('[data-schreib-senden]',box),st=$('[data-schreib-status]',box);
@@ -199,7 +199,7 @@ function bindLuecken(box){
 /* ---------- Test mit einem Versuch ---------- */
 export function test({id,titel,fragen}){
   registriere({id,frage:titel,loesung:fragen.map((q,i)=>`${i+1}. ${q.f} – <b>${q.o[q.r]}</b>`)});
-  return `<section class="aufgabe" data-test="${id}" data-richtig="${esc(JSON.stringify(fragen.map(q=>q.r)))}">${kopf('quiz','Test · ein Versuch')}
+  return `<section class="aufgabe" data-test="${id}" data-richtig="${esc(JSON.stringify(fragen.map(q=>q.r)))}">${kopf('quiz','Test · einmal prüfen')}
   <p class="aufgabe-frage">${titel}</p>
   <ol class="test-fragen">${fragen.map((q,i)=>`<li><fieldset><legend>${i+1}. ${q.f}</legend>${q.o.map((o,j)=>`<label class="test-opt"><input type="radio" name="t-${id}-${i}" value="${j}"><span>${o}</span></label>`).join('')}</fieldset><p class="small test-erkl" hidden>${q.e||''}</p></li>`).join('')}</ol>
   <div class="row"><button class="btn primary small" type="button" data-pruefen disabled><span class="ms" aria-hidden="true">task_alt</span>Prüfen</button><button class="btn small" type="button" data-neu hidden><span class="ms" aria-hidden="true">restart_alt</span>Noch einmal</button><span class="small" data-ergebnis role="status"></span></div></section>`;
@@ -242,7 +242,7 @@ const STUFEN={1:{name:'Grundlagen',afb:'Anforderungsbereich I',was:'Wissen wiede
   2:{name:'Anwenden',afb:'Anforderungsbereich II',was:'Zusammenhänge erklären, rechnen und auf neue Fälle übertragen.'},
   3:{name:'Beurteilen',afb:'Anforderungsbereich III',was:'Aussagen und Maßnahmen prüfen und begründet urteilen.'}};
 // Allgemeine Tipps für die Auswertung, wenn das Thema keine eigenen hat (def.tipps)
-const TIPP_STANDARD={1:'Wiederhole die Merksätze in „Mein Wissen“ und schlag Fachbegriffe im Glossar nach.',
+const TIPP_STANDARD={1:'Wiederhole deine Merksätze und schlag Fachbegriffe unter „Begriffe nachschlagen“ nach.',
   2:'Beim Anwenden hilft es, Schritt für Schritt vorzugehen: Was ist gegeben? Welche Regel oder welcher Fachbegriff passt? Was folgt daraus?',
   3:'Beim Beurteilen hilft das Schema: Kriterien nennen, Pro und Contra abwägen, begründet urteilen.'};
 const ARTEN={wahl:['radio_button_checked','Auswahl'],mehrfach:['check_box','Mehrfachauswahl'],richtigfalsch:['rule','Richtig oder falsch'],
@@ -533,7 +533,7 @@ function bindWissenscheck(box){
       if(a.art==='zuordnen'&&pk<p){const f=a.karten.filter((k,j)=>(s.w||{})[j]!==k.f).length;detail=`${f} ${f===1?'Karte ist':'Karten sind'} falsch zugeordnet (rot markiert).`}
       const wdh=a.art==='zuordnen'?[...new Set(a.karten.filter((k,j)=>(s.w||{})[j]!==k.f&&k.werkstatt).map(k=>k.werkstatt))]:[a.werkstatt];
       fb.innerHTML=`<div class="fb ${pk>=p?'ok':pk>0?'amb':'bad'}"><b>${pk>=p?'Richtig.':pk>0?'Teilweise richtig.':'Nicht ganz.'}</b> ${detail}</div>
-        <div class="wc-eh stack"><p class="title-s"><span class="ms sm" aria-hidden="true">checklist</span>Erwartungshorizont</p><div class="small">${loesungHTML(a)}</div>${a.e?`<p class="small">${a.e}</p>`:''}
+        <div class="wc-eh stack"><p class="title-s"><span class="ms sm" aria-hidden="true">checklist</span>Lösung</p><div class="small">${loesungHTML(a)}</div>${a.e?`<p class="small">${a.e}</p>`:''}
         <p class="small num">${fmtP(pk)} von ${fmtP(p)} ${p===1?'Punkt':'Punkten'}</p>${pk<p?`<div class="row">${wdh.map(werkstattKnopf).join('')}</div>`:''}</div>`;
     });
     zeichne(i,true);
@@ -558,7 +558,7 @@ export function blitz(def){
   const opt=r=>optionen.find(o=>o.id===r);
   registriere({id,frage:titel,loesung:karten.map(k=>`${k.t} – <b>${opt(k.r).t}</b>`),runde:karten.length});
   karten.forEach((k,i)=>registriere({id:kartenId(id,i),intern:true,frage:k.t,loesung:[],
-    umfrage:{kopf:`Blitzrunde · Karte ${i+1} von ${karten.length}`,icon:'bolt',frage:k.t,optionen:optionen.map(o=>o.t),r:optionen.findIndex(o=>o.id===k.r),e:verdeckt?'':k.e||''}}));
+    umfrage:{art:'blitz',kopf:`Blitzrunde · Karte ${i+1} von ${karten.length}`,icon:'bolt',frage:k.t,optionen:optionen.map(o=>o.t),r:optionen.findIndex(o=>o.id===k.r),e:verdeckt?'':k.e||''}}));
   return `<section class="aufgabe blitz" data-blitz="${id}">${kopf('bolt',verdeckt?'Blitzrunde · Bauchgefühl':'Blitzrunde')}
     <p class="aufgabe-frage">${titel}</p>
     <div class="stack" data-blitz-spiel>

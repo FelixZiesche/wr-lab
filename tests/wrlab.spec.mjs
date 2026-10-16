@@ -177,3 +177,49 @@ test('Screenreader lesen keine Icon-Namen vor, Themenkarten haben einen kurzen N
   expect(await alt('zu-karte right', '::after')).toBe('"check" / "richtig"');
   expect(await alt('zu-karte wrong', '::after')).toBe('"close" / "falsch"');
 });
+
+test('Begriffe nachschlagen: Suche ohne Rücksicht auf Leerzeichen, Bindestriche, Groß- und Kleinschreibung und Umlaute', async ({ page }) => {
+  const suche = async (thema, q, begriff) => {
+    await page.locator('#gs').fill(q);
+    await expect(page.locator('#gl dt').first(), `${thema}: „${q}“`).toHaveText(begriff);
+  };
+  await page.goto('/sechseck/');
+  await page.locator('#btn-glossar').click();
+  await suche('sechseck', 'Gini Koeffizient', 'Gini-Koeffizient');
+  await suche('sechseck', 'Phillipskurve', 'Phillips-Kurve');
+  await suche('sechseck', 'schuldenbremse', 'Schuldenbremse');
+  // Treffer im Begriff stehen vor Treffern in der Erklärung
+  await page.locator('#gs').fill('Inflation');
+  await expect(page.locator('#gl dt', { hasText: 'Inflation / Inflationsrate' })).toHaveCount(1);
+  expect(await page.locator('#gl dt').evaluateAll(d => d.map(x => x.textContent.toLowerCase().includes('inflation')).join(''))).toMatch(/^(true)+(false)*$/);
+  await suche('sechseck', 'kalte progression', 'Kalte Progression');
+  await page.locator('#gs').fill('Wort, das es nicht gibt');
+  await expect(page.locator('#gl')).toHaveText('Kein Treffer.');
+  await page.goto('/geschaeftsfaehigkeit/');
+  await page.locator('#btn-glossar').click();
+  await suche('geschaeftsfaehigkeit', 'Geschaftsfahigkeit', 'Geschäftsfähigkeit');
+  await suche('geschaeftsfaehigkeit', 'geschaeftsunfaehig', 'Geschäftsunfähig');
+  await suche('geschaeftsfaehigkeit', 'Raten', 'Ratenkauf');
+});
+
+test('Geschütztes Leerzeichen nach §, Abs., Nr. und Art.: kein Umbruch zwischen Zeichen und Zahl, Eingaben bleiben unverändert', async ({ page }) => {
+  await page.goto('/geschaeftsfaehigkeit/#haus');
+  await expect(page.locator('#modal')).toBeVisible();
+  // Im angezeigten Text steht nach § nie ein normales Leerzeichen vor einer Zahl (auch nicht in später gezeichneten Teilen)
+  const offen = () => page.evaluate(() => {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), r = [];let n;
+    while ((n = w.nextNode())) if (/(§§?|\bAbs\.|\bNr\.|\bArt\.) \d/.test(n.data) && !n.parentElement.closest('textarea,input,script,style,pre,code')) r.push(n.data.slice(0, 60));
+    return r;
+  });
+  expect(await offen()).toEqual([]);
+  expect(await page.locator('#modal-body').evaluate(el => el.textContent.includes('§ 108'))).toBe(true);
+  // Locators mit normalem Leerzeichen greifen weiter
+  await expect(page.locator('#modal-body').getByText('§ 108 BGB').first()).toBeVisible();
+  await page.locator('#modal-close').click();
+  await page.locator('#btn-glossar').click();
+  await page.locator('#gs').fill('§ 110');
+  await expect(page.locator('#gl dt', { hasText: 'Taschengeldparagraf' })).toBeVisible();
+  expect(await offen()).toEqual([]);
+  // Eingaben behalten das normale Leerzeichen
+  expect(await page.locator('#gs').inputValue()).toBe('§ 110');
+});

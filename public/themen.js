@@ -11,7 +11,7 @@ export const THEMEN = [
     titel: 'Geschäftsfähigkeit',
     stufe: 10,
     bereich: 'Recht',
-    text: 'Döner, Handyvertrag, V-Bucks, Klarna: Welche Verträge darfst du schon allein abschließen? Mit Rechts-Navi, Fall-Akte, Live-Gericht für die ganze Klasse und der Mission Zwergspitz.',
+    text: 'Döner, Handyvertrag, V-Bucks, Klarna: Welche Verträge darfst du schon allein abschließen? Mit Rechts-Navi, Fall-Akte, „Ihr seid das Gericht“ für die ganze Klasse und der Mission Zwergspitz.',
     stichworte: ['§§ 104–113 BGB', 'Taschengeldparagraf', 'Live-Abstimmung', 'Lernraum'],
     bild: 'geschaeftsfaehigkeit/img/galerie.jpg',
     alt: 'Blick in die Goethe Galerie in Jena: Glasdach, Rolltreppen und Geschäfte auf mehreren Etagen',

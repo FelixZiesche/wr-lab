@@ -1,4 +1,4 @@
-// Lernwerkstatt Geschäftsfähigkeit (Klasse 10): Werkstätten, Fall-Akte, Live-Gericht und Mission Zwergspitz.
+// Lernwerkstatt Geschäftsfähigkeit (Klasse 10): Werkstätten, Fall-Akte, „Ihr seid das Gericht“ und Mission Zwergspitz.
 // Gerüst, Navigation und Aufgaben-Bausteine kommen aus /shared/, hier stehen nur die Inhalte.
 import { $, $$, esc } from '../shared/js/ui.js';
 import { createWerkstatt } from '../shared/js/werkstatt.js';
@@ -40,6 +40,7 @@ const GLOSS=[
   ['Gesetzlicher Vertreter','Bei Minderjährigen in der Regel die Eltern, bei betreuten Volljährigen der Betreuer.'],
   ['Lediglich rechtlicher Vorteil','Man bekommt etwas, ohne rechtliche Pflichten zu übernehmen, zum Beispiel ein Geschenk (§ 107 BGB).'],
   ['Nichtig','Von Anfang an ohne jede Wirkung (§ 105 BGB).'],
+  ['Ratenkauf','Der Preis wird in Teilbeträgen bezahlt. Bei Minderjährigen greift § 110 BGB erst, wenn die letzte Rate mit überlassenem Geld bezahlt ist, etwa mit Taschengeld. Dasselbe gilt für „Jetzt kaufen, später bezahlen“, zum Beispiel mit Klarna.'],
   ['Rechtsfähigkeit','Fähigkeit, Träger von Rechten und Pflichten zu sein. Sie beginnt mit der Vollendung der Geburt (§ 1 BGB).'],
   ['Rechtsgeschäft','Eine oder mehrere Willenserklärungen, die eine rechtliche Folge haben sollen. Ein Kaufvertrag besteht aus Angebot und Annahme.'],
   ['Schwebend unwirksam','Der Vertrag gilt noch nicht und wartet auf die Genehmigung der Eltern (§ 108 BGB).'],
@@ -54,7 +55,7 @@ const CH={1:['Kapitel 1 – Einstieg','Dein Bauchgefühl'],2:['Kapitel 2 – Die
 const DEST=[
   {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Geschäftsfähigkeit',kurz:'Geschäftsfähigkeit',render:startHTML},
   {id:'regeln',icon:'gavel',label:'Regeln',title:'Die Regeln der Geschäftsfähigkeit',kurz:'Regeln',ch:[2],desc:'Vom Baby zum Vertragsprofi, das Haus der Geschäftsfähigkeit und der Rechts-Navi'},
-  {id:'faelle',icon:'folder_open',label:'Fälle',title:'Fälle lösen',ch:[3],desc:'Fall-Akte, Live-Gericht mit der ganzen Klasse, Taschengeld-Detektiv, Gaming und Abos, der erste Job'},
+  {id:'faelle',icon:'folder_open',label:'Fälle',title:'Fälle lösen',ch:[3],desc:'Fall-Akte, „Ihr seid das Gericht“ mit der ganzen Klasse, Taschengeld-Detektiv, Gaming und Abos, der erste Job'},
   {id:'mission',icon:'pets',label:'Mission',title:'Mission Zwergspitz',ch:[4],tool:'zwergspitz',desc:'Sieben Wege zum Hund – welche führen ans Ziel, welche in die Sackgasse?'},
   {id:'wissen',icon:'school',label:'Wissen',title:'Sichern und wiederholen',ch:[5],render:wissenHTML,desc:'Hefteintrag, Bauchgefühl-Check, Wissenscheck, Fachbegriffe und deine Merksätze'}
 ];
@@ -101,7 +102,7 @@ const BAUCH={id:'bauch',werkstatt:'bauchgefuehl',verdeckt:true,
     {t:'Du bist 13 und deine Patentante schenkt dir 100 € zum Geburtstag.',r:'ja',e:'Ein Geschenk bringt dir lediglich einen rechtlichen Vorteil (§ 107 BGB). Dafür brauchst du keine Zustimmung.'},
     {t:'Du bist 16, jobbst mit Erlaubnis deiner Eltern im Café und kündigst den Job selbst.',r:'ja',e:'Für alles rund um den erlaubten Job bist du voll geschäftsfähig, auch für die Kündigung (§ 113 BGB).'},
     {t:'Du bist 15 und kaufst dir von angespartem Taschengeld einen Hund. Deine Eltern haben ausdrücklich Nein gesagt.',r:'nein',e:'Gegen das ausdrückliche Nein der Eltern hilft auch das Taschengeld nicht. Mehr dazu in der Mission Zwergspitz.'}]};
-tool({id:'bauchgefuehl',ch:1,farben:['rot','gelb','gruen'],hinweise:HINWEISE.bauchgefuehl,title:'Darfst du das?',sub:'Acht Alltagssituationen, eine Sekunde pro Karte: Entscheide aus dem Bauch – die Auflösung kommt am Ende',
+tool({id:'bauchgefuehl',ch:1,farben:['rot','gelb','gruen'],hinweise:HINWEISE.bauchgefuehl,title:'Darfst du das?',sub:'Acht Alltagssituationen – entscheide so schnell du kannst, aus dem Bauch. Die Auflösung kommt am Ende',
 html(){return `<p class="task"><b>Auftrag:</b> Entscheide bei jeder Karte blitzschnell: Darfst du das allein, ohne deine Eltern? Nicht lange nachdenken! Ob du richtig lagst, erfährst du erst am Ende der Lernwerkstatt.</p>
 ${blitz(BAUCH)}
 ${schreibfeld(WAND.bauchgefuehl)}
@@ -181,8 +182,8 @@ ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Hau
       info:'<p>Alle von 7 bis 17 Jahren (§ 106 BGB). Für die meisten Verträge brauchen sie die Zustimmung der Eltern: vorher als <b>Einwilligung</b> (§ 107 BGB) oder hinterher als <b>Genehmigung</b> (§ 108 BGB).</p><p>Fehlt die Zustimmung noch, ist der Vertrag <b>schwebend unwirksam</b>: Er wartet auf die Entscheidung der Eltern.</p>'},
     {id:'voll',t:'Voll geschäfts&shy;fähig<span class="zu-sub">ab 18 Jahren</span>',kurz:'Voll geschäftsfähig (ab 18 Jahren)',
       info:'<p>Ab dem 18. Geburtstag ist man volljährig (§ 2 BGB) und darf jeden Vertrag allein abschließen, egal ob mit 18 oder mit 80.</p><p>Dafür trägt man auch die volle Verantwortung, zum Beispiel für Schulden.</p>'},
-    {id:'ausnahme',t:'Ausnahmen<span class="zu-sub">Minderjährige, ohne Zustimmung der Eltern wirksam</span>',kurz:'Ausnahmen ohne Zustimmung der Eltern',
-      info:'<p>Eigentlich brauchen Minderjährige ab 7 die Zustimmung der Eltern. In drei wichtigen Fällen klappt es aber ohne sie:</p><ul><li><b>Nur ein rechtlicher Vorteil:</b> Man bekommt etwas und muss nichts dafür tun, zum Beispiel ein Geschenk (§ 107 BGB).</li><li><b>Taschengeld:</b> Man bezahlt vollständig mit seinem Taschengeld – bei Raten erst mit der letzten Rate (§ 110 BGB).</li><li><b>Erlaubter Job:</b> Alles rund um einen Job, den die Eltern erlaubt haben, etwa die Kündigung (§ 113 BGB).</li></ul><p>Hierher gehören also nur Fälle mit Minderjährigen, bei denen es ohne Eltern klappt.</p>'},
+    {id:'ausnahme',t:'Ausnahmen<span class="zu-sub">Verträge Minderjähriger, die auch ohne Eltern wirksam sind</span>',kurz:'Ausnahmen ohne Zustimmung der Eltern',
+      info:'<p>Eigentlich brauchen Minderjährige ab 7 die Zustimmung der Eltern. In drei wichtigen Fällen klappt es aber ohne sie:</p><ul><li><b>Lediglich rechtlicher Vorteil:</b> Man bekommt etwas und hat keinerlei rechtliche Nachteile, zum Beispiel ein Geschenk (§ 107 BGB).</li><li><b>Taschengeld:</b> Man bezahlt vollständig mit seinem Taschengeld – bei Raten erst mit der letzten Rate (§ 110 BGB).</li><li><b>Erlaubter Job:</b> Alles rund um einen Job, den die Eltern erlaubt haben, etwa die Kündigung (§ 113 BGB).</li></ul><p>Hierher gehören also nur Fälle mit Minderjährigen, bei denen es ohne Eltern klappt.</p>'},
     {id:'basis',t:'Fundament: Rechtsfähigkeit<span class="zu-sub">ab der Geburt</span>',kurz:'Fundament: Rechtsfähigkeit (ab der Geburt)',
       info:'<p>Rechtsfähig ist jeder Mensch ab der Geburt (§ 1 BGB). Das heißt: Man kann Rechte und Pflichten haben, zum Beispiel ein Handy besitzen, ein Haus erben oder Eigentümer eines Hundes sein.</p><p>Selbst Verträge schließen kann man damit noch nicht, dafür braucht man die Geschäftsfähigkeit. Deshalb ist die Rechtsfähigkeit das Fundament, auf dem das ganze Haus steht.</p>'}],
   karten:[
@@ -190,7 +191,7 @@ ${zuordnen({id:'haus-bauen',klasse:'haus',frage:'Wohin gehört jede Karte im Hau
     {t:'Franz (30) kann wegen einer dauerhaften krankhaften Störung der Geistestätigkeit seinen Willen nicht frei bilden und bestellt sich einen Gaming-PC.',f:'unfaehig',e:'§ 104 Nr. 2 BGB: Wer wegen einer dauerhaften krankhaften Störung der Geistestätigkeit seinen Willen nicht frei bilden kann, ist geschäftsunfähig – egal wie alt. Die Bestellung ist nichtig.'},
     {t:'Lukas (12) schließt einen Handyvertrag ab. Seine Eltern haben vorher zugestimmt.',f:'beschraenkt',e:'Mit 12 ist Lukas beschränkt geschäftsfähig (§ 106 BGB). Mit der Einwilligung der Eltern ist der Vertrag wirksam (§ 107 BGB). Das ist die Regel, keine Ausnahme.'},
     {t:'Paula (16) bestellt Kopfhörer auf Rechnung. Ihre Eltern wissen nichts davon.',f:'beschraenkt',e:'Paula ist beschränkt geschäftsfähig. Auf Rechnung heißt: noch nicht bezahlt, also hilft § 110 nicht. Der Vertrag ist schwebend unwirksam, bis die Eltern genehmigen oder verweigern (§ 108 Abs. 1 BGB).'},
-    {t:'Ben (15) kauft ohne zu fragen einen E-Scooter. Seine Eltern genehmigen den Kauf hinterher.',f:'beschraenkt',e:'Die Genehmigung ist die nachträgliche Zustimmung der Eltern (§ 108 Abs. 1 BGB). Erst durch sie wird Bens Vertrag wirksam.'},
+    {t:'Ben (15) kauft, ohne zu fragen, einen E-Scooter. Seine Eltern genehmigen den Kauf hinterher.',f:'beschraenkt',e:'Die Genehmigung ist die nachträgliche Zustimmung der Eltern (§ 108 Abs. 1 BGB). Erst durch sie wird Bens Vertrag wirksam.'},
     {t:'Lea (18, Geburtstag war gestern) schließt allein einen Handyvertrag ab.',f:'voll',e:'Mit 18 ist Lea volljährig und voll geschäftsfähig (§ 2 BGB).'},
     {t:'Opa Gerd (72) kauft in Weimar ein E-Bike auf Raten.',f:'voll',e:'Gerd ist volljährig und damit voll geschäftsfähig (§ 2 BGB), egal wie alt. Für die Raten haftet er allein.'},
     {t:'Emma (10) bekommt vom Nachbarn ein Halloween-Kostüm geschenkt.',f:'ausnahme',e:'Lediglich rechtlicher Vorteil: Emma bekommt etwas und hat keine Pflichten (§ 107 BGB).'},
@@ -207,7 +208,7 @@ ${lueckentext({id:'haus-luecken',titel:'Hefteintrag: Stufen der Geschäftsfähig
   'Erlauben die Eltern einen Job, kann der Minderjährige alle Geschäfte rund um dieses [Arbeitsverhältnis|Dienst- oder Arbeitsverhältnis|Dienst- und Arbeitsverhältnis] allein abschließen, etwa den Arbeitsvertrag oder die Kündigung (§ 113 BGB). Was er vom Lohn kauft, regelt dagegen § [110] BGB.',
   'Mit Eintritt der [Volljährigkeit] sind Personen voll geschäftsfähig. Geschäftsunfähig sind nach § 104 BGB außerdem Personen in einem nicht nur vorübergehenden Zustand krankhafter Störung der [Geistestätigkeit], der die freie Willensbestimmung ausschließt.',
   'Rechtsfähig ist jeder Mensch nach § 1 BGB ab der Vollendung der [Geburt].']})}
-<details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>Gesetzestexte §§ 1, 2, 104–110 und 113 BGB nachlesen</summary>
+<details class="hilfe"><summary><span class="ms sm" aria-hidden="true">menu_book</span>Gesetzestexte §§ 1, 2, 104–108, 110 und 113 BGB nachlesen</summary>
   <dl class="glossary">${[1,2,104,105,106,107,108,110,113].map(n=>`<dt>${GESETZ[n].p} – ${GESETZ[n].titel}</dt><dd>${GESETZ[n].t}</dd>`).join('')}</dl></details>
 ${schreibfeld(WAND.haus)}
 ${impuls(IMPULS.haus)}
@@ -215,7 +216,7 @@ ${erkHTML('haus')}`},
 init(root){bindErk(root)}});
 
 /* 4 Der Rechts-Navi: das Prüfschema zum Durchklicken */
-tool({id:'navi',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.navi,title:'Der Rechts-Navi',sub:'Das Prüfungsschema als Route: Frage für Frage zum Ergebnis – und den Paragrafen richtig zitieren',
+tool({id:'navi',ch:2,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.navi,title:'Der Rechts-Navi',sub:'Das Prüfschema als Route: Frage für Frage zum Ergebnis – und den Paragrafen richtig zitieren',
 html(){return `<p class="task"><b>Auftrag:</b> Mach eine Probefahrt mit dem Rechts-Navi. Beantworte die Fragen für das Beispiel und schau, wo du ankommst. Zitiere den Paragrafen, bei dem du gelandet bist, so wie es unten bei der Zitiertechnik steht. Starte dann neu und probier andere Abzweigungen aus: Wann landest du bei „Nichtig“, wann bei „Schwebend unwirksam“?</p>
 ${pruefschema({id:'navi-probe',titel:'Wirksam oder nicht? Der Rechts-Navi prüft für dich.',schema:NAVI,
   beispiel:'<b>Probefahrt:</b> Lea (16) kauft sich ohne Wissen ihrer Eltern Kopfhörer für 40 € und bezahlt sofort mit ihrem Taschengeld.'})}
@@ -252,14 +253,14 @@ const GERICHT=[
     frage:'Ist die Übertragung der Wohnung auf Lina wirksam?',r:1,e:'Ein Geschenk – aber mit Haken: Wird Lina Eigentümerin, tritt sie in den Mietvertrag ein (§ 566 BGB) und hat Pflichten als Vermieterin, etwa für Reparaturen. Das ist kein lediglich rechtlicher Vorteil. Ohne Zustimmung der Eltern ist die Übertragung schwebend unwirksam.'},
   {id:'gericht-job',titel:'Der Jobwechsel',fall:`${fotoHTML('cafe')}<p><b>Tom (17)</b> jobbt mit Erlaubnis seiner Eltern als Aushilfe in einem Café in Jena. Weil ein anderes Café am Holzmarkt mehr zahlt, kündigt er und unterschreibt dort einen neuen Arbeitsvertrag als Aushilfe – ohne seine Eltern zu fragen.</p>`,
     frage:'Sind Kündigung und neuer Vertrag wirksam?',r:0,e:'Die Kündigung gehört zum erlaubten Job (§ 113 Abs. 1 BGB). Und die Erlaubnis für einen Job gilt im Zweifel auch für Jobs derselben Art (§ 113 Abs. 4 BGB): Aushilfe im Café bleibt Aushilfe im Café. Kündigung und neuer Vertrag sind wirksam.'},
-  {id:'gericht-tiktok',titel:'Der TikTok Shop',fall:`${fotoHTML('maus')}<p><b>Noah (15)</b> sieht im TikTok Shop, wie ein Gaming-Streamer (fiktiv) eine Gaming-Maus für 89 € in die Kamera hält. Noah bestellt sie sofort – mit „Jetzt kaufen, später bezahlen“.</p>`,
+  {id:'gericht-tiktok',titel:'Der TikTok Shop',fall:`${fotoHTML('maus')}<p><b>Noah (15)</b> sieht im TikTok Shop, wie ein Streamer (fiktiv) eine Gaming-Maus für 89 € in die Kamera hält. Noah bestellt sie sofort – mit „Jetzt kaufen, später bezahlen“.</p>`,
     frage:'Ist der Kauf wirksam?',r:1,e:'Später bezahlen heißt: Noch ist nichts bezahlt. § 110 BGB greift nicht, der Kauf ist schwebend unwirksam – bis die Eltern entscheiden oder Noah vollständig mit Taschengeld bezahlt hat.'},
   {id:'gericht-konsole',titel:'Die Konsole',fall:`${fotoHTML('switch')}<p><b>Oskar (6)</b> bekommt von seiner Oma eine Nintendo Switch geschenkt und sagt begeistert: „Danke, die nehm ich!“</p>`,
     frage:'Hat Oskar das Geschenk wirksam angenommen?',r:2,e:'Überraschung: Auch ein Geschenk kann Oskar nicht selbst annehmen. Unter 7 ist jede eigene Willenserklärung nichtig (§§ 104, 105 BGB). Die Eltern nehmen das Geschenk für ihn an – dann gehört die Konsole Oskar.'},
   {id:'gericht-bote',titel:'Der Brötchen-Auftrag',fall:`${fotoHTML('baeckerei')}<p>Derselbe <b>Oskar (6)</b> aus Jena bekommt von seiner Mama 5 € und einen Zettel: „6 Brötchen“. In der Bäckerei sagt er: „Meine Mama will sechs Brötchen.“ Er bezahlt mit Mamas Geld und trägt die Tüte stolz nach Hause.</p>`,
     frage:'Ist der Kauf der Brötchen wirksam?',r:0,e:'Überraschung: Diesmal ja! Oskar gibt keine eigene Willenserklärung ab, er überbringt nur die seiner Mama – als Bote. Der Kaufvertrag kommt zwischen Mama und der Bäckerei zustande. Ein Bote muss nicht geschäftsfähig sein, deshalb spielt Oskars Alter keine Rolle. Bei der Konsole wollte Oskar dagegen selbst etwas annehmen.'}];
 tool({id:'gericht',ch:3,farben:['rot','gelb','gruen'],hinweise:HINWEISE.gericht,title:'Ihr seid das Gericht',sub:'Sieben knifflige Fälle: Die ganze Klasse stimmt live auf dem Handy ab, dann kommt das Urteil',
-html(){return `<p class="task"><b>Auftrag:</b> Fällt euer Urteil: wirksam, schwebend unwirksam oder nichtig? Im Lernraum startet eure Lehrkraft die Abstimmung, ihr stimmt auf dem Handy ab und seht danach das Ergebnis der Klasse. Ohne Lernraum urteilst du allein. Begründe dein Urteil mit dem Rechts-Navi.</p>
+html(){return `<p class="task"><b>Auftrag:</b> Fällt euer Urteil: wirksam, schwebend unwirksam oder nichtig? Im Lernraum startet eure Lehrkraft die Abstimmung, ihr stimmt auf dem Handy ab, danach löst eure Lehrkraft auf. Ohne Lernraum urteilst du allein. Begründe dein Urteil mit dem Rechts-Navi.</p>
 ${GERICHT.map(g=>abstimmung({...g,optionen:URTEIL})).join('')}
 ${schreibfeld(WAND.gericht)}
 ${impuls(IMPULS.gericht)}
@@ -310,7 +311,7 @@ const JOB={id:'job-blitz',werkstatt:'job',
   titel:'Lisa (16) aus Weimar jobbt mit Erlaubnis ihrer Eltern in einem Café am Theaterplatz. Was darf sie jetzt allein?',
   optionen:[{id:'eltern',t:'Nur mit Eltern',icon:'family_restroom'},{id:'allein',t:'Darf sie allein',icon:'check_circle'}],
   karten:[
-    {t:'Den Arbeitsvertrag mit dem Café unterschreiben.',r:'allein',e:'Genau dafür ist § 113 Abs. 1 BGB da: Eingehung des erlaubten Arbeitsverhältnisses.'},
+    {t:'Den Arbeitsvertrag mit dem Café unterschreiben.',r:'allein',e:'Genau dafür ist § 113 Abs. 1 BGB da: Lisa darf den Arbeitsvertrag für den erlaubten Job allein abschließen.'},
     {t:'Vom ersten Lohn ein E-Bike auf Raten kaufen.',r:'eltern',e:'Käufe vom Lohn gehören nicht zum Job. Und solange Raten offen sind, ist nicht vollständig bezahlt, also hilft auch § 110 BGB nicht.'},
     {t:'Den Job kündigen, weil ihr die Schichten zu spät sind.',r:'allein',e:'Auch die Kündigung gehört zum Job (§ 113 Abs. 1 BGB).'},
     {t:'Einen Kredit aufnehmen, um sich eine Siebträgermaschine für zu Hause zu kaufen.',r:'eltern',e:'Hat mit dem Job nichts zu tun. Für einen Kredit bräuchten sogar die Eltern die Genehmigung des Familiengerichts.'},
@@ -371,7 +372,7 @@ init(root){bindErk(root)}});
 
 /* 11 Hefteintrag, Kurztest und Bauchgefühl-Check */
 tool({id:'sichern',ch:5,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.sichern,title:'Hefteintrag und Kurztest',sub:'Das Wichtigste ins Heft, ein Test mit einem Versuch und der Vergleich mit deinem Bauchgefühl vom Anfang',
-html(){return `<p class="task"><b>Auftrag:</b> Füllt den Hefteintrag aus und macht den Kurztest. Pro Frage habt ihr nur einen Versuch. Schaut dann, wie gut euer Bauchgefühl am Anfang war, und beantwortet die Leitfrage.</p>
+html(){return `<p class="task"><b>Auftrag:</b> Füllt den Hefteintrag aus und macht den Kurztest. Jeder Durchgang wird nur einmal geprüft, danach seht ihr die Lösungen. Schaut dann, wie gut euer Bauchgefühl am Anfang war, und beantwortet die Leitfrage vom Start.</p>
 ${lueckentext({id:'sichern-heft',titel:'Hefteintrag: Geschäftsfähigkeit auf einen Blick',saetze:[
   'Rechtsfähig ist jeder Mensch ab der [Geburt] (§ 1 BGB). Geschäftsfähig wird man in Stufen.',
   'Kinder unter 7 Jahren sind [geschäftsunfähig]. Was sie erklären, ist [nichtig] (§ 105 BGB).',
@@ -390,8 +391,8 @@ ${erkHTML('sichern')}`},
 init(root){bindErk(root)}});
 
 /* 12 Wissenscheck (Aufgaben in wissenscheck.js) */
-tool({id:'wissenscheck',ch:5,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Erwartungshorizont und Auswertung`,
-html(){return `<p class="task"><b>Auftrag:</b> Prüft, was ihr könnt. Fangt bei den Grundlagen an und arbeitet euch bis zum Beurteilen vor. Den Erwartungshorizont seht ihr erst, nachdem ihr geantwortet habt. Am Ende zeigt die Auswertung, was ihr noch wiederholen solltet.</p>
+tool({id:'wissenscheck',ch:5,farben:['rot','gelb','gruen','blau'],hinweise:HINWEISE.wissenscheck,title:'Wissenscheck',sub:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen – Grundlagen, Anwenden, Beurteilen – mit Lösungen, Erwartungshorizont und Auswertung`,
+html(){return `<p class="task"><b>Auftrag:</b> Prüf, was du kannst. Fang bei den Grundlagen an und arbeite dich bis zum Beurteilen vor. Die Lösung und bei offenen Aufgaben den Erwartungshorizont – also was in eine gute Antwort gehört – siehst du erst, nachdem du geantwortet hast. Am Ende zeigt dir die Auswertung, was du noch wiederholen solltest.</p>
 ${wissenscheck(WISSENSCHECK)}
 ${schreibfeld(WAND.wissenscheck)}
 ${impuls(IMPULS.wissenscheck)}`},
@@ -400,9 +401,9 @@ init(){}});
 /* ---------- Startseite und Wissen ---------- */
 function startHTML(){
   return `<section class="banner"><img src="${FOTO.galerie.src}" alt="${esc(FOTO.galerie.alt)}"><span class="credit">${nachweis('galerie')}</span>
-    <div class="banner-text"><p class="eyebrow">Klasse 10 · Bürgerliches Recht</p><h2>Ich bin 15 – welche Verträge darf ich eigentlich schon allein abschließen?</h2></div></section>
+    <div class="banner-text"><p class="eyebrow">Leitfrage · Klasse 10 · Bürgerliches Recht</p><h2>Ich bin 15 – welche Verträge darf ich eigentlich schon allein abschließen?</h2></div></section>
   <section class="gf-start">
-    <div class="stack"><p class="body-l">Döner, Handyvertrag, V-Bucks, Klarna: Jeden Tag schließt du Verträge, oft ohne es zu merken. Aber gelten sie auch? In dieser Lernwerkstatt testest du zuerst dein Bauchgefühl, lernst dann die Regeln des BGB kennen und löst echte Fälle – allein, zu zweit oder live mit der ganzen Klasse als Gericht.</p>
+    <div class="stack"><p class="body-l">Döner, Handyvertrag, V-Bucks, Klarna: Jeden Tag schließt du Verträge, oft ohne es zu merken. Aber gelten sie auch? In dieser Lernwerkstatt testest du zuerst dein Bauchgefühl, lernst dann die Regeln des BGB kennen und löst Fälle aus dem Alltag – allein, zu zweit oder live mit der ganzen Klasse als Gericht.</p>
       <div class="cta"><button class="fab" type="button" data-gf-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-dest="mission"><span class="ms" aria-hidden="true">pets</span>Mission Zwergspitz</button></div></div>
     <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="lernziele">
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Rechtsfähigkeit und die drei Stufen der Geschäftsfähigkeit unterscheiden</span></li>
@@ -411,7 +412,7 @@ function startHTML(){
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Fälle mit dem Prüfschema lösen und Paragrafen richtig zitieren</span></li></ul></div>
   </section>
   ${chapterHTML(1)}
-  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf: erst die Regeln, dann die Fälle, dann die Mission. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Wissen“ landet – gesammelt ergibt das deinen Hefteintrag. Am Ende prüfst du alles im Wissenscheck.</p></section>
+  <section class="section-h"><h2>Dein Lernpfad</h2><p>Die Bereiche bauen aufeinander auf: erst die Regeln, dann die Fälle, dann die Mission. Jede Werkstatt endet mit einer Erkenntnis, die als Merksatz in „Mein Rechts-Wissen“ landet – gesammelt ergibt das deinen Hefteintrag. Am Ende prüfst du alles im Wissenscheck.</p></section>
   <div class="dest-cards">${DEST.slice(1).map(d=>`<button class="dest" type="button" data-dest="${d.id}"><span class="ic"><span class="ms" aria-hidden="true">${d.icon}</span></span><span><span class="title-m">${d.label}</span><span class="small muted" style="display:block">${d.desc}</span></span></button>`).join('')}</div>`;
 }
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen (Stand Oktober 2026)</h3><ul>

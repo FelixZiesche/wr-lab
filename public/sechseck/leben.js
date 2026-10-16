@@ -1,5 +1,5 @@
 // Planspiel „Sechseck-Leben“: Figuren, Runden, Rechenmodell und Darstellung.
-// Den Ablauf (Modi, Live-Klassenraum, Abstimmung, Dashboard) übernimmt shared/js/planspiel.js.
+// Den Ablauf (Modi, Lernraum, Abstimmung, Dashboard) übernimmt shared/js/planspiel.js.
 import { esc, fmt, sgn, clamp, store, photoHTML } from '../shared/js/ui.js';
 import { OPTC } from '../shared/js/planspiel.js';
 import { ORDER, G, radar, START } from './daten.js';
@@ -44,7 +44,7 @@ const ROUNDS=[
    {k:'B',t:'Klimageld auszahlen',d:'Alle bekommen dauerhaft 150 € pro Kopf und Jahr (12,50 € im Monat) aus den CO₂-Einnahmen. Die Preise bleiben, wie sie sind.',ops:{T:12.5,hex:{V:5,U:2},debt:1}},
    {k:'C',t:'Nicht eingreifen',d:'Keine Hilfen, die Schuldenbremse wird eingehalten. Hohe Preise sollen zum Energiesparen bewegen.',ops:{hex:{P:2,W:-3,V:-4,U:3},debt:-1}}],
   choice:{q:'GTA 6 erscheint am 19. November. Holst du es dir (oder verschenkst du es)?',opts:[
-   {t:'Day One kaufen (rund 80 €)',cost:80,mood:8,l:'Konsum jetzt macht jetzt Spaß – das Geld fehlt aber beim Sparziel.'},
+   {t:'Day One kaufen (rund 80 €)',cost:80,mood:8,l:'Sofort kaufen macht Spaß – das Geld fehlt aber beim Sparziel.'},
    {t:'Warten, bis es im Angebot ist',cost:0,mood:-2,l:'Neue Spiele werden oft nach einigen Monaten günstiger: Wer warten kann, spart.'},
    {t:'Gar nicht – das Geld kommt aufs Sparkonto',cost:0,mood:-4,l:'Opportunitätskosten: Jeder Euro kann nur einmal ausgegeben werden.'}]}},
  {y:'2027',real:false,t:'Zollkrieg und KI-Boom',
@@ -57,8 +57,8 @@ const ROUNDS=[
    {k:'A',t:'Kurzarbeit verlängern + Weiterbildung',d:'Das Kurzarbeitergeld läuft weiter, Beschäftigte werden für E-Mobilität und KI umgeschult.',ops:{job:{auto:3},hex:{B:6,V:2,W:1},debt:1}},
    {k:'B',t:'Industriestrompreis',d:'Der Staat verbilligt Strom für die Industrie, damit die Werke wettbewerbsfähig bleiben.',ops:{job:{auto:0},hex:{B:4,W:4,U:-5,A:-2},debt:2}},
    {k:'C',t:'Gegenzölle auf US-Waren',d:'Die EU belegt US-Produkte wie Jeans, Motorräder und Whiskey mit Zöllen. Die USA reagieren verärgert.',ops:{job:{auto:2},L:1.02,hex:{P:-4,W:-3,B:-2}}}],
-  choice:{q:'Matcha ist weltweit knapp: Die Nachfrage wächst durch TikTok schneller als Japans Ernte. Ein Matcha-Latte kostet jetzt 5,50 €.',opts:[
-   {t:'Dreimal pro Woche gönnen (rund 860 € im Jahr)',cost:860,mood:6,l:'Knappes Angebot plus hohe Nachfrage = hoher Preis. Wer trotzdem kauft, zahlt die Knappheit mit.'},
+  choice:{q:'Matcha ist weltweit knapp: Die Nachfrage wächst durch TikTok schneller als Japans Ernte. Ein Matcha-Latte kostet inzwischen 6,20 €.',opts:[
+   {t:'Dreimal pro Woche gönnen (rund 970 € im Jahr)',cost:970,mood:6,l:'Knappes Angebot plus hohe Nachfrage = hoher Preis. Wer trotzdem kauft, zahlt die Knappheit mit.'},
    {t:'Matcha-Pulver kaufen und selbst machen (rund 180 €)',cost:180,mood:3,l:'Substitution: Wer auf eine günstigere Alternative ausweicht, spart.'},
    {t:'Umsteigen auf Leitungswasser',cost:0,mood:-3,l:'Verzicht spart Geld – aber Konsum ist auch Lebensqualität. Abwägen gehört dazu.'}]}},
  {y:'2028',real:false,t:'Wohnungsnot und Fachkräftemangel',
@@ -301,8 +301,8 @@ export const SPIEL={
   ergebnis(f,g){
     const rd=simulate(g.decs)[g.r];const o=ROUNDS[g.r].opts.find(x=>x.k===rd.d);const m=monthly(f,rd.after);const tr=figTrack(f,g.decs,g.ch,g.chx);const row=tr.rows[g.r];
     return `<div class="grid2"><div class="panel"><h3>${esc(/[sxzß]$/.test(f.n)?f.n+'’':f.n+'s')} Monatsbilanz</h3>${partsHTML(m)}
-          <p style="margin-top:8px">Über das Jahr: <b class="${row.yr>=0?'pos':'neg'}">${sgnE(row.yr)}</b> auf dem Konto (inklusive normalem Überschuss von ${eur(f.base)} im Monat).</p></div>
-          <div class="panel chart"><h3>Klassen-Sechseck</h3>${radar([{v:rd.hex0,stroke:'var(--muted)',dash:'6 5',fo:0},{v:rd.after.hex,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Sechseck vor und nach dieser Runde'})}<p class="small muted">Gestrichelt: vor der Runde.</p></div></div>
+          <p style="margin-top:8px">Über das Jahr: <b class="${row.yr>=0?'pos':'neg'}">${sgnE(row.yr)}</b> auf dem Konto (einschließlich des normalen Überschusses von ${eur(f.base)} im Monat).</p></div>
+          <div class="panel chart"><h3>Sechseck nach dem Beschluss ${esc(ROUNDS[g.r].y)}</h3>${radar([{v:rd.hex0,stroke:'var(--muted)',dash:'6 5',fo:0},{v:rd.after.hex,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Sechseck vor und nach dieser Runde'})}<p class="small muted">Gestrichelt: vor der Runde.</p></div></div>
         ${realHTML(o)}
         <details class="panel"><summary><b>Und wie geht es den anderen?</b></summary>${figsTableHTML(g.decs,g.r,true)}</details>`;
   },
@@ -320,7 +320,10 @@ export const SPIEL={
         <p class="small muted">Eure Beschlüsse: ${g.decs.map((d,i)=>`${ROUNDS[i].y}: ${d} – ${esc(ROUNDS[i].opts.find(o=>o.k===d).t)}`).join(' · ')}</p></div>
         <div class="grid2"><div class="panel chart"><h3>Sechseck 2026 → 2029</h3>${radar([{v:START.de.v,stroke:'var(--muted)',dash:'6 5',fo:0},{v:fin.after.hex,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Sechseck am Anfang und am Ende'})}
           ${debtHTML(fin.after.debt)}</div>
-        <div class="panel"><h3>Gewinner und Verlierer eurer Politik</h3><div class="tbl-wrap"><table><thead><tr><th>Figur</th><th class="r">Politik-Effekt in 4 Jahren</th><th>Ziel</th></tr></thead><tbody>${all.map(a=>`<tr${a.f.id===f.id?' style="background:var(--accent-soft)"':''}><td>${esc(a.f.n)} <span class="small muted">${esc(a.f.job.split(',')[0])}</span></td><td class="r num ${a.t.policy>=0?'pos':'neg'}"><b>${sgnE(a.t.policy)}</b></td><td>${a.t.goalOk?'<span class="pill ok">erreicht</span>':'<span class="pill bad">verfehlt</span>'}</td></tr>`).join('')}</tbody></table></div><p class="small muted">Politik-Effekt und Ziele ohne private Entscheidungen. Dein eigenes Ergebnis oben enthält sie.</p></div></div>
+        <div class="panel"><h3>Gewinner und Verlierer eurer Politik</h3><div class="tbl-wrap"><table><thead><tr><th>Figur</th><th class="r">Politik-Effekt in 4 Jahren</th><th>Ziel (nur Politik)</th></tr></thead><tbody>${all.map(a=>{const ich=a.f.id===f.id;
+          // Eigene Zeile: Weicht das Ergebnis mit den privaten Ausgaben ab, steht es direkt dabei (sonst wirkt „erreicht“ neben „Ziel verfehlt“ oben widersprüchlich)
+          const anders=ich&&a.t.goalOk!==tr.goalOk?` <span class="small muted">mit deinen Ausgaben: ${tr.goalOk?'erreicht':'verfehlt'}</span>`:'';
+          return `<tr${ich?' style="background:var(--accent-soft)"':''}><td>${esc(a.f.n)} <span class="small muted">${esc(a.f.job.split(',')[0])}</span></td><td class="r num ${a.t.policy>=0?'pos':'neg'}"><b>${sgnE(a.t.policy)}</b></td><td>${a.t.goalOk?'<span class="pill ok">erreicht</span>':'<span class="pill bad">verfehlt</span>'}${anders}</td></tr>`}).join('')}</tbody></table></div><p class="small muted">Politik-Effekt und Ziele ohne private Entscheidungen. Dein eigenes Ergebnis oben enthält sie.</p></div></div>
         <div class="panel"><h3>Nachdenken</h3><ul><li>War eure Politik gerecht – und für wen?</li><li>Wer hat von den Beschlüssen profitiert, die dem Sechseck insgesamt geholfen haben?</li><li>Was bedeutet der Schuldenstand für eure Generation?</li><li>Welche Beschlüsse würdet ihr mit dem Wissen von heute anders treffen?</li></ul></div>`;
   },
   werte(f,g){
@@ -351,7 +354,7 @@ export const SPIEL={
       return `<div class="panel"><h3>Abschlussbilanz der Klasse</h3><p class="small muted">Beschlüsse: ${t.decs.map((d,i)=>`${ROUNDS[i].y}: ${d} – ${esc(ROUNDS[i].opts.find(o=>o.k===d).t)}`).join(' · ')}</p></div>
         <div class="grid2"><div class="panel chart"><h3>Sechseck 2026 → 2029</h3>${radar([{v:START.de.v,stroke:'var(--muted)',dash:'6 5',fo:0},{v:fin.after.hex,stroke:'var(--accent)',fill:'var(--accent)',fo:.2}],{label:'Sechseck am Anfang und am Ende'})}
           ${debtHTML(fin.after.debt)}</div>
-        <div class="panel"><h3>Gewinner und Verlierer (Figuren)</h3><div class="tbl-wrap"><table><thead><tr><th>Figur</th><th class="r">Politik-Effekt in 4 Jahren</th><th>Stimmung</th><th>Ziel</th></tr></thead><tbody>${all.map(a=>{const [ml,mc]=moodLabel(a.t.mood);return `<tr><td>${esc(a.f.n)} <span class="small muted">${esc(a.f.job.split(',')[0])}</span></td><td class="r num ${a.t.policy>=0?'pos':'neg'}"><b>${sgnE(a.t.policy)}</b></td><td><span class="pill ${mc}">${ml}</span></td><td>${a.t.goalOk?'<span class="pill ok">erreicht</span>':'<span class="pill bad">verfehlt</span>'}</td></tr>`}).join('')}</tbody></table></div></div></div>`;
+        <div class="panel"><h3>Gewinner und Verlierer (Figuren)</h3><div class="tbl-wrap"><table><thead><tr><th>Figur</th><th class="r">Politik-Effekt in 4 Jahren</th><th>Stimmung</th><th>Ziel (nur Politik)</th></tr></thead><tbody>${all.map(a=>{const [ml,mc]=moodLabel(a.t.mood);return `<tr><td>${esc(a.f.n)} <span class="small muted">${esc(a.f.job.split(',')[0])}</span></td><td class="r num ${a.t.policy>=0?'pos':'neg'}"><b>${sgnE(a.t.policy)}</b></td><td><span class="pill ${mc}">${ml}</span></td><td>${a.t.goalOk?'<span class="pill ok">erreicht</span>':'<span class="pill bad">verfehlt</span>'}</td></tr>`}).join('')}</tbody></table></div></div></div>`;
     },
     auswertung:`<div class="panel"><h3>Auswertungsfragen</h3><ul><li>War unsere Politik gerecht – und für wen?</li><li>Welche Figur hat am meisten verloren, obwohl das Sechseck insgesamt besser wurde (oder umgekehrt)?</li><li>Wo wurden Zielkonflikte zu Interessenkonflikten zwischen euch?</li><li>Wer bezahlt den gestiegenen Schuldenstand?</li></ul></div>`,
     dashKopf:'<th class="r">Kontostand</th><th>Stimmung</th><th>Ziel</th>',

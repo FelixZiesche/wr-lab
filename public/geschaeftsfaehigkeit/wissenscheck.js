@@ -2,6 +2,9 @@
 // Aufbau und Felder: siehe shared/js/aufgaben.js, wissenscheck(). Punkte etwa 40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen.
 // werkstatt: Werkstatt, die bei Fehlern zum Wiederholen vorgeschlagen wird.
 // w in erwartung: Wortstämme (Groß- und Kleinschreibung und Umlaute egal), 'urteil' prüft auf ein eigenes Urteil.
+// Namen: Jeder Name hat in diesem Wissenscheck genau ein Alter (Leon 6, Oskar 6, Tom 7, Emma 10, Ben 13, Lea 15, Nele 15,
+// Hannah 16, Jonas 16, Leonie 16, Lisa 16, Mats 16, Paul 16, Finn 17 → 18, Greta 17, Jannik 17, Jule 17, Simon 17, Malte 18,
+// Franz 30, Oma Erika 75). Franz, Max, Emma, Simon, Maya und Finn kommen aus dem Arbeitsblatt der Lehrkraft.
 
 const STUFE=[{id:'unfaehig',t:'Geschäftsunfähig'},{id:'beschraenkt',t:'Beschränkt geschäftsfähig'},{id:'voll',t:'Voll geschäftsfähig'}];
 const FOLGE=[{id:'wirksam',t:'Wirksam'},{id:'schwebend',t:'Schwebend unwirksam'},{id:'nichtig',t:'Nichtig'}];
@@ -12,7 +15,7 @@ export const WISSENSCHECK={
   thema:'Geschäftsfähigkeit (§§ 1, 2, 104–113 BGB)',
   stufe:10,
   // Tipps in der Auswertung für die schwächste Stufe (I Grundlagen, II Anwenden, III Beurteilen)
-  tipps:{1:'Wiederhole die Merksätze in „Mein Rechts-Wissen“ und schlag Fachbegriffe wie Einwilligung, Genehmigung und schwebend unwirksam im Glossar nach.',
+  tipps:{1:'Wiederhole die Merksätze in „Mein Rechts-Wissen“ und schlag Fachbegriffe wie Einwilligung, Genehmigung und schwebend unwirksam unter „Begriffe nachschlagen“ nach.',
     2:'Geh Schritt für Schritt vor wie der Rechts-Navi: Alter – lediglich rechtlicher Vorteil – Einwilligung – Taschengeld – Job – Genehmigung. Nenne bei jedem Schritt den Paragrafen.',
     3:'Beim Beurteilen hilft der Rechts-Navi als Gerüst: Regel nennen, den Fall daran prüfen, Argumente abwägen und am Ende begründet urteilen.'},
   aufgaben:[
@@ -27,8 +30,8 @@ export const WISSENSCHECK={
     e:'Geschäftsfähig ist, wer selbst wirksam Rechtsgeschäfte abschließen kann, zum Beispiel einen Kaufvertrag.'},
   {afb:1,art:'zuordnen',p:2,f:'Auf welcher Stufe der Geschäftsfähigkeit steht die Person? Wähle für jede Person die passende Stufe.',
     faecher:STUFE,
-    karten:[{t:'Leon, 6 Jahre',f:'unfaehig'},{t:'Tom, genau 7 Jahre',f:'beschraenkt'},{t:'Lisa, 17 Jahre',f:'beschraenkt'},
-      {t:'Finn, 18 Jahre',f:'voll'},{t:'Franz, 30 Jahre, kann wegen einer dauerhaften krankhaften Störung seinen Willen nicht frei bilden',f:'unfaehig'},{t:'Oma Erika, 75 Jahre',f:'voll'}].map(k=>({...k,werkstatt:'haus'})),
+    karten:[{t:'Leon, 6 Jahre',f:'unfaehig'},{t:'Tom, genau 7 Jahre',f:'beschraenkt'},{t:'Jule, 17 Jahre',f:'beschraenkt'},
+      {t:'Malte, 18 Jahre',f:'voll'},{t:'Franz, 30 Jahre, kann wegen einer dauerhaften krankhaften Störung seinen Willen nicht frei bilden',f:'unfaehig'},{t:'Oma Erika, 75 Jahre',f:'voll'}].map(k=>({...k,werkstatt:'haus'})),
     e:'Unter 7 und bei einer dauerhaften krankhaften Störung der Geistestätigkeit, die die freie Willensbestimmung ausschließt: geschäftsunfähig (§ 104 BGB). Von 7 bis 17: beschränkt geschäftsfähig (§ 106 BGB). Ab 18: voll geschäftsfähig (§ 2 BGB).'},
   {afb:1,art:'richtigfalsch',werkstatt:'alter',f:'Ein Baby kann ein Haus erben.',r:true,
     e:'Richtig. Ein Baby ist rechtsfähig (§ 1 BGB) und kann deshalb Eigentümer werden. Um das Haus kümmern sich die Eltern als gesetzliche Vertreter.'},
@@ -118,7 +121,7 @@ export const WISSENSCHECK={
   {afb:2,art:'zuordnen',p:2,f:'Wirksam, schwebend unwirksam oder nichtig? Ordne zu. Die Eltern wissen jeweils von nichts.',
     faecher:FOLGE,
     karten:[{t:'Nele (15) kauft im Späti in Erfurt vom Taschengeld eine Cola.',f:'wirksam',werkstatt:'navi'},
-      {t:'Paul (17) schließt allein ein Deutschlandticket-Abo ab.',f:'schwebend',werkstatt:'online'},
+      {t:'Jannik (17) schließt allein ein Deutschlandticket-Abo ab.',f:'schwebend',werkstatt:'online'},
       {t:'Leon (6) tauscht seine Sammelkarten gegen einen Ball.',f:'nichtig',werkstatt:'haus'},
       {t:'Mats (16) bestellt Kopfhörer und will sie mit Klarna später bezahlen.',f:'schwebend',werkstatt:'online'},
       {t:'Emma (10) bekommt vom Nachbarn ein Kostüm geschenkt.',f:'wirksam',werkstatt:'haus'},
@@ -158,9 +161,9 @@ export const WISSENSCHECK={
     muster:'Nach § 110 BGB ist der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern wirksam, wenn er vollständig mit Geld bezahlt, das ihm zur freien Verfügung überlassen wurde. Zum Beispiel kaufe ich mir in Jena von meinem Taschengeld einen Döner und bezahle bar. Der Kauf ist wirksam, weil ich sofort und vollständig mit meinem Taschengeld bezahle. Würde ich dagegen Kopfhörer auf Raten kaufen, wäre der Vertrag schwebend unwirksam, denn erst mit der letzten Rate ist alles bezahlt.'},
 
   /* ---------- Stufe III: Beurteilen ---------- */
-  {afb:3,art:'wahl',p:2,werkstatt:'fallakte',f:'Ein Händler beschwert sich: „Lea (17) sah aus wie 20. Also muss ihr Ratenkauf gelten.“ Welche Antwort ist rechtlich am stärksten?',
-    o:['Entscheidend ist das echte Alter. Das Gesetz schützt Minderjährige auch dann, wenn der Händler es nicht merkt.','Der Händler hat recht, weil Lea älter aussah.','Der Vertrag gilt, sobald Lea das Geld für die Raten hat.','Der Händler darf die Ware behalten und das Geld verlangen.'],r:0,
-    fehler:{1:'Wie jemand aussieht, spielt keine Rolle. Händler können nach dem Ausweis fragen.',2:'Ob Lea das Geld hat, ändert nichts: Solange die Raten nicht bezahlt sind, greift § 110 BGB nicht.',3:'Ohne Genehmigung der Eltern ist der Vertrag unwirksam. Dann gehen Ware und Geld zurück.'},
+  {afb:3,art:'wahl',p:2,werkstatt:'fallakte',f:'Ein Händler beschwert sich: „Greta (17) sah aus wie 20. Also muss ihr Ratenkauf gelten.“ Welche Antwort ist rechtlich am stärksten?',
+    o:['Entscheidend ist das echte Alter. Das Gesetz schützt Minderjährige auch dann, wenn der Händler es nicht merkt.','Der Händler hat recht, weil Greta älter aussah.','Der Vertrag gilt, sobald Greta das Geld für die Raten hat.','Der Händler darf die Ware behalten und das Geld verlangen.'],r:0,
+    fehler:{1:'Wie jemand aussieht, spielt keine Rolle. Händler können nach dem Ausweis fragen.',2:'Ob Greta das Geld hat, ändert nichts: Solange die Raten nicht bezahlt sind, greift § 110 BGB nicht.',3:'Ohne Genehmigung der Eltern ist der Vertrag unwirksam. Dann gehen Ware und Geld zurück.'},
     e:'Wie im Fall Franz: Der Schutz der Geschäftsfähigkeit geht vor. Das Risiko trägt der Händler, der nicht nach dem Alter fragt.'},
   {afb:3,art:'mehrfach',p:2,werkstatt:'online',f:'These: „Jugendliche ab 16 sollten Handyverträge allein abschließen dürfen.“ Welche Argumente sprechen <b>gegen</b> die These?',
     o:['Lange Laufzeiten und monatliche Kosten können zu Schulden führen.','Viele 16-Jährige haben kein festes Einkommen.','Mit 16 dürfen Jugendliche in Thüringen schon bei Kommunalwahlen wählen.','Kostenfallen wie Zusatzabos sind schwer zu durchschauen.','Das Handy ist für Schule und Ausbildung wichtig.'],r:[0,1,3],
@@ -199,9 +202,9 @@ export const WISSENSCHECK={
   /* ---------- Ergänzt im Oktober 2026 (am Ende, damit gespeicherte Antworten und Aufgabennummern bleiben) ---------- */
   {afb:1,art:'richtigfalsch',werkstatt:'gericht',f:'Oskar (6) holt mit Mamas Geld und ihrem Einkaufszettel Brötchen beim Bäcker. Der Kauf ist nichtig, weil Oskar geschäftsunfähig ist.',r:false,
     e:'Falsch. Oskar gibt keine eigene Willenserklärung ab, er überbringt nur die seiner Mama – als Bote. Der Kaufvertrag kommt zwischen Mama und der Bäckerei zustande. Ein Bote muss nicht geschäftsfähig sein.'},
-  {afb:1,art:'mehrfach',p:2,werkstatt:'alter',f:'Nele ist 16 und wohnt in Jena. Was darf sie schon?',
+  {afb:1,art:'mehrfach',p:2,werkstatt:'alter',f:'Hannah ist 16 und wohnt in Jena. Was darf sie schon?',
     o:['Bei der Kommunalwahl in Thüringen wählen','Selbst einwilligen, wenn eine App ihre Daten verarbeiten will','Den Thüringer Landtag wählen','Allein einen Handyvertrag abschließen','Ohne Begleitung Auto fahren'],r:[0,1],
-    fehler:{2:'Den Landtag wählt man in Thüringen erst ab 18.',3:'Mit 16 ist Nele beschränkt geschäftsfähig. Für den Handyvertrag braucht sie die Zustimmung ihrer Eltern.',4:'Mit 17 darf man mit Begleitung fahren (BF17), allein erst ab 18.'},
+    fehler:{2:'Den Landtag wählt man in Thüringen erst ab 18.',3:'Mit 16 ist Hannah beschränkt geschäftsfähig. Für den Handyvertrag braucht sie die Zustimmung ihrer Eltern.',4:'Mit 17 darf man mit Begleitung fahren (BF17), allein erst ab 18.'},
     e:'Ab 16: Kommunal- und Europawahl in Thüringen und die eigene Einwilligung in die Datenverarbeitung (Art. 8 DSGVO). Voll geschäftsfähig ist man erst mit 18 (§ 2 BGB).'},
   {afb:2,art:'richtigfalsch',werkstatt:'job',f:'Wer mit Erlaubnis der Eltern jobbt, darf auch einen Ausbildungsvertrag allein abschließen.',r:false,
     e:'Falsch. Eine Ausbildung ist mehr als ein Job: Im Vordergrund steht das Lernen. Nach herrschender Meinung gilt § 113 BGB dafür nicht. Minderjährige brauchen deshalb die Zustimmung ihrer Eltern (§§ 107, 108 BGB). Im Ausbildungsvertrag stehen auch die Namen der Eltern (§ 11 BBiG).'},

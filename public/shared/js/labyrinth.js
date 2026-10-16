@@ -143,7 +143,7 @@ export function bindLabyrinth(box){
   const kopfHTML=k=>`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">${wege[k].icon}</span>Weg ${k+1}: ${wege[k].titel}</p>`;
   const knopf=(attr,ic,t)=>`<div class="row"><button class="btn small primary" type="button" ${attr}><span class="ms" aria-hidden="true">${ic}</span>${t}</button></div>`;
   function panelStart(){modus={art:'start'};
-    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">explore</span>So spielst du</p><p class="small">Lauf mit deiner Figur zu einer der ${wege.length} Kreuzungen. Dort erfährst du, was auf diesem Weg passiert. Schätze zuerst, wohin er führt. Dann lauf ihn ab: Endet er im Ziel, steckst du in einer Sackgasse fest – oder entscheidet an einem Tor der Würfel?</p>`}
+    panel.innerHTML=`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">explore</span>So spielst du</p><p class="small">Lauf mit deiner Figur zu einer der ${wege.length} Kreuzungen. Dort erfährst du, was auf diesem Weg passiert. Schätze zuerst, wohin er führt. Dann lauf ihn ab und finde heraus: Führt er ins Ziel, in eine Sackgasse – oder entscheidet an einem Tor der Würfel?</p>`}
   function zeigeWeg(k,hinweis,j){
     const w=wege[k],t=st.tipp[w.id];modus={art:'weg',k,j};
     let s=kopfHTML(k)+`<div class="wc-material">${w.text}</div>`+(hinweis?`<div class="fb amb">${hinweis}</div>`:'');

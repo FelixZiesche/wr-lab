@@ -1,4 +1,4 @@
-// Planspiel-Grundmechanik für alle Themen: Einzelspiel, Klassenspiel mit Stimmkarten und Live-Klassenraum.
+// Planspiel-Grundmechanik für alle Themen: Einzelspiel, Klassenspiel mit Stimmkarten und im Lernraum (live).
 // Das Modul kümmert sich um Modi, Beitritt mit Code und QR-Code, Figurenwahl, den Ablauf jeder Runde
 // (Ereignis → Abstimmung → Beschluss → Check → private Entscheidung), das Lehrkraft-Dashboard und den Beamer-Modus.
 // Das Thema liefert nur die Inhalte. Beispiel: sechseck/leben.js
@@ -71,13 +71,13 @@ export function mountPlanspiel(app,spiel){
     const so=load('solo'),st=load('schueler'),lk=load('lk');
     app.innerHTML=`<p class="task" data-fokus><b>Worum geht’s?</b> ${spiel.einleitung}</p><div class="mode-cards">
       <button class="mode-card" type="button" data-m="solo"><span class="ic"><span class="ms" aria-hidden="true">person</span></span><span class="eyebrow">Einzelspiel</span><h3>Allein spielen</h3><p class="small muted">Du wählst eine Figur und entscheidest jede Runde selbst, was die Politik tut. Du spielst in deinem Tempo, kannst jederzeit unterbrechen und später weiterspielen.</p>${so&&so.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===so.fig)?.n||'')}, Runde ${Math.min(N,(so.decs||[]).length+1)}</span>`:''}</button>
-      <button class="mode-card" type="button" data-m="lk"><span class="ic"><span class="ms" aria-hidden="true">co_present</span></span><span class="eyebrow">Klassenspiel</span><h3>Lehrkraft (Beamer)</h3><p class="small muted">Du erstellst den Klassenraum mit Code, steuerst die Runden und siehst live, was die Klasse macht.</p>${lk&&lk.code?`<span class="small">Offener Raum: <b class="mono">${esc(lk.code)}</b>, Runde ${Math.min(N,(lk.decs||[]).length+1)}</span>`:''}</button>
+      <button class="mode-card" type="button" data-m="lk"><span class="ic"><span class="ms" aria-hidden="true">co_present</span></span><span class="eyebrow">Klassenspiel</span><h3>Lehrkraft (Beamer)</h3><p class="small muted">Du öffnest den Lernraum mit Code, steuerst die Runden und siehst live, was die Klasse macht.</p>${lk&&lk.code?`<span class="small">Offener Raum: <b class="mono">${esc(lk.code)}</b>, Runde ${Math.min(N,(lk.decs||[]).length+1)}</span>`:''}</button>
       <button class="mode-card" type="button" data-m="schueler"><span class="ic"><span class="ms" aria-hidden="true">groups</span></span><span class="eyebrow">Klassenspiel</span><h3>Schüler (eigenes Gerät)</h3><p class="small muted">Mit dem Code vom Beamer beitreten, Figur spielen, auf dem Handy abstimmen.</p>${st&&st.fig?`<span class="small">Spielstand vorhanden: ${esc(FIG.find(f=>f.id===st.fig)?.n||'')}${st.code?` in Raum <b class="mono">${esc(st.code)}</b>`:''}</span>`:''}</button></div>
       <div class="panel"><h3>${esc(spiel.figurenTitel||'Die Figuren')}</h3><div class="figs">${FIG.map(f=>`<div class="fig" style="cursor:default"><div class="fighead">${avatarHTML(f)}<div><div class="nm">${esc(f.n)}, ${f.a}</div><div class="sm">${esc(f.ort)}</div></div></div><div class="small">${esc(f.job)}</div></div>`).join('')}</div></div>`;
     gesprungen();
     $$('[data-m]',app).forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;springen=true;
       if(m==='solo')return player('solo',null);
-      waiting('Verbinde mit dem Live-Klassenraum …');
+      waiting('Verbinde mit dem Lernraum …');
       connect().then(L=>{if(!document.body.contains(app))return;m==='lk'?teacherStart(L):player('schueler',L)})}));
   }
 
@@ -118,7 +118,7 @@ export function mountPlanspiel(app,spiel){
     if(!g.fig)return pickFig();
     if(live){
       unsub.push(live.watchRoom(g.code,d=>{
-        if(!d||d.phase==='closed'){liveOn=false;return ended('Der Klassenraum wurde beendet oder ist abgelaufen.')}
+        if(!d||d.phase==='closed'){liveOn=false;return ended('Der Lernraum wurde beendet oder ist abgelaufen.')}
         liveOn=true;
         if(g.gameId!==d.gameId){g.gameId=d.gameId;g.decs=[];g.ch=[];g.chx=[];g.ck=[];g.votes=[];g.r=0;g.ph='event';g.vote=null}
         const ld=(d.decisions||[]).filter(x=>KEYS.includes(x)).slice(0,N);
@@ -138,20 +138,20 @@ export function mountPlanspiel(app,spiel){
     function keineVerbindung(code){
       const grund=liveFehler(),warDrin=app.contains(document.activeElement);
       app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
-      <div class="panel stack" style="max-width:560px"><h3 class="title-l">Keine Verbindung zum Klassenraum</h3>
-      <div class="fb bad" role="alert" id="kv">${grund==='config'?'Der Live-Modus ist nicht eingerichtet.':`Keine Verbindung zum Klassenraum (Code <b class="mono">${esc(code)}</b>). Prüfe das WLAN und ${grund==='laden'?'lade die Seite neu.':'versuch es noch einmal.'}`}</div>
+      <div class="panel stack" style="max-width:560px"><h3 class="title-l">Keine Verbindung zum Lernraum</h3>
+      <div class="fb bad" role="alert" id="kv">${grund==='config'?'Der Lernraum ist nicht eingerichtet.':`Keine Verbindung zum Lernraum (Code <b class="mono">${esc(code)}</b>). Prüfe das WLAN und ${grund==='laden'?'lade die Seite neu.':'versuch es noch einmal.'}`}</div>
       <p class="small muted">Ohne Klasse spielst du allein mit Stimmkarten weiter. Deine Lehrkraft sieht dich dann nicht im Raum.</p>
       <div class="cta">${grund==='config'?'':grund==='laden'?neuLadenHTML('join='+code,'btn primary'):'<button class="btn primary" type="button" id="kv-neu"><span class="ms" aria-hidden="true">refresh</span>Erneut versuchen</button>'}
         <button class="btn" type="button" id="kv-ohne"><span class="ms" aria-hidden="true">person</span>Ohne Klasse spielen</button></div></div>`;
       $('#bk',app).addEventListener('click',()=>{pendingJoin=null;zumMenu()});
-      $('#kv-neu',app)?.addEventListener('click',()=>{springen=true;waiting('Verbinde mit dem Klassenraum …');
+      $('#kv-neu',app)?.addEventListener('click',()=>{springen=true;waiting('Verbinde mit dem Lernraum …');
         connect().then(async L2=>{if(!document.body.contains(app))return;if(L2&&raum.verbindung())await raum.verbinden();player(mode,L2)})});
       $('#kv-ohne',app).addEventListener('click',()=>{ohneKlasse=true;pendingJoin=null;springen=true;player(mode,null)});
       if(warDrin)springen=true;gesprungen();
     }
     function joinScreen(err){
       app.innerHTML=`<div class="row"><button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button></div>
-      <form class="panel stack" id="jf" style="max-width:520px" novalidate><h3 class="title-l">Klassenraum beitreten</h3>
+      <form class="panel stack" id="jf" style="max-width:520px" novalidate><h3 class="title-l">Lernraum beitreten</h3>
       <p class="small muted">Gib den Code vom Beamer ein und wähle einen Spitznamen. Bitte nicht deinen vollen echten Namen.</p>
       <div class="ctrl"><label for="jc">Code</label><input id="jc" type="text" inputmode="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(g.code||'')}" style="font-family:var(--mono);font-size:1.5rem;letter-spacing:.2em;text-transform:uppercase"></div>
       <div class="ctrl"><label for="jn">Spitzname</label><input id="jn" type="text" maxlength="20" autocomplete="off" value="${esc(g.nick||'')}"></div>
@@ -219,12 +219,12 @@ export function mountPlanspiel(app,spiel){
         const o=R.opts.find(x=>x.k===g.vote);
         h+=`<div class="stimmkarte" data-fokus style="--oc:${OPTC[g.vote]}"><b>${g.vote}</b><span>${esc(o.t)}</span><span class="small">${esc(f.n)} stimmt dafür</span></div>
         <p class="small muted">${liveOn?'Deine Stimme ist beim Beamer angekommen.':'Halte die Karte hoch, damit deine Lehrkraft zählen kann.'}</p>
-        <div class="cta"><button class="btn" type="button" id="schere"><span class="ms" aria-hidden="true">undo</span>Schere – Stimme ändern</button><button class="btn primary" type="button" id="go">Weiter: Beschluss abwarten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
+        <div class="cta"><button class="btn" type="button" id="schere"><span class="ms" aria-hidden="true">undo</span>Stimme ändern</button><button class="btn primary" type="button" id="go">Weiter: Beschluss abwarten<span class="ms trail" aria-hidden="true">arrow_forward</span></button></div>`;
       }else if(g.ph==='wait'){
         h+=`<div class="panel stack"><h3>Welchen Beschluss hat die Klasse gefasst?</h3>
         <p class="small muted">${liveOn?'Sobald deine Lehrkraft den Beschluss verkündet, geht es automatisch weiter.':'Deine Lehrkraft verkündet den Beschluss. Tippe den Buchstaben an:'}</p>
         ${liveOn?'<div class="row"><span class="ms" aria-hidden="true">hourglass_top</span><span>Warte auf den Beschluss …</span></div>':`<div class="choice">${R.opts.map(o=>`<button type="button" data-d="${o.k}" style="font-weight:700">${o.k} – ${esc(o.t)}</button>`).join('')}</div>
-        <details><summary class="small">Runde verpasst? Klassencode eingeben</summary><div class="row" style="margin-top:6px"><input id="kc" type="text" maxlength="${N}" placeholder="z. B. BAC" aria-label="Klassencode" style="width:8em;text-transform:uppercase"><button class="btn small" type="button" id="kcgo">Übernehmen</button></div></details>`}</div>`;
+        <details><summary class="small">Runde verpasst? Beschluss-Code eingeben (z. B. BAC)</summary><div class="row" style="margin-top:6px"><input id="kc" type="text" maxlength="${N}" placeholder="z. B. BAC" aria-label="Beschluss-Code" style="width:8em;text-transform:uppercase"><button class="btn small" type="button" id="kcgo">Übernehmen</button></div></details>`}</div>`;
       }else if(g.ph==='result'){
         const o=R.opts.find(x=>x.k===g.decs[g.r]);
         h+=`<div class="row"><span class="yr">${R.y}</span><span class="letter" style="--oc:${OPTC[o.k]}">${o.k}</span><h3>Beschluss: ${esc(o.t)}</h3></div>
@@ -316,7 +316,7 @@ export function mountPlanspiel(app,spiel){
       if(L2&&raum.verbindung())await raum.verbinden();springen=true;teacherStart(L2)}
     async function createRoom(){busy=true;roomErr='';render();
       try{t.code=await raum.oeffnen();persist();await attach()}
-      catch(e){console.warn(e);roomErr=e&&e.message&&!e.html?e.message:'Der Klassenraum konnte nicht erstellt werden. Prüfe das WLAN und versuch es noch einmal.'}
+      catch(e){console.warn(e);roomErr=e&&e.message&&!e.html?e.message:'Der Lernraum konnte nicht geöffnet werden. Prüfe das WLAN und versuch es noch einmal.'}
       busy=false;render()}
     // Erst nach dem Löschen ist der Raum weg; scheitert es, bleibt alles stehen und „Raum löschen“ geht noch einmal
     async function closeRoom(){busy=true;closeErr='';render();
@@ -332,13 +332,13 @@ export function mountPlanspiel(app,spiel){
     function netzHTML(){
       const grund=liveFehler();
       if(!(!live&&grund!=='config')&&!roomNetz)return '';
-      return `<div class="fb bad stack" id="netz"><p><b>Keine Verbindung zum Live-Klassenraum${t.code?` <span class="mono">${esc(t.code)}</span>`:''}.</b> Prüfe das WLAN und ${!live&&grund==='laden'?'lade die Seite neu':'versuch es noch einmal'}.${t.code?' Der Raum bleibt bestehen.':''} Bis dahin läuft das Planspiel mit Stimmkarten.</p>
+      return `<div class="fb bad stack" id="netz"><p><b>Keine Verbindung zum Lernraum${t.code?` <span class="mono">${esc(t.code)}</span>`:''}.</b> Prüfe das WLAN und ${!live&&grund==='laden'?'lade die Seite neu':'versuch es noch einmal'}.${t.code?' Der Raum bleibt bestehen.':''} Bis dahin läuft das Planspiel mit Stimmkarten.</p>
         <div class="row">${!live&&grund==='laden'?neuLadenHTML(''):`<button class="btn small" type="button" id="neu-verbinden" ${busy?'disabled':''}><span class="ms" aria-hidden="true">refresh</span>${t.code?'Erneut verbinden':'Erneut versuchen'}</button>`}</div></div>`;
     }
     function lobbyLiveHTML(){
-      if(!live&&liveFehler()==='config')return `<div class="fb neu"><b>Live-Modus nicht eingerichtet.</b> Das Planspiel läuft mit Stimmkarten. Wie du den Live-Klassenraum einschaltest, steht in der README im GitHub-Projekt.</div>`;
+      if(!live&&liveFehler()==='config')return `<div class="fb neu"><b>Der Lernraum ist nicht eingerichtet.</b> Das Planspiel läuft mit Stimmkarten. Wie du ihn einschaltest, steht in der README im GitHub-Projekt.</div>`;
       const netz=netzHTML();if(netz)return netz;
-      if(!t.code||!roomOk)return `<div class="panel stack"><h3 class="title-l">Live-Klassenraum</h3><p>Erstelle einen Raum. Die Schüler treten mit Code oder QR-Code bei – ohne Konto.</p>${roomErr?`<div class="fb bad">${esc(roomErr)}</div>`:''}<div class="cta"><button class="btn primary" type="button" id="mkroom" ${busy?'disabled':''}><span class="ms" aria-hidden="true">add</span>Live-Klassenraum erstellen</button></div></div>`;
+      if(!t.code||!roomOk)return `<div class="panel stack"><h3 class="title-l">Lernraum</h3><p>Öffne einen Lernraum. Die Schüler treten mit Code oder QR-Code bei – ohne Konto.</p>${roomErr?`<div class="fb bad">${esc(roomErr)}</div>`:''}<div class="cta"><button class="btn primary" type="button" id="mkroom" ${busy?'disabled':''}><span class="ms" aria-hidden="true">add</span>Lernraum öffnen</button></div></div>`;
       const url=joinURL(t.code);const cnt={};players.forEach(p=>cnt[p.fig]=(cnt[p.fig]||0)+1);
       return `<div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code" style="font-size:clamp(2.5rem,7vw,4.5rem);letter-spacing:.15em;line-height:1.15;margin-top:4px;display:block">${esc(t.code)}</div>
         <p class="small">${beitrittsWeg('join')}</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
@@ -374,7 +374,7 @@ export function mountPlanspiel(app,spiel){
       const R=ROUNDS[Math.min(t.r,N-1)];
       const liveOk=!!(live&&t.code&&roomOk);
       let h=`<div class="hud"><b>Klassenspiel · Lehrkraft</b><div><div class="k">Runde</div><div class="v">${Math.min(N,t.r+1)}/${N}</div></div>
-        ${liveOk?`<div><div class="k">Raumcode</div><div class="v mono">${esc(t.code)}</div></div><div class="small"><span class="live-dot"></span>${players.length} live verbunden</div>`:`<div><div class="k">Klassencode</div><div class="v mono">${t.decs.join('')||'–'}</div></div><div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`}
+        ${liveOk?`<div><div class="k">Raumcode</div><div class="v mono">${esc(t.code)}</div></div><div class="small"><span class="live-dot"></span>${players.length} live verbunden</div>`:`<div><div class="k">Beschluss-Code</div><div class="v mono">${t.decs.join('')||'–'}</div></div><div class="small"><span class="live-dot off"></span>Ohne Live-Verbindung</div>`}
         <span style="flex:1"></span>${liveOk?`<button class="btn small" type="button" id="anon" aria-pressed="${anon()}">Beamer-Modus</button><button class="btn text small" type="button" id="close"><span class="ms" aria-hidden="true">delete</span>Raum beenden</button>`:''}<button class="btn small" type="button" id="bk"><span class="ms" aria-hidden="true">arrow_back</span>Menü</button><button class="btn small" type="button" id="reset"><span class="ms" aria-hidden="true">restart_alt</span>Neues Spiel</button></div>
         <div id="reset-q" class="fb amb"${confirmReset?'':' hidden'}>Spiel neu starten? Der Raum bleibt offen, alle Spielstände beginnen von vorn. <button class="btn small primary" type="button" id="reset-y">Ja, neu starten</button> <button class="btn small text" type="button" id="reset-n">Abbrechen</button></div>
         ${confirmClose?`<div class="fb bad">Raum ${esc(t.code)} beenden? Alle Daten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="close-y" ${busy?'disabled':''}>Raum löschen</button> <button class="btn small text" type="button" id="close-n">Abbrechen</button>${closeErr?`<p class="small" role="alert">${esc(closeErr)}</p>`:''}</div>`:''}
@@ -400,7 +400,7 @@ export function mountPlanspiel(app,spiel){
         <div class="cta" id="dec">${!mx?'<span class="small muted">Noch keine Stimmen.</span>':win.length===1?`<button class="btn primary" type="button" data-win="${win[0]}">Beschluss verkünden: ${win[0]}<span class="ms trail" aria-hidden="true">arrow_forward</span></button>`:`<span class="small">Gleichstand – du entscheidest:</span>${win.map(k=>`<button class="btn primary" type="button" data-win="${k}">${k}</button>`).join('')}`}</div>`;
       }else if(t.ph==='result'){
         const o=R.opts.find(x=>x.k===t.decs[t.r]);
-        const hinweis=liveOk?'':`<div class="fb neu" style="margin-top:8px">Die Schüler tippen jetzt <b>${o.k}</b> ein. Wer eine Runde verpasst hat, gibt den Klassencode ein: <span class="code">${t.decs.join('')}</span></div>`;
+        const hinweis=liveOk?'':`<div class="fb neu" style="margin-top:8px">Die Schüler tippen jetzt <b>${o.k}</b> ein. Wer eine Runde verpasst hat, gibt den Beschluss-Code ein: <span class="code">${t.decs.join('')}</span></div>`;
         h+=`<div class="row"><span class="yr">${R.y}</span><span class="letter" style="--oc:${OPTC[o.k]}">${o.k}</span><h3 style="font-size:1.4rem">${esc(TX.beschluss)}: ${esc(o.t)}</h3></div>
         ${LK.ergebnis(t,hinweis)}
         ${dashHTML()}
@@ -449,5 +449,5 @@ export function mountPlanspiel(app,spiel){
 
   menu();
   // Beitritt per QR-Link: wie im Lernraum gleich mit dem Cursor im Feld Spitzname
-  if(pendingJoin){springen=true;waiting('Verbinde mit dem Klassenraum …');connect().then(L=>{if(document.body.contains(app))player('schueler',L)})}
+  if(pendingJoin){springen=true;waiting('Verbinde mit dem Lernraum …');connect().then(L=>{if(document.body.contains(app))player('schueler',L)})}
 }

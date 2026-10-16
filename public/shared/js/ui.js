@@ -6,6 +6,30 @@ export const sgn=(n,d=1)=>(n>0?'+':n<0?'−':'±')+fmt(Math.abs(n),d);
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+/** Vergleichsform für Suchen: ohne Groß- und Kleinschreibung, Leerzeichen, Bindestriche und Satzzeichen; Umlaute und ihre
+ *  Umschreibung zählen gleich („Geschäftsfähig“ = „Geschaeftsfaehig“ = „Geschaftsfahig“, „Phillips-Kurve“ = „Phillipskurve“). */
+export const suchtext=s=>String(s).toLowerCase().replace(/<[^>]*>/g,'').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/([aou])e/g,'$1').replace(/[^a-z0-9]/g,'');
+
+/* ---------- Geschütztes Leerzeichen ----------
+   Nach §, §§, Abs., Nr. und Art. vor einer Zahl darf die Zeile nicht umbrechen („§ 105 BGB“, DIN 5008). Statt alle
+   Inhalte umzuschreiben, ersetzt ein Beobachter beim Anzeigen das Leerzeichen in jedem neuen Textknoten durch ein
+   geschütztes (U+00A0). Attribute, Eingabefelder, Code und Skripte bleiben unberührt. */
+const FESTE=/(§§?|\bAbs\.|\bNr\.|\bArt\.) (?=\d)/g, NICHT_FEST='TEXTAREA,INPUT,SCRIPT,STYLE,PRE,CODE,[contenteditable]';
+/** Setzt im Text s die geschützten Leerzeichen (für Texte, die nicht über das DOM laufen). */
+export const festeLeerzeichen=s=>String(s).replace(FESTE,'$1 ');
+const FESTE_DA=new RegExp(FESTE.source);
+function festText(n){if(!FESTE_DA.test(n.data))return;const p=n.parentElement;if(p&&p.closest(NICHT_FEST))return;n.data=festeLeerzeichen(n.data)}
+/** Alle Textknoten in root bearbeiten */
+export function festeLeerzeichenIn(root){
+  if(!root)return;if(root.nodeType===3)return festText(root);if(root.nodeType!==1&&root.nodeType!==11)return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))festText(n);
+}
+if(typeof document!=='undefined'&&typeof MutationObserver!=='undefined'){
+  const start=()=>{festeLeerzeichenIn(document.body);new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(festeLeerzeichenIn))).observe(document.body,{childList:true,subtree:true})};
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+}
+
 /** Liest (ein Argument) oder schreibt (zwei Argumente) einen Wert im localStorage dieses Browsers. */
 export function store(k,v){try{ if(v===undefined){return JSON.parse(localStorage.getItem(k)||'null')} localStorage.setItem(k,JSON.stringify(v)) }catch(e){return null}}
 

@@ -637,7 +637,7 @@ test('Lernraum: Live-Abstimmung mit zwei Schülern, Wand und Lehrerpanel', async
   const feld = ben.locator('[data-schreib="gericht-wand"]');
   await feld.locator('textarea').fill('Bei der Wohnung dachten viele, ein Geschenk ist immer wirksam.');
   await feld.locator('[data-schreib-senden]').click();
-  await expect(feld.locator('[data-schreib-status]')).toContainText('An der Wand');
+  await expect(feld.locator('[data-schreib-status]')).toContainText('Deine Antwort hängt an der Wand');
   const wand = lk.locator('[data-schreib="gericht-wand"] [data-wand]');
   await expect(wand.locator('[data-wand-n]')).toHaveText('1');
   await wand.locator('[data-wand-zeigen]').click();
