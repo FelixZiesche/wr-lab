@@ -15,6 +15,7 @@
 //   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
 //   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
 //   labyrinth(…) aus labyrinth.js                                     Labyrinth-Spiel mit Figur, wird hier mitgebunden
+//   chatgeschichte(…) aus chat.js                                     Chat-Abenteuer mit Entscheidungen, wird hier mitgebunden
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
 // id: Kleinbuchstaben, Ziffern, Bindestrich (max. 40 Zeichen), eindeutig im Thema. Texte in frage, tipp usw. dürfen HTML enthalten.
@@ -22,6 +23,7 @@ import { $, $$, esc, store, kopieren, neuZeichnen, zeigeHinweis } from './ui.js'
 import { raum, registriere } from './lernraum.js';
 import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
 import { bindLabyrinth } from './labyrinth.js';
+import { bindChat } from './chat.js';
 
 const key=(art,id)=>`${raum.speicher()}-${art}-${id}`;
 const kopf=(icon,text)=>`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">${icon}</span>${text}</p>`;
@@ -875,4 +877,5 @@ export function bindAufgaben(root){
   einmal('[data-akte]',bindAkte);
   einmal('[data-abst]',zeichneAbst);
   einmal('[data-labyrinth]',bindLabyrinth);
+  einmal('[data-chat]',bindChat);
 }

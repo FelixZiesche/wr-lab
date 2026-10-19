@@ -4,7 +4,7 @@
 import { $, $$, esc } from '../shared/js/ui.js';
 import { createLernstrecke } from '../shared/js/lernstrecke.js';
 import { schreibfeld, zuordnen, lueckentext, wissenscheck, impuls, hilfen, blitz, blitzAufloesung, pruefschema, fallakte, abstimmung } from '../shared/js/aufgaben.js';
-import { labyrinth } from '../shared/js/labyrinth.js';
+import { chatgeschichte } from '../shared/js/chat.js';
 import { GESETZ, NAVI, FAELLE, GERICHT } from './daten.js';
 import { FOTO, nachweis, fotoHTML, HAFTPFLICHT, QUELLEN } from './fotos.js';
 import { HINWEISE, WAND, IMPULS } from './wand.js';
@@ -55,10 +55,10 @@ const L=createLernstrecke({
     'Fälle mit dem Rechts-Navi prüfen und ein Gutachten schreiben',
     'Beurteilen, wann Eltern haften (§ 832 BGB) und warum eine Haftpflichtversicherung wichtig ist'],
   bereiche:[
-    {id:'mission',icon:'two_wheeler',label:'Mission',title:'Mission Simson',tool:'simson',desc:'Nach dem Crash: Welche Wege führen dazu, dass der Schaden sauber geregelt ist?'},
+    {id:'mission',icon:'two_wheeler',label:'Mission',title:'Mission Simson',tool:'simson',desc:'Ein Chat-Abenteuer nach dem Crash: Was tust du – und wer zahlt am Ende?'},
     {id:'wissen',icon:'school',label:'Wissen',title:'Sichern und wiederholen',ch:[2],render:wissenHTML,desc:'Wissenscheck, Fachbegriffe, deine Merksätze und die Quellen'}],
   abschluss:[
-    {tool:'simson',titel:'Mission Simson',text:'Lauf durchs Labyrinth: Welche Wege nach einem Unfall führen ans Ziel?',icon:'two_wheeler'},
+    {tool:'simson',titel:'Mission Simson',text:'Ein Chat-Abenteuer nach dem Crash: Was tust du? Vier Enden warten auf dich.',icon:'chat'},
     {tool:'wissenscheck',titel:'Wissenscheck',text:`${WISSENSCHECK.aufgaben.length} Aufgaben in drei Stufen mit Auswertung`,icon:'fact_check'}],
   kapitel:{2:['Sichern und wiederholen','Allein']},
   merksaetze:MS,
@@ -338,49 +338,50 @@ L.lektion({id:'eltern',titel:'Und die Eltern?',icon:'family_restroom',dauer:'30 
       ${schreibfeld(WAND.eltern)}
       ${impuls(IMPULS.eltern)}`}]});
 
-/* ---------- Mission Simson: Labyrinth ---------- */
-const WEGE=[
-  {id:'kennzeichen',icon:'verified',titel:'Versicherung melden',text:'An deiner Simson klebt das schwarze Versicherungskennzeichen für 2026/27. Du meldest den Unfall noch am selben Tag deiner Versicherung.',erg:'ziel',
-    e:'Für Mopeds ist eine Haftpflichtversicherung Pflicht. Herr Labuhn kann sein Geld direkt von deiner Versicherung verlangen. Du haftest zwar (§ 823 Abs. 1 BGB), aber die Versicherung zahlt für dich.'},
-  {id:'zeugen',icon:'visibility',titel:'Zeugen suchen',text:'Du bist dir sicher: Herr Labuhn war auch viel zu schnell. Du suchst Zeugen.',erg:'glueck',
-    e:'Hat Herr Labuhn den Unfall mitverschuldet, wird der Schaden geteilt (§ 254 BGB). Ob das so war, entscheiden die Beweise.',
-    wuerfel:{frage:'Findet sich eine Zeugin, die bestätigt, dass Herr Labuhn zu schnell war?',ja:'Eine Zeugin bestätigt es. Herr Labuhn trägt einen Teil seines Schadens selbst, den Rest zahlt deine Versicherung.',nein:'Niemand hat etwas gesehen, das gegen Herrn Labuhn spricht. Du haftest voll – zum Glück zahlt deine Versicherung.'}},
-  {id:'abhauen',icon:'directions_run',titel:'Einfach weiterfahren',text:'Du gibst Gas und verschwindest. Hat ja keiner gesehen …',erg:'sackgasse',
-    e:'Unfallflucht ist eine Straftat (§ 142 StGB). Herr Labuhn hat sich dein Kennzeichen gemerkt. Die Versicherung zahlt ihm zwar den Schaden, kann sich aber Geld von dir zurückholen – und für dich wird es richtig teuer.',
-    unterwegs:['Du biegst um die Ecke und atmest durch.','In der Schule fragt dich niemand etwas. Puh.','Am Nachmittag klingelt die Polizei bei euch: Herr Labuhn hat dein Kennzeichen notiert.']},
-  {id:'eltern',icon:'family_restroom',titel:'Die Eltern sollen zahlen',text:'„Eltern haften für ihre Kinder!“ – du gibst Herrn Labuhn die Adresse deiner Eltern.',erg:'sackgasse',
-    e:'Eltern haften nur, wenn sie ihre Aufsichtspflicht verletzt haben (§ 832 BGB). Eine Fünfzehnjährige mit Mopedführerschein müssen sie nicht zur Schule begleiten. Deine Eltern müssen nicht zahlen.'},
-  {id:'jung',icon:'child_care',titel:'„Ich bin doch erst 15!“',text:'Du sagst: „Ich bin minderjährig, ich muss gar nichts zahlen.“',erg:'sackgasse',
-    e:'Mit 15 bist du beschränkt deliktsfähig. Wer den Mopedführerschein hat, kann verstehen, dass er für Unfälle geradestehen muss (§ 828 Abs. 3 BGB). Du haftest.'},
-  {id:'privathaftpflicht',icon:'home',titel:'Die Familienhaftpflicht',text:'Deine Eltern haben eine Privathaftpflicht für die ganze Familie. Die soll den Schaden bezahlen.',erg:'sackgasse',
-    e:'Die Privathaftpflicht zahlt keine Schäden, die beim Fahren mit einem Kraftfahrzeug entstehen – auch nicht mit einem Moped (Benzinklausel). Dafür ist die Pflichtversicherung mit Versicherungskennzeichen da.'},
-  {id:'richtig',icon:'checklist',titel:'Alles richtig machen',text:'Du hältst an und machst Schritt für Schritt alles richtig.',erg:'ziel',
-    e:'Anhalten, sichern, Daten austauschen, Schaden melden: So bekommt Herr Labuhn sein Geld von deiner Versicherung, und du bleibst auf der sicheren Seite.',
-    unterwegs:['Warnblinker an, Unfallstelle sichern.','Ist jemand verletzt? Zum Glück nicht.','Daten austauschen: Name, Anschrift, Versicherungskennzeichen.','Fotos von der Unfallstelle machen, Zeugen notieren.','Den Schaden deiner Versicherung melden.']}];
-// Karte: Kreuzungen 1–7 unten, Gänge a–g, Tor B (Würfel) beim Weg „Zeugen suchen“, Ziel Z oben in der Mitte
-const KARTE=[
-  '#################',
-  '#########ggggggg#',
-  '#######ZZZ#####g#',
-  '#d###bBZZZ#e###g#',
-  '#d#c#b##a##e#f#g#',
-  '#d#c#b##a##e#f#g#',
-  '#d#c#b##a##e#f#g#',
-  '#d#c#b##a##e#f#g#',
-  '#d#c#b##a##e#f#g#',
-  '#d#c#b##a##e#f#g#',
-  '#4#3#2##1##5#6#7#',
-  '#...............#',
-  '########S########',
-  '#################'];
-L.tool({id:'simson',ch:3,farben:['gelb','gruen','blau'],hinweise:HINWEISE.simson,title:'Mission Simson',sub:'Nach dem Crash vor der Schule: Welche Wege führen dazu, dass der Schaden sauber geregelt ist?',
-html(){return `<p class="task"><b>Auftrag:</b> Spielt zu zweit. Lauft mit der Figur zu einer Kreuzung, lest, was passiert, und schätzt zuerst: Führt der Weg ans Ziel, in die Sackgasse, oder kommt es darauf an? Dann lauft ihn ab. Schafft ihr alle sieben Wege?</p>
-<div class="stack"><p class="small muted"><span class="ms sm" aria-hidden="true">theater_comedy</span> Szenario</p><h2 class="headline-s">Du bist 15 und hast gerade Herrn Labuhns Auto gegen eine Laterne gelenkt.</h2>
-  <p class="body-l">1.500 € Schaden, Herr Labuhn ist sauer, und du musst gleich in die Schule. Sieben Wege führen durch das Labyrinth. Ziel: Herr Labuhn bekommt sein Geld, und du stehst nicht allein mit den Schulden da.</p></div>
-${labyrinth({id:'simson-lab',titel:'Das Labyrinth nach dem Crash',karte:KARTE,wege:WEGE,speicher:'df-simson',
-  namen:{ziel:'Schaden geregelt',sackgasse:'Sackgasse',glueck:'Kommt drauf an'},
-  ziel:{bild:FOTO.simson?{src:FOTO.simson.src,alt:FOTO.simson.alt,nachweis:nachweis('simson')}:null,text:'Herr Labuhn bekommt sein Geld von deiner Versicherung.'},
-  fertig:()=>'Sicher ans Ziel führen nur zwei Wege: den Unfall richtig abwickeln und der Versicherung melden. Abhauen, die Eltern oder die Familienhaftpflicht helfen nicht.'})}
+/* ---------- Mission Simson: Chat-Abenteuer nach dem Crash ---------- */
+const CHAT={id:'simson-chat',titel:'7:42 Uhr, Apolda: Gerade hat es gekracht. Was tust du jetzt?',start:'start',
+  kontakte:{labuhn:{name:'Herr Labuhn',icon:'directions_car'},jonas:{name:'Jonas',icon:'sports_esports'},mama:{name:'Mama',icon:'woman'},papa:{name:'Papa',icon:'man'},vers:{name:'Deine Moped-Versicherung',icon:'support_agent'}},
+  szenen:{
+    start:{n:[{info:'Szenario · 7:42 Uhr, Bahnhofstraße in Apolda'},
+        {info:'Rumms! Herr Labuhn musste wegen dir ausweichen und ist gegen eine Laterne gefahren. Seine Stoßstange ist eingedrückt. Er steigt aus. Du sitzt noch auf deiner Simson.'},
+        {von:'jonas',t:'Wo bleibst du?? In 18 Minuten schreiben wir Mathe!'}],
+      wahl:[{t:'Gas geben und weg. Hat ja keiner gesehen …',weiter:'flucht'},
+        {t:'Anhalten, Warnblinker an und zu Herrn Labuhn gehen',weiter:'halt'},
+        {t:'Erst mal Mama schreiben',weiter:'mama'}]},
+    flucht:{n:[{info:'Du gibst Gas und biegst um die nächste Ecke. Dein Herz rast.'},
+        {von:'jonas',t:'Alles okay bei dir?'},
+        {info:'13:15 Uhr, nach der Schule'},
+        {von:'mama',t:'Die Polizei war gerade bei uns. Ein Herr Labuhn hat sich dein Versicherungskennzeichen notiert. Ruf mich SOFORT an.'}],
+      wahl:[{t:'Mama anrufen und alles erzählen',n:[{recht:'Unfallflucht ist eine Straftat (§ 142 StGB, unerlaubtes Entfernen vom Unfallort). Herr Labuhn bekommt sein Geld trotzdem von deiner Versicherung. Die kann sich aber einen Teil davon von dir zurückholen, weil du abgehauen bist.'}],ende:'flucht'},
+        {t:'Behaupten, dass jemand anderes gefahren ist',sag:'Das war ich nicht! Jemand muss meine Simson genommen haben.',n:[{von:'mama',t:'Die Polizei hat ein Foto von dir auf der Simson. Ernsthaft jetzt?'},{recht:'Lügen macht es nur schlimmer. Unfallflucht ist eine Straftat (§ 142 StGB), und die Versicherung kann sich Geld von dir zurückholen.'}],ende:'flucht'}]},
+    halt:{n:[{info:'Du stellst die Simson ab und schaltest den Warnblinker ein. Zum Glück ist niemand verletzt.'},
+        {von:'labuhn',t:'Bist du verrückt geworden? Wer bezahlt mir das jetzt?'}],
+      wahl:[{t:'„Meine Eltern! Eltern haften doch für ihre Kinder.“',sag:'Meine Eltern! Eltern haften doch für ihre Kinder.',n:[{von:'labuhn',t:'Ach ja? Dann gib mir mal deren Nummer.'},{recht:'Eltern haften nur, wenn sie ihre Aufsichtspflicht verletzt haben (§ 832 BGB). Eine Fünfzehnjährige mit Mopedführerschein müssen sie nicht zur Schule begleiten. Deine Eltern müssen nicht zahlen.'}],weiter:'daten'},
+        {t:'„Ich bin 15. Ich muss gar nichts zahlen.“',sag:'Ich bin 15. Ich muss gar nichts zahlen.',n:[{von:'labuhn',t:'Netter Versuch.'},{recht:'Mit 15 bist du beschränkt deliktsfähig. Wer den Mopedführerschein hat, kann verstehen, dass er für Unfälle geradestehen muss (§ 828 Abs. 3 BGB). Weil du die Verkehrsregeln nicht genau genommen hast, haftest du (§ 823 Abs. 1 BGB).'}],weiter:'daten'},
+        {t:'„Tut mir leid. Lassen Sie uns die Daten austauschen.“',sag:'Tut mir leid. Lassen Sie uns die Daten austauschen.',n:[{von:'labuhn',t:'Na gut. Wenigstens bist du ehrlich.'}],weiter:'daten'}]},
+    mama:{n:[{ich:'Mama, ich hatte gerade einen Unfall mit der Simson. Ein Auto ist wegen mir gegen eine Laterne gefahren.'},{von:'mama',t:'WAS?! Bist du verletzt?'}],
+      wahl:[{t:'„Nein, alles okay. Aber was mache ich jetzt?“',sag:'Nein, alles okay. Aber was mache ich jetzt?',n:[{von:'mama',t:'Bleib dort! Warnblinker an, Unfallstelle sichern und mit dem Fahrer die Daten austauschen. Ich komme.'},{recht:'Wer an einem Unfall beteiligt ist, muss am Unfallort bleiben und seine Daten angeben. Wer einfach wegfährt, begeht eine Straftat (§ 142 StGB).'}],weiter:'halt'},
+        {t:'„Ich hau einfach ab, oder?“',sag:'Ich hau einfach ab, oder?',n:[{von:'mama',t:'NEIN! Auf keinen Fall, das ist Fahrerflucht. Bleib, wo du bist!'}],weiter:'halt'}]},
+    daten:{n:[{info:'Ihr tauscht Namen, Anschrift und das Versicherungskennzeichen aus. Herr Labuhn macht Fotos von der Unfallstelle.'},
+        {von:'labuhn',t:'Die Laterne gehört übrigens der Stadt Apolda. Die meldet sich bestimmt auch noch.'},
+        {von:'jonas',t:'Frau Krämer fragt, wo du bist. Der Test hat angefangen!'}],
+      wahl:[{t:'Jonas antworten und dann zur Schule fahren',sag:'Hatte einen Unfall, mir geht’s gut. Sag Frau Krämer bitte Bescheid, ich komme gleich.',weiter:'abend'},
+        {t:'„Sie waren aber auch viel zu schnell!“ – Zeugen suchen',sag:'Sie waren aber auch viel zu schnell!',n:[{info:'An der Bushaltestelle hat eine Frau alles gesehen. Sie sagt: „Der Herr war wirklich deutlich zu schnell.“'},{recht:'Hat Herr Labuhn den Unfall mitverschuldet, wird der Schaden geteilt (§ 254 BGB). Deine Versicherung zahlt dann nur einen Teil, den Rest trägt er selbst.'}],weiter:'abend'}]},
+    abend:{n:[{info:'19:30 Uhr, Familienchat'},{von:'papa',t:'Das mit dem Auto regeln wir. Wir haben doch eine Familienhaftpflicht!'}],
+      wahl:[{t:'Papa die Familienhaftpflicht anrufen lassen',n:[{von:'papa',t:'Die sagen, Schäden mit dem Moped zahlen sie nicht?!'},{recht:'Die Privathaftpflicht zahlt keine Schäden, die beim Fahren mit einem Kraftfahrzeug entstehen – auch nicht mit dem Moped. Dafür gibt es die Pflichtversicherung, die du am Versicherungskennzeichen erkennst.'}],weiter:'kennzeichen'},
+        {t:'Den Unfall der Versicherung hinter dem Versicherungskennzeichen melden',weiter:'kennzeichen'},
+        {t:'Herrn Labuhn anbieten, alles selbst zu zahlen: 1.500 € vom Sparbuch',n:[{von:'mama',t:'Bist du sicher? Das ist dein ganzes Erspartes für den Autoführerschein.'},{info:'Du überweist Herrn Labuhn 1.500 €. Eine Woche später schickt die Stadt Apolda eine Rechnung für die Laterne.'}],ende:'privat'}]},
+    kennzeichen:{n:[{von:'mama',t:'Moment … Hast du eigentlich das neue Versicherungskennzeichen drangemacht? Das alte war grün.'}],
+      wahl:[{t:'„Klar, das schwarze für 2026/27 klebt seit März dran.“',sag:'Klar, das schwarze für 2026/27 klebt seit März dran.',n:[{info:'Du meldest den Unfall online bei deiner Moped-Versicherung.'},{von:'vers',t:'Ihre Schadenmeldung ist eingegangen. Wir übernehmen den Schaden von Herrn Labuhn und der Stadt Apolda.'}],ende:'profi'},
+        {t:'„Äh … da ist noch das grüne dran.“',sag:'Äh … da ist noch das grüne dran.',n:[{von:'papa',t:'Das grüne galt nur bis Ende Februar!'},{recht:'Ohne gültiges Versicherungskennzeichen gibt es keinen Versicherungsschutz, und Fahren ohne Pflichtversicherung ist strafbar. Den Schaden zahlst du allein.'}],ende:'ohne'}]}},
+  enden:{
+    profi:{titel:'Schaden sauber geregelt',art:'gut',t:'Du haftest für den Unfall (§ 823 Abs. 1, § 828 Abs. 3 BGB) – bezahlen tut deine Moped-Versicherung. Herr Labuhn und die Stadt bekommen ihr Geld, und du bist abgesichert.'},
+    privat:{titel:'Teurer Stolz',art:'mittel',t:'Erlaubt ist das, aber unnötig: Deine Pflichtversicherung hätte genau diesen Schaden bezahlt. Jetzt ist dein Erspartes weg, und die Rechnung für die Laterne kommt noch dazu.'},
+    flucht:{titel:'Abgehauen',art:'schlecht',t:'Unfallflucht ist eine Straftat (§ 142 StGB). Herr Labuhn bekommt sein Geld, du bekommst Ärger mit der Polizei, und die Versicherung kann Geld von dir zurückfordern.'},
+    ohne:{titel:'Ohne Versicherung',art:'schlecht',t:'Mit dem abgelaufenen Kennzeichen warst du nicht versichert. Du haftest allein für Auto und Laterne, und Fahren ohne Pflichtversicherung ist strafbar. Bei einem Unfall mit Verletzten kann es um Millionen gehen.'}}};
+L.tool({id:'simson',ch:3,farben:['gelb','gruen','blau'],hinweise:HINWEISE.simson,title:'Mission Simson',sub:'Ein Chat-Abenteuer nach dem Crash vor der Schule: Was tust du – und wer zahlt am Ende?',
+html(){return `<p class="task"><b>Auftrag:</b> Spielt zu zweit. Lest die Nachrichten und entscheidet, was ihr tut. Nach manchen Entscheidungen meldet sich der Rechts-Check. Findet alle vier Enden – welches ist das beste?</p>
+${chatgeschichte(CHAT)}
 ${schreibfeld(WAND.simson)}
 ${impuls(IMPULS.simson)}
 ${L.erkHTML('simson')}`},

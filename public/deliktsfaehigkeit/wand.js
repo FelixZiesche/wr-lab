@@ -34,11 +34,12 @@ export const HINWEISE={
     'Party-Abrechnung: Tom → selbst (§ 827 S. 2 BGB), Emil (5) → Eltern (Aufsichtspflicht verletzt), Lea (6) mit aufmerksamem Vater → niemand, Jan (16) → selbst, Sophie (17) rutscht ohne Schuld aus → niemand.',
     'Simson-Fall (Leitfrage): Du bist mit 15 beschränkt deliktsfähig und hast mit dem Mopedführerschein die nötige Einsicht (§ 828 Abs. 3 BGB). Wer Verkehrsregeln missachtet, handelt fahrlässig, du haftest nach § 823 Abs. 1 BGB. Bezahlen wird den Schaden die Kfz-Haftpflichtversicherung hinter dem Versicherungskennzeichen. Die Privathaftpflicht der Familie zahlt keine Schäden beim Fahren mit einem Kraftfahrzeug (sogenannte Benzinklausel).',
     'Zum Abschluss die Vermutungen von der Wand aus Lektion 1 noch einmal zeigen: Wer lag richtig?'],
-  simson:['Mission Simson ist ein Labyrinth-Spiel wie Mission Zwergspitz: erst schätzen, dann laufen. Zu zweit spielen lassen.',
-    'Ziel: Herr Labuhn bekommt sein Geld, und du stehst nicht allein mit 1.500 € Schulden da. Sicher ins Ziel führen nur die Versicherung und das richtige Verhalten am Unfallort.',
-    'Unfallflucht ist eine Straftat (§ 142 StGB). Wer sie begeht, verliert unter Umständen den Versicherungsschutz und muss sich auf Rückforderungen der Versicherung einstellen. Das Thema Strafmündigkeit ist hier bewusst nicht vertieft.',
-    'Privathaftpflicht: Schäden durch den Gebrauch eines Kraftfahrzeugs sind ausgeschlossen (Benzinklausel). Dafür gibt es die Pflichtversicherung des Mopeds.'],
-  wissenscheck:['Der Wissenscheck hat 18 Aufgaben (40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen nach Punkten). Er eignet sich als Hausaufgabe oder als Abschluss der Reihe.',
+  simson:['Mission Simson ist ein Chat-Abenteuer: Die Minuten und Stunden nach dem Crash laufen wie im Messenger ab, mit Nachrichten von Mama, Papa, Jonas und der Versicherung. Die Schüler entscheiden, was sie tun, und ein Rechts-Check erklärt die Folgen. Zu zweit spielen lassen.',
+    'Vier Enden: „Schaden sauber geregelt“ (Versicherung hinter dem gültigen Kennzeichen), „Teurer Stolz“ (selbst bezahlt, obwohl versichert), „Abgehauen“ (Unfallflucht) und „Ohne Versicherung“ (Kennzeichen abgelaufen). Auftrag: alle vier finden.',
+    'Unfallflucht ist eine Straftat (§ 142 StGB). Die Versicherung zahlt dem Geschädigten trotzdem, kann aber Geld vom Fahrer zurückfordern. Das Thema Strafmündigkeit ist hier bewusst nicht vertieft.',
+    'Privathaftpflicht: Schäden durch den Gebrauch eines Kraftfahrzeugs sind ausgeschlossen (Benzinklausel). Dafür gibt es die Pflichtversicherung des Mopeds. Das Versicherungskennzeichen gilt vom 1. März bis Ende Februar, 2026/27 ist es schwarz. Wer ohne gültige Pflichtversicherung fährt, macht sich strafbar (§ 6 Pflichtversicherungsgesetz).',
+    'Zeugen-Zweig: Bei Mitverschulden von Herrn Labuhn wird der Schaden geteilt (§ 254 BGB). Passt zur Rechenaufgabe im Wissenscheck.'],
+  wissenscheck:['Der Wissenscheck hat 17 Aufgaben (nach Punkten etwa 35 % Grundlagen, 43 % Anwenden, 22 % Beurteilen). Er eignet sich als Hausaufgabe oder als Abschluss der Reihe.',
     'Im Lernraum siehst du im Dashboard die Punkte pro Stufe und die schwierigsten Aufgaben, aber keine Texte der Schüler.']
 };
 

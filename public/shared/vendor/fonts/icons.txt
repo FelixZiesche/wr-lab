@@ -21,6 +21,7 @@ casino
 cast_for_education
 category
 celebration
+chat
 check
 check_box
 check_circle
@@ -42,6 +43,7 @@ edit
 edit_note
 elderly_woman
 electric_scooter
+emoji_events
 expand_more
 explore
 explore_off
@@ -84,9 +86,11 @@ lock
 lock_open
 login
 logout
+man
 map
 menu_book
 money_off
+more_horiz
 no_accounts
 pause
 payments
@@ -127,6 +131,7 @@ steps
 stop_circle
 storefront
 style
+support_agent
 swipe_left
 sync_alt
 task_alt
@@ -144,5 +149,6 @@ undo
 verified
 videogame_asset
 visibility
+woman
 work
 workspace_premium
