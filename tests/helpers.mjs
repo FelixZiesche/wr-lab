@@ -13,8 +13,10 @@ export const PROJECT = 'demo-wr-lab';
 export const FIRESTORE = 'http://127.0.0.1:8080';
 
 // Die Firebase-Bibliothek kommt im Test aus dem npm-Paket (dieselbe Version wie auf gstatic.com).
-// So hängen die Tests nicht davon ab, ob gstatic.com erreichbar ist.
-const SDK = /^https:\/\/www\.gstatic\.com\/firebasejs\/10\.12\.2\/(firebase-[a-z]+\.js)$/;
+// So hängen die Tests nicht davon ab, ob gstatic.com erreichbar ist. Die Version steht in package.json;
+// dass live.js dieselbe lädt, prüft tests/wrlab.spec.mjs.
+export const FIREBASE_VERSION = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')).devDependencies.firebase;
+const SDK = new RegExp(`^https://www\\.gstatic\\.com/firebasejs/${FIREBASE_VERSION.replace(/\./g, '\\.')}/(firebase-[a-z]+\\.js)$`);
 
 /** Bereitet einen Browser-Kontext vor. offline: true simuliert eine Seite ohne Live-Klassenraum. */
 export async function prepare(context, { offline = false } = {}) {
@@ -32,9 +34,10 @@ function trackErrors(page) {
   return errors;
 }
 
-/** Öffnet einen weiteren, unabhängigen Browser (eigenes Gerät, eigene anonyme Anmeldung). */
+/** Öffnet einen weiteren, unabhängigen Browser (eigenes Gerät, eigene anonyme Anmeldung).
+ *  kontext: weitere Einstellungen für den Browser-Kontext, z. B. ein Handy-Profil aus devices von Playwright. */
 export async function device(browser, opts = {}) {
-  const context = await browser.newContext(opts.viewport ? { viewport: opts.viewport } : {});
+  const context = await browser.newContext({ ...(opts.viewport ? { viewport: opts.viewport } : {}), ...opts.kontext });
   await prepare(context, opts);
   const page = await context.newPage();
   page.errors = trackErrors(page);

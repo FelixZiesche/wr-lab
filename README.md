@@ -10,8 +10,8 @@ Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und
 
 | Klasse | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- | --- |
-| 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber, Haus der Geschäftsfähigkeit mit Hilfeknopf an jedem Raum, Hefteintrag und Zitiertechnik, Rechts-Navi, Fall-Akte mit acht Fällen und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“, Gaming, Abos und Klarna, der erste Job (§ 113 BGB), Mission Zwergspitz als Labyrinth-Spiel (Figur steuern, schätzen, Sackgassen, Würfel an den Toren) und ein Wissenscheck mit 38 Aufgaben in drei Stufen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
-| 11 | [Magisches Sechseck](public/sechseck/) | Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden. Zu jeder Werkstatt eine Frage an die Wand, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und ein Wissenscheck mit 31 Aufgaben in drei Stufen. | *noch ergänzen* |
+| 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber mit Mopedführerschein und Einwilligung in Apps, Haus der Geschäftsfähigkeit mit Hilfeknopf an jedem Raum und Hefteintrag, Rechts-Navi mit Zitiertechnik, Fall-Akte mit neun Fällen (darunter ein Job-Fall zu § 113 BGB) und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“ mit sieben Fällen (darunter das Kind als Bote), Gaming, Abos und Klarna, der erste Job (§ 113 BGB, auch: Warum gilt er nicht für den Ausbildungsvertrag?), Mission Zwergspitz als Labyrinth-Spiel (Figur steuern, schätzen, Sackgassen, Würfel an den Toren) und ein Wissenscheck mit 42 Aufgaben in drei Stufen. Eigene Erkenntnis zuerst formulieren, dann mit dem Merksatz vergleichen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
+| 11 | [Magisches Sechseck](public/sechseck/) | Leitfrage: Warum kann die Politik nicht alles gleichzeitig reparieren? Einstieg mit einer verdeckten Nachrichten-Blitzrunde (allein oder als Klassenrunde), aufgelöst im Bauchgefühl-Check. Sechs Ziele der Wirtschaftspolitik messen, in den Regler-Werkstätten erst schätzen, dann schieben (BIP-Blitzrunde, Euro und Zeiss-Mikroskop, Vermögen des reichsten Zehntels, Tempo beim Klimaschutz), Zielkonflikte aufdecken, Politik simulieren und im Planspiel „Sechseck-Leben“ vier Jahre Wirtschaftspolitik für acht Figuren aus Thüringen entscheiden (mit Deutschlandticket 2027 und Industriestrompreis). Zu jeder Werkstatt eine Frage an die Wand, eigene Erkenntnis vor dem Merksatz, dazu Glossar, Wissensspeicher, Hefteintrag mit Kurztest und ein Wissenscheck mit 36 Aufgaben in drei Stufen. | Lernbereich Soziale Marktwirtschaft |
 
 ## Aufbau
 
@@ -111,12 +111,14 @@ Unter **Actions → Veröffentlichen → Run workflow** (Branch `main`) die erst
 
 ### 5. Optional: Daten automatisch löschen lassen
 
-Jeder Raum, jeder Schülereintrag und jede Antwort hat das Feld `expireAt` (24 Stunden nach dem Anlegen). Firestore kann solche Einträge automatisch löschen:
+Jeder Raum, jeder Schülereintrag und jede Antwort hat das Feld `expireAt` (24 Stunden nach dem Anlegen, berechnet mit der Uhr des Geräts). Die Sicherheitsregeln verlangen es beim Anlegen und lassen höchstens 72 Stunden in der Zukunft zu, weil Geräteuhren falsch gehen können. Firestore kann solche Einträge automatisch löschen:
 
 1. **Firestore Database → Time-to-live (TTL)** öffnen.
 2. Je eine Richtlinie mit dem Feld `expireAt` für die Sammlungsgruppen `rooms`, `players` und `antworten` anlegen.
 
-Falls die Konsole dafür den Blaze-Tarif verlangt, kann der Schritt entfallen. Mit **„Raum beenden“** löscht die Lehrkraft alle Daten eines Raums ohnehin sofort.
+Das geht nur im kostenpflichtigen Blaze-Tarif: Löschungen per TTL haben laut Firebase-Preisliste kein kostenloses Kontingent. Wer das will, bucht Blaze mit einer Budgetwarnung (z. B. 1 €) und legt die Richtlinien in der Konsole an. Bitte keine TTL-Einstellungen in die Dateien des Projekts schreiben: Im kostenlosen Spark-Tarif würde sonst die Veröffentlichung scheitern. Auch mit TTL löscht Firestore erst einige Zeit nach dem Ablauf, typischerweise innerhalb von 24 Stunden.
+
+Ohne TTL bleiben vergessene Räume liegen. Dagegen hilft: Mit **„Raum beenden“** löscht die Lehrkraft alle Daten eines Raums sofort. Öffnet sie auf demselben Gerät einen neuen Raum im selben Thema, beendet die Seite den alten automatisch.
 
 ## Veröffentlichung
 
@@ -124,7 +126,7 @@ Falls die Konsole dafür den Blaze-Tarif verlangt, kann der Schritt entfallen. M
 | --- | --- |
 | Push oder Merge auf `main` | Workflow **Veröffentlichen**: Zuerst laufen alle Tests. Wenn sie grün sind, werden Seite und Firestore-Regeln veröffentlicht. |
 | Pull Request öffnen oder aktualisieren | Workflow **Vorschau**: Zuerst laufen die Tests, dann bekommt der Pull Request eine eigene Vorschau-Adresse (7 Tage gültig) als Kommentar. |
-| Actions → Veröffentlichen → Run workflow | Veröffentlicht den aktuellen Stand von `main` von Hand. |
+| Actions → Veröffentlichen → Run workflow | Veröffentlicht den aktuellen Stand von `main` von Hand. Mit einem anderen Branch laufen nur die Tests, veröffentlicht wird nichts. |
 
 - **Vorschau:** Die Vorschau nutzt die echte Datenbank mit den Regeln von `main`. Neue Regeln aus einem Pull Request gelten erst nach dem Merge.
 - **Zurück zu einer alten Version:** In der Firebase-Konsole unter **Hosting → Versionsverlauf** bei einer älteren Version **Rollback** wählen.
@@ -164,6 +166,8 @@ npm test        # alle Tests: Werkstätten, Aufgaben, Planspiel, Lernraum (Playw
 
 `npm run dev` startet die Seite mit einer lokalen Datenbank (Demo-Projekt `demo-wr-lab`), es fließen keine echten Daten. Den Lernraum testest du mit zwei Browserfenstern, z. B. einem normalen und einem privaten Fenster.
 
+Auf dem Mac belegt der AirPlay-Empfänger Port 5000. Startet der Emulator nicht, unter **Systemeinstellungen → Allgemein → AirDrop & Handoff** den AirPlay-Empfänger ausschalten.
+
 Ohne Java geht es auch, dann aber ohne Lernraum:
 
 ```bash
@@ -177,21 +181,26 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
 1. **Lehrkraft (Beamer):** https://wr-lab.web.app öffnen, ein Thema wählen, z. B. **Geschäftsfähigkeit**, und oben auf das Symbol **Lernraum** tippen. Dann **Lernraum öffnen** klicken. Code und QR-Code erscheinen groß.
 2. **Schüler (Handy):** QR-Code scannen oder die Seite öffnen, oben **Lernraum** tippen, Code und Spitznamen eingeben.
 3. **Im Dashboard der Lehrkraft** (Symbol Lernraum, auch aus jeder Werkstatt heraus):
-   - **Teilnehmer:** wer im Raum ist, in welcher Werkstatt gerade gearbeitet wird und wie viele Antworten schon an der Wand sind
+   - **Teilnehmer:** wer im Raum ist, in welcher Werkstatt gerade gearbeitet wird und wie viele Antworten schon an der Wand sind. **Entfernen** fragt kurz nach und bietet an, die Antworten dieser Person an der Wand mitzulöschen
    - **Alle anhalten:** Auf allen Handys erscheint „Schau nach vorn“, bis du weitermachst
    - **Alle holen nach …:** Alle Handys springen in dieselbe Werkstatt
    - **Werkstätten freigeben:** Gesperrte Werkstätten können die Schüler nicht öffnen
    - **Beamer-Modus:** blendet Spitznamen und das Lehrerpanel aus, sobald das Dashboard für alle sichtbar ist
    - **Alle Antworten drucken:** Druckansicht mit allen Antworten, auch „Als PDF speichern“
-   - **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht
-4. **An der Wand:** Jede Werkstatt hat eine Frage mit Schreibfeld. Die Schüler tippen **Abschicken**, die Lehrkraft öffnet dieselbe Werkstatt am Beamer und deckt mit **Antworten zeigen** auf, wann es passt.
+   - **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht. Klappt das Löschen nicht (z. B. WLAN weg), bleibt der Raum im Dashboard und „Raum löschen“ lässt sich wiederholen
+4. **An der Wand:** Jede Werkstatt hat eine Frage mit Schreibfeld. Die Schüler tippen **Abschicken**, die Lehrkraft öffnet dieselbe Werkstatt am Beamer und deckt mit **Antworten zeigen** auf, wann es passt. Eine unpassende Antwort nimmt sie mit dem Papierkorb an der Karte von der Wand (mit kurzer Rückfrage, auch im Beamer-Modus).
 5. **Lehrerpanel:** Oben in jeder Werkstatt stehen auf dem Gerät der Lehrkraft Hinweise und der Erwartungshorizont. Schüler sehen davon nichts, im Beamer-Modus ist es ausgeblendet.
+6. **Verbindungsprobleme:** Hakt das WLAN beim Neuladen, bleibt der Raum auf dem Gerät gespeichert. Im Lernraum-Fenster steht dann „Keine Verbindung zum Lernraum.“ mit **Erneut verbinden** (oder **Seite neu laden**, wenn die Firebase-Bibliothek nicht geladen werden konnte).
 
 Ohne Lernraum funktioniert alles genauso, die Antworten kommen dann ins Heft.
 
 ### Blitzrunde als Klassenrunde
 
-Bei der Geschäftsfähigkeit unter **Start → Darfst du das?**: Ist der Lernraum offen, sieht die Lehrkraft statt der Karten die Steuerung. **Klassenrunde starten** zeigt jede Karte auf allen Handys, die Balken zeigen live, wie die Klasse tippt. Das Bauchgefühl bleibt verdeckt. Am Ende zeigt der **Bauchgefühl-Check** (Werkstatt „Hefteintrag und Kurztest“) auf dem Gerät der Lehrkraft das Ergebnis der Klasse und auf den Handys das eigene.
+Bei der Geschäftsfähigkeit unter **Start → Darfst du das?**, beim Magischen Sechseck unter **Start → Gute Nachricht, schlechte Nachricht?**: Ist der Lernraum offen, sieht die Lehrkraft statt der Karten die Steuerung. **Klassenrunde starten** zeigt jede Karte auf allen Handys, die Balken zeigen live, wie die Klasse tippt. Das Bauchgefühl bleibt verdeckt. Am Ende zeigt der **Bauchgefühl-Check** (Werkstatt „Hefteintrag und Kurztest“) auf dem Gerät der Lehrkraft das Ergebnis der Klasse und auf den Handys das eigene.
+
+### Erkenntnis: erst selbst formulieren, dann vergleichen
+
+Am Ende jeder Werkstatt schreiben die Schüler ihre Erkenntnis zuerst in einem Satz auf (freiwillig). **Mit dem Merksatz vergleichen** zeigt dann den Merksatz neben dem eigenen Satz und legt ihn in „Mein Wissen“ ab. Der eigene Satz bleibt nur im Browser des Geräts und geht nie an den Server, auch nicht im Lernraum.
 
 ### Fall-Akte mit Gutachten-Baukasten
 
@@ -255,7 +264,8 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Die Schüler sollen keinen vollen echten Namen verwenden. Die Seite weist darauf hin.
 - **Speicherort und Dauer:**
   - Die Daten liegen in Firestore am Standort eur3 (Europa).
-  - Sie werden mit „Raum beenden“ gelöscht oder, falls eingerichtet, automatisch nach 24 Stunden.
+  - „Raum beenden“ löscht alle Daten eines Raums sofort. „Raum verlassen“ löscht den eigenen Eintrag und die eigenen Antworten. Öffnet die Lehrkraft auf demselben Gerät einen neuen Raum im selben Thema, wird der alte beendet.
+  - Jeder Eintrag trägt ein Ablaufdatum (`expireAt`, 24 Stunden nach dem Anlegen). Automatisch gelöscht wird nur, wenn die TTL-Richtlinie eingerichtet ist (Abschnitt 5, kostenpflichtiger Blaze-Tarif), und dann erst einige Zeit nach dem Ablauf. Die Seite verspricht den Schülern deshalb keine feste Frist.
 - **Hosting:**
   - Die Seite wird über Firebase Hosting ausgeliefert (Google Ireland Ltd.).
   - Dabei verarbeitet Google technisch notwendige Verbindungsdaten wie die IP-Adresse.
@@ -287,8 +297,11 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Spielkonsolen: InclusiveGameLab, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:InclusiveGameLab_Current_Console_Generation_CC-BY-SA.jpg)
   - Messe Erfurt: Messe Erfurt AG, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Panorama_Messe_Erfurt.jpg)
   - Neumarkt Gotha: Roeland P., [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg)
+  - Café Stilbruch Jena: Sebastian Wallroth, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_2023_002.jpg)
   - Computermäuse: Gpkp, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Computer_mice_%282026%29.jpg)
   - Nintendo Switch: KK IN HK, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Nintendo_Switch.jpg)
+  - Supermarkt-Regale: The real Marcoman, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:Netto_Marken-Discount_Innenansicht_(4).jpg)
+  - Bäckerei in Jena (Ausschnitt): Timk70, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Baeckerei_Zwiebel_%26_CiZ,_Jena,_Johannisplatz_9_%26_10.jpg)
   - Eigene Illustrationen: Labyrinth und Spielfigur der Mission Zwergspitz, TikTok-LIVE (Fall „Rosen für den Streamer“) und Energydrink (Fall „Der verbotene Energydrink“)
 
 Die Fotos zum Magischen Sechseck stammen von [Unsplash](https://unsplash.com) und stehen unter der [Unsplash-Lizenz](https://unsplash.com/license).

@@ -2,6 +2,9 @@
 // Aufbau und Felder: siehe shared/js/aufgaben.js, wissenscheck(). Punkte etwa 40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen.
 // werkstatt: Werkstatt, die bei Fehlern zum Wiederholen vorgeschlagen wird.
 // w in erwartung: Wortstämme (Groß- und Kleinschreibung und Umlaute egal), 'urteil' prüft auf ein eigenes Urteil.
+// Namen: Jeder Name hat in diesem Wissenscheck genau ein Alter (Leon 6, Oskar 6, Tom 7, Emma 10, Ben 13, Lea 15, Nele 15,
+// Hannah 16, Jonas 16, Leonie 16, Lisa 16, Mats 16, Paul 16, Finn 17 → 18, Greta 17, Jannik 17, Jule 17, Simon 17, Malte 18,
+// Franz 30, Oma Erika 75). Franz, Max, Emma, Simon, Maya und Finn kommen aus dem Arbeitsblatt der Lehrkraft.
 
 const STUFE=[{id:'unfaehig',t:'Geschäftsunfähig'},{id:'beschraenkt',t:'Beschränkt geschäftsfähig'},{id:'voll',t:'Voll geschäftsfähig'}];
 const FOLGE=[{id:'wirksam',t:'Wirksam'},{id:'schwebend',t:'Schwebend unwirksam'},{id:'nichtig',t:'Nichtig'}];
@@ -11,6 +14,10 @@ export const WISSENSCHECK={
   titel:'Wissenscheck: Geschäftsfähigkeit',
   thema:'Geschäftsfähigkeit (§§ 1, 2, 104–113 BGB)',
   stufe:10,
+  // Tipps in der Auswertung für die schwächste Stufe (I Grundlagen, II Anwenden, III Beurteilen)
+  tipps:{1:'Wiederhole die Merksätze in „Mein Rechts-Wissen“ und schlag Fachbegriffe wie Einwilligung, Genehmigung und schwebend unwirksam unter „Begriffe nachschlagen“ nach.',
+    2:'Geh Schritt für Schritt vor wie der Rechts-Navi: Alter – lediglich rechtlicher Vorteil – Einwilligung – Taschengeld – Job – Genehmigung. Nenne bei jedem Schritt den Paragrafen.',
+    3:'Beim Beurteilen hilft der Rechts-Navi als Gerüst: Regel nennen, den Fall daran prüfen, Argumente abwägen und am Ende begründet urteilen.'},
   aufgaben:[
   /* ---------- Stufe I: Grundlagen ---------- */
   {afb:1,art:'wahl',werkstatt:'alter',f:'Ab wann ist ein Mensch rechtsfähig?',
@@ -23,9 +30,9 @@ export const WISSENSCHECK={
     e:'Geschäftsfähig ist, wer selbst wirksam Rechtsgeschäfte abschließen kann, zum Beispiel einen Kaufvertrag.'},
   {afb:1,art:'zuordnen',p:2,f:'Auf welcher Stufe der Geschäftsfähigkeit steht die Person? Wähle für jede Person die passende Stufe.',
     faecher:STUFE,
-    karten:[{t:'Leon, 6 Jahre',f:'unfaehig'},{t:'Tom, genau 7 Jahre',f:'beschraenkt'},{t:'Lisa, 17 Jahre',f:'beschraenkt'},
-      {t:'Finn, 18 Jahre',f:'voll'},{t:'Franz, 30 Jahre, dauerhaft geisteskrank',f:'unfaehig'},{t:'Oma Erika, 75 Jahre',f:'voll'}].map(k=>({...k,werkstatt:'haus'})),
-    e:'Unter 7 und bei dauerhafter krankhafter Störung der Geistestätigkeit: geschäftsunfähig (§ 104 BGB). Von 7 bis 17: beschränkt geschäftsfähig (§ 106 BGB). Ab 18: voll geschäftsfähig (§ 2 BGB).'},
+    karten:[{t:'Leon, 6 Jahre',f:'unfaehig'},{t:'Tom, genau 7 Jahre',f:'beschraenkt'},{t:'Jule, 17 Jahre',f:'beschraenkt'},
+      {t:'Malte, 18 Jahre',f:'voll'},{t:'Franz, 30 Jahre, kann wegen einer dauerhaften krankhaften Störung seinen Willen nicht frei bilden',f:'unfaehig'},{t:'Oma Erika, 75 Jahre',f:'voll'}].map(k=>({...k,werkstatt:'haus'})),
+    e:'Unter 7 und bei einer dauerhaften krankhaften Störung der Geistestätigkeit, die die freie Willensbestimmung ausschließt: geschäftsunfähig (§ 104 BGB). Von 7 bis 17: beschränkt geschäftsfähig (§ 106 BGB). Ab 18: voll geschäftsfähig (§ 2 BGB).'},
   {afb:1,art:'richtigfalsch',werkstatt:'alter',f:'Ein Baby kann ein Haus erben.',r:true,
     e:'Richtig. Ein Baby ist rechtsfähig (§ 1 BGB) und kann deshalb Eigentümer werden. Um das Haus kümmern sich die Eltern als gesetzliche Vertreter.'},
   {afb:1,art:'richtigfalsch',werkstatt:'haus',f:'Die Willenserklärung eines Sechsjährigen ist schwebend unwirksam.',r:false,
@@ -39,12 +46,12 @@ export const WISSENSCHECK={
   {afb:1,art:'mehrfach',p:2,werkstatt:'haus',f:'In welchen Fällen brauchen beschränkt Geschäftsfähige <b>keine</b> Zustimmung ihrer Eltern?',
     o:['Das Geschäft bringt lediglich einen rechtlichen Vorteil.','Sie bezahlen vollständig mit Taschengeld.','Es geht um einen Job, den die Eltern erlaubt haben.','Es ist ein Ratenkauf unter 100 €.','Es ist ein Handyvertrag ohne Grundgebühr.','Sie kaufen am Wochenende ein.'],r:[0,1,2],
     fehler:{3:'Solange Raten offen sind, ist nicht vollständig bezahlt. Ohne Zustimmung der Eltern ist auch ein kleiner Ratenkauf erst einmal schwebend unwirksam.',4:'Auch ohne Grundgebühr entstehen Pflichten, etwa für jede Minute oder jedes Datenpaket.',5:'Der Wochentag spielt keine Rolle.'},
-    e:'Die drei Ausnahmen: lediglich rechtlicher Vorteil (§ 107 BGB), Taschengeld (§ 110 BGB) und erlaubter Job (§ 113 BGB).'},
+    e:'Die drei wichtigen Ausnahmen: lediglich rechtlicher Vorteil (§ 107 BGB), Taschengeld (§ 110 BGB) und erlaubter Job (§ 113 BGB).'},
   {afb:1,art:'wahl',werkstatt:'haus',f:'Wie heißt die <b>vorherige</b> Zustimmung der Eltern?',
     o:['Einwilligung','Genehmigung','Erlaubnisschein','Vollmacht'],r:0,
     fehler:{1:'Die Genehmigung ist die nachträgliche Zustimmung (§ 108 BGB).',2:'Einen Erlaubnisschein kennt das BGB nicht.',3:'Mit einer Vollmacht handelt jemand im Namen eines anderen. Das ist etwas anderes.'},
     e:'Vorher: Einwilligung (§ 107 BGB). Nachher: Genehmigung (§ 108 BGB). Merkhilfe: Ein-willigen, bevor man ein-kauft.'},
-  {afb:1,art:'wahl',werkstatt:'haus',f:'Wie zitierst du richtig: Paragraf 108, Absatz 3, Bürgerliches Gesetzbuch?',
+  {afb:1,art:'wahl',werkstatt:'navi',f:'Wie zitierst du richtig: Paragraf 108, Absatz 3, Bürgerliches Gesetzbuch?',
     o:['§ 108 Abs. 3 BGB','BGB § 3 Abs. 108','§§ 108 3 BGB','Art. 108 Nr. 3 BGB'],r:0,
     fehler:{1:'Erst kommt der Paragraf, dann der Absatz, das Gesetz steht am Ende.',2:'Zwei Paragrafenzeichen stehen für mehrere Paragrafen, etwa §§ 104, 105 BGB.',3:'„Art.“ steht für Artikel, etwa im Grundgesetz. Das BGB hat Paragrafen, und „Nr.“ ist eine Nummer, kein Absatz.'},
     e:'Zeichen §, Nummer des Paragrafen, Absatz (Abs.), gegebenenfalls Satz (S.) oder Nummer (Nr.), am Ende das Gesetz.'},
@@ -69,8 +76,8 @@ export const WISSENSCHECK={
   {afb:1,art:'richtigfalsch',werkstatt:'navi',f:'Eltern können einem Vertrag ihres Kindes auch noch zustimmen, nachdem es ihn geschlossen hat.',r:true,
     e:'Richtig. Das ist die Genehmigung (§ 108 Abs. 1 BGB). Mit ihr wird der schwebend unwirksame Vertrag wirksam.'},
 
-  {afb:1,art:'richtigfalsch',werkstatt:'taschengeld',f:'Kauft eine Minderjährige auf Raten und zahlt die letzte Rate von ihrem Taschengeld, ist der Kauf nach § 110 BGB wirksam.',r:true,
-    e:'Richtig. § 110 BGB verlangt, dass vollständig bezahlt ist. Mit der letzten Rate aus dem Taschengeld gilt der Vertrag als von Anfang an wirksam.'},
+  {afb:1,art:'richtigfalsch',werkstatt:'taschengeld',f:'Kauft eine Minderjährige auf Raten und zahlt alle Raten von ihrem Taschengeld, wird der Kauf mit der letzten Rate nach § 110 BGB wirksam – wenn die Eltern nicht vorher Nein gesagt haben.',r:true,
+    e:'Richtig. § 110 BGB verlangt, dass vollständig mit überlassenem Geld bezahlt ist. Mit der letzten Rate aus dem Taschengeld gilt der Vertrag als von Anfang an wirksam – außer die Eltern haben den Kauf vorher verboten oder die Genehmigung verweigert.'},
   {afb:1,art:'richtigfalsch',werkstatt:'taschengeld',f:'Taschengeld darf man für alles ausgeben – auch für Dinge, die die Eltern ausdrücklich verboten haben.',r:false,
     e:'Falsch. § 110 BGB deckt nur Käufe im Rahmen dessen, was die Eltern erlauben. Beim verbotenen Energydrink greift er nicht.'},
   {afb:1,art:'wahl',werkstatt:'taschengeld',f:'Welche Voraussetzung gehört <b>nicht</b> zum Taschengeldparagrafen?',
@@ -81,7 +88,7 @@ export const WISSENSCHECK={
     faecher:[{id:'ja',t:'§ 110 greift'},{id:'nein',t:'§ 110 greift nicht'}],
     karten:[{t:'Labubu-Blindbox, vollständig vom Taschengeld bezahlt',f:'ja'},{t:'PS5 vom Erlös einer verkauften Pokémon-Karte',f:'nein'},
       {t:'EA-FC-Points von Omas Geld für die Klassenfahrt',f:'nein'},{t:'TikTok-Coins per Guthabenkarte vom Taschengeld',f:'ja'},
-      {t:'Energydrink trotz Verbot der Eltern',f:'nein'},{t:'Gebrauchte PS5, letzte Rate vom Taschengeld bezahlt',f:'ja'}].map(k=>({...k,werkstatt:'taschengeld'})),
+      {t:'Energydrink trotz Verbot der Eltern',f:'nein'},{t:'Gebrauchte PS5, alle Raten vom Taschengeld bezahlt',f:'ja'}].map(k=>({...k,werkstatt:'taschengeld'})),
     e:'§ 110 BGB greift nur bei überlassenem Geld, vollständiger Bezahlung und ohne Verbot der Eltern.'},
 
   /* ---------- Stufe II: Anwenden ---------- */
@@ -91,7 +98,7 @@ export const WISSENSCHECK={
     e:'Lea ist beschränkt geschäftsfähig. Sie bezahlt sofort und vollständig mit Taschengeld, das ihr zur freien Verfügung überlassen wurde: § 110 BGB.'},
   {afb:2,art:'wahl',werkstatt:'online',f:'Jonas (16) bestellt ohne Wissen seiner Eltern Sneaker für 140 € auf Rechnung: „Jetzt kaufen, in 30 Tagen bezahlen“. Wie ist die Rechtslage?',
     o:['Schwebend unwirksam, bis die Eltern entscheiden','Wirksam, weil Jonas Taschengeld bekommt','Nichtig, weil Jonas minderjährig ist','Wirksam, weil Sneaker etwas Alltägliches sind'],r:0,
-    fehler:{1:'§ 110 BGB verlangt, dass vollständig bezahlt ist. Auf Rechnung heißt: Noch ist nichts bezahlt.',2:'Nichtig sind nur Erklärungen von Geschäftsunfähigen. Jonas ist beschränkt geschäftsfähig.',3:'Ob etwas alltäglich ist, entscheidet nicht. Entscheidend ist, ob sofort mit eigenem Geld bezahlt wird.'},
+    fehler:{1:'§ 110 BGB verlangt, dass vollständig bezahlt ist. Auf Rechnung heißt: Noch ist nichts bezahlt.',2:'Nichtig sind nur Erklärungen von Geschäftsunfähigen. Jonas ist beschränkt geschäftsfähig.',3:'Ob etwas alltäglich ist, entscheidet nicht. Entscheidend ist, ob vollständig mit überlassenem Geld bezahlt ist.'},
     e:'Kein lediglich rechtlicher Vorteil, keine Einwilligung, § 110 greift nicht (noch nichts bezahlt): schwebend unwirksam (§ 108 Abs. 1 BGB).'},
   {afb:2,art:'zahl',werkstatt:'navi',
     material:'<b>§ 108 Abs. 2 BGB (gekürzt):</b> Fordert der andere Teil den Vertreter zur Erklärung über die Genehmigung auf, so kann die Genehmigung nur bis zum Ablauf von zwei Wochen nach dem Empfang der Aufforderung erklärt werden; wird sie nicht erklärt, so gilt sie als verweigert.',
@@ -114,13 +121,13 @@ export const WISSENSCHECK={
   {afb:2,art:'zuordnen',p:2,f:'Wirksam, schwebend unwirksam oder nichtig? Ordne zu. Die Eltern wissen jeweils von nichts.',
     faecher:FOLGE,
     karten:[{t:'Nele (15) kauft im Späti in Erfurt vom Taschengeld eine Cola.',f:'wirksam',werkstatt:'navi'},
-      {t:'Paul (17) schließt allein ein Deutschlandticket-Abo ab.',f:'schwebend',werkstatt:'online'},
+      {t:'Jannik (17) schließt allein ein Deutschlandticket-Abo ab.',f:'schwebend',werkstatt:'online'},
       {t:'Leon (6) tauscht seine Sammelkarten gegen einen Ball.',f:'nichtig',werkstatt:'haus'},
       {t:'Mats (16) bestellt Kopfhörer und will sie mit Klarna später bezahlen.',f:'schwebend',werkstatt:'online'},
       {t:'Emma (10) bekommt vom Nachbarn ein Kostüm geschenkt.',f:'wirksam',werkstatt:'haus'},
-      {t:'Franz (30, dauerhaft geisteskrank) kauft einen Fernseher.',f:'nichtig',werkstatt:'fallakte'}],
+      {t:'Franz (30) kann wegen einer dauerhaften krankhaften Störung seinen Willen nicht frei bilden und kauft einen Gaming-PC.',f:'nichtig',werkstatt:'fallakte'}],
     e:'Mit Taschengeld vollständig bezahlt und Geschenke: wirksam. Abo und „später bezahlen“: schwebend unwirksam. Geschäftsunfähige: nichtig.'},
-  {afb:2,art:'wahl',werkstatt:'fallakte',f:'Simon (17) bekommt von der Sparkasse einen zinslosen Kredit über 50.000 €. Warum ist das kein lediglich rechtlicher Vorteil?',
+  {afb:2,art:'wahl',werkstatt:'fallakte',f:'Simon (17) bekommt von einer Bank einen zinslosen Kredit über 50.000 €. Warum ist das kein lediglich rechtlicher Vorteil?',
     o:['Weil er das Geld zurückzahlen muss','Weil 50.000 € zu viel Geld sind','Weil Banken nicht mit Minderjährigen sprechen dürfen','Weil zinslose Kredite verboten sind'],r:0,
     fehler:{1:'Die Höhe entscheidet nicht. Auch ein Kredit über 50 € müsste zurückgezahlt werden.',2:'Banken dürfen mit Minderjährigen Verträge schließen, etwa ein Girokonto – nur eben mit Zustimmung der Eltern.',3:'Zinslose Kredite sind erlaubt. Rechtlich zählt aber die Pflicht zur Rückzahlung.'},
     e:'Wirtschaftlich ist der Kredit günstig, rechtlich aber ein Nachteil: Simon muss zurückzahlen. Ohne Zustimmung ist der Vertrag schwebend unwirksam.'},
@@ -154,24 +161,24 @@ export const WISSENSCHECK={
     muster:'Nach § 110 BGB ist der Vertrag eines Minderjährigen auch ohne Zustimmung der Eltern wirksam, wenn er vollständig mit Geld bezahlt, das ihm zur freien Verfügung überlassen wurde. Zum Beispiel kaufe ich mir in Jena von meinem Taschengeld einen Döner und bezahle bar. Der Kauf ist wirksam, weil ich sofort und vollständig mit meinem Taschengeld bezahle. Würde ich dagegen Kopfhörer auf Raten kaufen, wäre der Vertrag schwebend unwirksam, denn erst mit der letzten Rate ist alles bezahlt.'},
 
   /* ---------- Stufe III: Beurteilen ---------- */
-  {afb:3,art:'wahl',p:2,werkstatt:'fallakte',f:'Ein Händler beschwert sich: „Lea (17) sah aus wie 20. Also muss ihr Ratenkauf gelten.“ Welche Antwort ist rechtlich am stärksten?',
-    o:['Entscheidend ist das echte Alter. Das Gesetz schützt Minderjährige auch dann, wenn der Händler es nicht merkt.','Der Händler hat recht, weil Lea älter aussah.','Der Vertrag gilt, sobald Lea das Geld für die Raten hat.','Der Händler darf die Ware behalten und das Geld verlangen.'],r:0,
-    fehler:{1:'Wie jemand aussieht, spielt keine Rolle. Händler können nach dem Ausweis fragen.',2:'Ob Lea das Geld hat, ändert nichts: Solange die Raten nicht bezahlt sind, greift § 110 BGB nicht.',3:'Ohne Genehmigung der Eltern ist der Vertrag unwirksam. Dann gehen Ware und Geld zurück.'},
-    e:'Wie beim geisteskranken Franz: Der Schutz der Geschäftsfähigkeit geht vor. Das Risiko trägt der Händler, der nicht nach dem Alter fragt.'},
+  {afb:3,art:'wahl',p:2,werkstatt:'fallakte',f:'Ein Händler beschwert sich: „Greta (17) sah aus wie 20. Also muss ihr Ratenkauf gelten.“ Welche Antwort ist rechtlich am stärksten?',
+    o:['Entscheidend ist das echte Alter. Das Gesetz schützt Minderjährige auch dann, wenn der Händler es nicht merkt.','Der Händler hat recht, weil Greta älter aussah.','Der Vertrag gilt, sobald Greta das Geld für die Raten hat.','Der Händler darf die Ware behalten und das Geld verlangen.'],r:0,
+    fehler:{1:'Wie jemand aussieht, spielt keine Rolle. Händler können nach dem Ausweis fragen.',2:'Ob Greta das Geld hat, ändert nichts: Solange die Raten nicht bezahlt sind, greift § 110 BGB nicht.',3:'Ohne Genehmigung der Eltern ist der Vertrag unwirksam. Dann gehen Ware und Geld zurück.'},
+    e:'Wie im Fall Franz: Der Schutz der Geschäftsfähigkeit geht vor. Das Risiko trägt der Händler, der nicht nach dem Alter fragt.'},
   {afb:3,art:'mehrfach',p:2,werkstatt:'online',f:'These: „Jugendliche ab 16 sollten Handyverträge allein abschließen dürfen.“ Welche Argumente sprechen <b>gegen</b> die These?',
     o:['Lange Laufzeiten und monatliche Kosten können zu Schulden führen.','Viele 16-Jährige haben kein festes Einkommen.','Mit 16 dürfen Jugendliche in Thüringen schon bei Kommunalwahlen wählen.','Kostenfallen wie Zusatzabos sind schwer zu durchschauen.','Das Handy ist für Schule und Ausbildung wichtig.'],r:[0,1,3],
     fehler:{2:'Das spricht eher für die These: Wer mitbestimmen darf, könnte auch mehr selbst entscheiden.',4:'Das ist ein Argument für die These, nicht dagegen.'},
     e:'Gegen die These sprechen Schuldenrisiko, fehlendes Einkommen und Kostenfallen. Dafür sprechen mehr Selbstständigkeit und das Wahlrecht ab 16.'},
   {afb:3,art:'offen',op:'beurteilen',werkstatt:'gericht',
-    material:'<b>Szenario:</b> Leonie (16) aus Gera hat 600 € Taschengeld gespart. Ohne ihre Eltern zu fragen, kauft sie sich einen E-Scooter und bezahlt sofort. Für den Scooter braucht sie eine Versicherung. Ihre Eltern sind dagegen.',
+    material:'<b>Szenario:</b> Leonie (16) aus Gera hat 600 € Taschengeld gespart. Ohne ihre Eltern zu fragen, kauft sie sich einen E-Scooter und bezahlt sofort. Für den Scooter braucht sie eine Versicherung. Ihre Eltern erfahren erst danach davon und sagen: „Den Kauf genehmigen wir nicht.“',
     f:'Beurteile, ob der Kauf wirksam ist.',
     anfaenge:['Leonie ist …','Für den Taschengeldparagrafen spricht …','Allerdings …','Im Ergebnis …'],
     erwartung:[
       {t:'Leonie ist beschränkt geschäftsfähig (§ 106 BGB). Der Kauf ist kein lediglich rechtlicher Vorteil, eine Einwilligung fehlt (§ 107 BGB).',w:[['beschränkt','106'],['vorteil','einwillig','zustimm']],tipp:'Auf welcher Stufe steht Leonie – und haben ihre Eltern zugestimmt?'},
       {t:'Für § 110 BGB spricht: Sie bezahlt sofort und vollständig mit angespartem Taschengeld.',w:[['110','taschengeld'],['sofort','bar','vollständig','gespart']],tipp:'Welche Voraussetzungen des Taschengeldparagrafen sind erfüllt?'},
       {t:'Gegen § 110 BGB spricht: Mit dem Scooter kommen Folgekosten und Risiken (Versicherung, Unfälle). So weit reicht die Erlaubnis der Eltern in der Regel nicht.',w:[['versicher','folgekost','unfall','risiko','gefahr']],tipp:'Was kommt nach dem Kauf noch auf Leonie zu?'},
-      {t:'Ergebnis: Der Kauf ist schwebend unwirksam und nach dem Nein der Eltern endgültig unwirksam.',w:[['unwirksam']],tipp:'Wie lautet dein Ergebnis: wirksam oder unwirksam?'}],
-    muster:'Leonie ist 16 und damit nach § 106 BGB beschränkt geschäftsfähig. Der Kauf bringt ihr nicht nur einen Vorteil, denn sie muss bezahlen, und eine Einwilligung ihrer Eltern fehlt (§ 107 BGB). Für den Taschengeldparagrafen (§ 110 BGB) spricht, dass sie sofort und vollständig mit angespartem Taschengeld bezahlt. Allerdings kommen mit dem Scooter eine Versicherung und das Unfallrisiko dazu. So weit reicht die Erlaubnis, über das Taschengeld frei zu verfügen, in der Regel nicht. Im Ergebnis ist der Kauf deshalb schwebend unwirksam. Weil die Eltern dagegen sind, ist er endgültig unwirksam.'},
+      {t:'Begründetes Ergebnis: Überwiegend wird man sagen, der Kauf ist schwebend unwirksam und nach dem Nein der Eltern endgültig unwirksam. Mit guter Begründung (die Versicherung ist ein eigener Vertrag, ein E-Scooter ist eine übliche Anschaffung) ist auch „wirksam“ vertretbar.',w:[['wirksam']],tipp:'Komm zu einem klaren Ergebnis: wirksam oder unwirksam – und begründe es.'}],
+    muster:'Leonie ist 16 und damit nach § 106 BGB beschränkt geschäftsfähig. Der Kauf bringt ihr nicht nur einen Vorteil, denn sie muss bezahlen, und eine Einwilligung ihrer Eltern fehlt (§ 107 BGB). Für den Taschengeldparagrafen (§ 110 BGB) spricht, dass sie sofort und vollständig mit angespartem Taschengeld bezahlt. Allerdings kommen mit dem Scooter eine Versicherung und das Unfallrisiko dazu. So weit reicht die Erlaubnis, über das Taschengeld frei zu verfügen, in der Regel nicht. Man könnte zwar sagen, dass die Versicherung ein eigener Vertrag ist. Im Ergebnis ist der Kauf aber schwebend unwirksam. Weil die Eltern die Genehmigung verweigern, ist er endgültig unwirksam.'},
   {afb:3,art:'offen',op:'Stellung nehmen',werkstatt:'alter',
     material:'<b>Fiktiver Beitrag auf TikTok:</b> „Mit 16 darf ich in Thüringen den Bürgermeister wählen, aber keinen Handyvertrag abschließen. Voll unfair!“',
     f:'Nimm Stellung zu diesem Beitrag.',
@@ -183,13 +190,33 @@ export const WISSENSCHECK={
       {t:'Eigene, begründete Position.',w:'urteil',tipp:'Wie stehst du dazu? Beginne zum Beispiel mit „Ich finde …, weil …“.'}],
     muster:'Mit 16 ist man nach § 106 BGB beschränkt geschäftsfähig. Für einen Handyvertrag braucht man deshalb die Zustimmung der Eltern, weil er nicht nur Vorteile bringt. Bei Kommunalwahlen in Thüringen darf man dagegen schon ab 16 wählen. Für den Beitrag spricht, dass Jugendliche, die mitbestimmen dürfen, auch Verantwortung für eigene Entscheidungen tragen können. Andererseits bindet ein Handyvertrag über 24 Monate und verursacht jeden Monat Kosten. Wer sie nicht bezahlen kann, macht Schulden. Bei einer Wahl haftet man nicht mit seinem eigenen Geld. Ich finde die Regel deshalb nicht unfair, weil sie Jugendliche vor Schulden schützt. Mit Zustimmung der Eltern geht der Vertrag ja trotzdem.'},
   {afb:3,art:'offen',op:'beurteilen',werkstatt:'taschengeld',
-    material:'<b>Fiktiver Beitrag auf Instagram:</b> „Taschengeld ist MEIN Geld. Damit kann ich kaufen, was ich will!“',
+    material:'<b>Fiktiver Beitrag auf Instagram (@dealdennis.erfurt, fiktiv):</b> „Taschengeld ist MEIN Geld. Damit kann ich kaufen, was ich will!“ Darunter streiten sich die Kommentare: „Ragebait!“ – „Nee, stimmt doch!“ (Ragebait, das Jugendwort 2026, ist ein Beitrag, der absichtlich provoziert, damit sich alle aufregen.)',
     f:'Beurteile diese Aussage mithilfe von § 110 BGB.',
     anfaenge:['Zum Teil stimmt die Aussage, denn …','Allerdings …','Insgesamt …'],
     erwartung:[
       {t:'Richtig daran: Mit Taschengeld kann man ohne Zustimmung der Eltern wirksam kaufen, wenn vollständig bezahlt ist (§ 110 BGB).',w:[['110','taschengeld'],['wirksam','gültig','erlaubt','zustimmung']],tipp:'Was erlaubt der Taschengeldparagraf?'},
       {t:'Grenzen: nur überlassenes Geld, erst bei vollständiger Bezahlung (Raten) und nicht gegen ein ausdrückliches Verbot der Eltern; ein Gewinn aus einem Taschengeld-Kauf ist nicht automatisch gedeckt.',w:[['verbot','verbiet','raten','gewinn','zweck','grenze']],tipp:'Wann greift § 110 BGB nicht? Denk an die Fälle aus der Akte Taschengeld.'},
       {t:'Begründetes Urteil: Die Aussage stimmt nur teilweise.',w:'urteil',tipp:'Wie lautet dein Urteil? Zum Beispiel: „Insgesamt stimmt die Aussage nur zum Teil, weil …“'}],
-    muster:'Zum Teil stimmt die Aussage: Nach § 110 BGB kann ich mit meinem Taschengeld ohne Zustimmung meiner Eltern wirksam kaufen, wenn ich vollständig bezahle. Allerdings gibt es Grenzen. Bei Raten ist der Kauf erst mit der letzten Rate wirksam, und was meine Eltern ausdrücklich verbieten, deckt auch Taschengeld nicht. Außerdem gilt § 110 nur für Geld, das mir überlassen wurde, nicht für einen Gewinn, den ich damit gemacht habe. Insgesamt stimmt die Aussage deshalb nur zum Teil, weil Taschengeld zwar mein Geld ist, die Eltern aber den Rahmen setzen.'}
+    muster:'Zum Teil stimmt die Aussage: Nach § 110 BGB kann ich mit meinem Taschengeld ohne Zustimmung meiner Eltern wirksam kaufen, wenn ich vollständig bezahle. Allerdings gibt es Grenzen. Bei Raten ist der Kauf erst mit der letzten Rate wirksam, und was meine Eltern ausdrücklich verbieten, deckt auch Taschengeld nicht. Außerdem gilt § 110 nur für Geld, das mir überlassen wurde, nicht für einen Gewinn, den ich damit gemacht habe. Insgesamt stimmt die Aussage deshalb nur zum Teil, weil Taschengeld zwar mein Geld ist, die Eltern aber den Rahmen setzen.'},
+
+  /* ---------- Ergänzt im Oktober 2026 (am Ende, damit gespeicherte Antworten und Aufgabennummern bleiben) ---------- */
+  {afb:1,art:'richtigfalsch',werkstatt:'gericht',f:'Oskar (6) holt mit Mamas Geld und ihrem Einkaufszettel Brötchen beim Bäcker. Der Kauf ist nichtig, weil Oskar geschäftsunfähig ist.',r:false,
+    e:'Falsch. Oskar gibt keine eigene Willenserklärung ab, er überbringt nur die seiner Mama – als Bote. Der Kaufvertrag kommt zwischen Mama und der Bäckerei zustande. Ein Bote muss nicht geschäftsfähig sein.'},
+  {afb:1,art:'mehrfach',p:2,werkstatt:'alter',f:'Hannah ist 16 und wohnt in Jena. Was darf sie schon?',
+    o:['Bei der Kommunalwahl in Thüringen wählen','Selbst einwilligen, wenn eine App ihre Daten verarbeiten will','Den Thüringer Landtag wählen','Allein einen Handyvertrag abschließen','Ohne Begleitung Auto fahren'],r:[0,1],
+    fehler:{2:'Den Landtag wählt man in Thüringen erst ab 18.',3:'Mit 16 ist Hannah beschränkt geschäftsfähig. Für den Handyvertrag braucht sie die Zustimmung ihrer Eltern.',4:'Mit 17 darf man mit Begleitung fahren (BF17), allein erst ab 18.'},
+    e:'Ab 16: Kommunal- und Europawahl in Thüringen und die eigene Einwilligung in die Datenverarbeitung (Art. 8 DSGVO). Voll geschäftsfähig ist man erst mit 18 (§ 2 BGB).'},
+  {afb:2,art:'richtigfalsch',werkstatt:'job',f:'Wer mit Erlaubnis der Eltern jobbt, darf auch einen Ausbildungsvertrag allein abschließen.',r:false,
+    e:'Falsch. Eine Ausbildung ist mehr als ein Job: Im Vordergrund steht das Lernen. Nach herrschender Meinung gilt § 113 BGB dafür nicht. Minderjährige brauchen deshalb die Zustimmung ihrer Eltern (§§ 107, 108 BGB). Im Ausbildungsvertrag stehen auch die Namen der Eltern (§ 11 BBiG).'},
+  {afb:3,art:'offen',op:'Stellung nehmen',werkstatt:'alter',
+    material:'<b>Meldung (Juni 2026):</b> Eine Expertenkommission der Bundesregierung hat zwei Wege vorgeschlagen: eine gesetzliche Mindestaltersgrenze von 13 Jahren für eigene Social-Media-Konten – oder keine feste Altersgrenze, sondern strengere Regeln für die Plattformen nach EU-Recht. Die Bundesfamilienministerin unterstützt die Grenze von 13 Jahren. Beschlossen ist noch nichts (Stand Oktober 2026).',
+    f:'Nimm Stellung: Sollte es eine gesetzliche Altersgrenze von 13 Jahren für eigene Social-Media-Konten geben? Vergleiche mit Altersstufen, die du schon kennst.',
+    anfaenge:['Heute gilt: …','Für eine Altersgrenze von 13 spricht …','Andererseits …','Ich finde …, weil …'],
+    erwartung:[
+      {t:'Einordnung: Die Grenze von 13 ist bisher nur ein Vorschlag. Ab 16 darf man selbst in die Verarbeitung seiner Daten einwilligen (Art. 8 DSGVO), vorher müssen die Eltern zustimmen. Auch bei Verträgen schützt das Gesetz Jüngere in Stufen.',w:[['vorschlag','16','dsgvo','einwillig','stufe','beschränkt']],tipp:'Was gilt heute schon – zum Beispiel für die Einwilligung in die Datenverarbeitung oder bei Verträgen?'},
+      {t:'Argument dafür: Schutz vor Cybermobbing, Sucht, ungeeigneten Inhalten und Kostenfallen – wie bei der Geschäftsfähigkeit vor Folgen, die man noch nicht überblickt.',w:[['schutz','schütz','mobbing','sucht','gefahr','inhalt','kostenfalle','risik']],tipp:'Wovor soll die Altersgrenze Kinder schützen?'},
+      {t:'Argument dagegen: Kontakt zu Freunden, Information und Mitreden gehören dazu. Altersgrenzen lassen sich leicht umgehen, Alterskontrollen brauchen selbst Daten. Medienkompetenz statt Verbot.',w:[['freund','kontakt','information','umgeh','kontroll','medienkompetenz','teilhabe','ausweis']],tipp:'Was spricht gegen ein Verbot – und lässt es sich überhaupt kontrollieren?'},
+      {t:'Eigene, begründete Position.',w:'urteil',tipp:'Wie stehst du dazu? Beginne zum Beispiel mit „Ich finde …, weil …“.'}],
+    muster:'Heute gilt: Die Altersgrenze von 13 ist bisher nur ein Vorschlag. Ab 16 darf ich selbst einwilligen, dass eine App meine Daten verarbeitet (Art. 8 DSGVO), vorher müssen meine Eltern zustimmen. Auch bei Verträgen schützt das Gesetz Jüngere in Stufen. Für eine Altersgrenze von 13 spricht der Schutz vor Cybermobbing, Sucht und ungeeigneten Inhalten, denn jüngere Kinder überblicken die Folgen oft noch nicht. Andererseits halten viele über Social Media Kontakt zu ihren Freunden und bekommen dort Informationen. Außerdem lässt sich eine Altersgrenze leicht umgehen, und für eine Kontrolle müssten alle ihren Ausweis zeigen. Ich finde eine Grenze von 13 trotzdem sinnvoll, weil sie Eltern und Plattformen eine klare Regel gibt. Wichtig ist aber, dass Schulen Medienkompetenz vermitteln.'}
   ]
 };

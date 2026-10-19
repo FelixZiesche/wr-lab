@@ -1,4 +1,4 @@
-// Planspiel Sechseck-Leben: Einzelspiel, Klassenspiel mit Stimmkarten und Live-Klassenraum.
+// Planspiel Sechseck-Leben: Einzelspiel, Klassenspiel mit Stimmkarten und Lernraum (live).
 import { test, expect, device, readDoc, SECHSECK } from './helpers.mjs';
 
 // Beschlüsse, Antworten im Fachbegriff-Check und private Entscheidungen für eine ganze Partie.
@@ -9,9 +9,10 @@ const PARTIE = [
   { dec: 'C', check: 0, choice: 0 },
   { dec: 'A', check: 1, choice: 1 }
 ];
-// Erwartete Abschlussbilanz für Mia bei dieser Partie (berechnet mit dem Stand vor dem Umbau).
-const MIA_ENDE = 'Mia startete mit 1.200 € und hat jetzt 9.004 €. Die Politik der vier Jahre hat Mia insgesamt +1.104 € gebracht.';
-const MIA_KONTO = '9.004 €';
+// Erwartete Abschlussbilanz für Mia bei dieser Partie (berechnet mit dem Stand vor dem Umbau). Seit Oktober 2026 zahlt Mia
+// ab 2027 für das Deutschlandticket 66,80 € statt 63 € (gerundet 4 € im Monat): 3 Jahre × 12 × 4 € = 144 € weniger.
+const MIA_ENDE = 'Mia startete mit 1.200 € und hat jetzt 8.860 €. Die Politik der vier Jahre hat Mia insgesamt +960 € gebracht.';
+const MIA_KONTO = '8.860 €';
 
 /** Spielt eine Runde auf dem Gerät eines Spielers bis zur nächsten Runde (oder Bilanz). */
 async function spieleRunde(page, r, { dec, check, choice }, { live = false, warten } = {}) {
@@ -48,7 +49,7 @@ test('Einzelspiel: ganze Partie, Spielstand bleibt nach dem Neuladen', async ({ 
   for (const [r, zug] of PARTIE.entries()) await spieleRunde(page, r, zug);
 
   await expect(page.getByText('Abschlussbilanz 2029')).toBeVisible();
-  await expect(page.locator('p', { hasText: 'startete mit' })).toHaveText(new RegExp(MIA_ENDE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '.*'));
+  await expect(page.locator('p', { hasText: 'startete mit' })).toHaveText(new RegExp(MIA_ENDE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s') + '.*')); // \s: vor „€“ steht ein geschütztes Leerzeichen
   await expect(page.locator('.chart svg')).toBeVisible();
 
   await page.reload();
@@ -66,7 +67,10 @@ test.describe('Klassenspiel ohne Live-Verbindung (Stimmkarten)', () => {
   test('Lehrkraft zählt Stimmen, Schüler tippen den Beschluss ein', async ({ page, browser }) => {
     await page.goto(`${SECHSECK}#spiel`);
     await page.locator('.mode-card[data-m="lk"]').click();
-    await expect(page.getByText('Live-Modus nicht eingerichtet.')).toBeVisible();
+    // Die Bibliothek lädt nicht (z. B. Schulfilter): keine Verbindung, nicht „nicht eingerichtet“
+    await expect(page.locator('#netz')).toContainText('Keine Verbindung zum Lernraum. Prüfe das WLAN und lade die Seite neu.');
+    await expect(page.locator('#netz [data-neu-laden]')).toBeVisible();
+    await expect(page.getByText('Der Lernraum ist nicht eingerichtet.')).toHaveCount(0);
     await page.locator('#go').click(); // Runde 1 starten
     await expect(page.locator('.photo')).toBeVisible();
     await page.locator('#go').click(); // Abstimmung starten
@@ -93,7 +97,7 @@ test.describe('Klassenspiel ohne Live-Verbindung (Stimmkarten)', () => {
   });
 });
 
-test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen, Raum beenden', async ({ page: lk, browser }) => {
+test('Lernraum (live): Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen, Raum beenden', async ({ page: lk, browser }) => {
   test.setTimeout(120_000);
   await lk.goto(`${SECHSECK}#spiel`);
   await lk.locator('.mode-card[data-m="lk"]').click();
@@ -101,8 +105,8 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   const codeEl = lk.locator('.panel .code').first();
   await expect(codeEl).toHaveText(/^[A-Z2-9]{6}$/);
   const code = (await codeEl.textContent()).trim();
-  await expect(lk.locator('.panel [style*="background:#fff"] svg')).toBeVisible(); // QR-Code
-  expect(await lk.locator('.panel [style*="background:#fff"] svg rect, .panel [style*="background:#fff"] svg path').count()).toBeGreaterThan(0);
+  await expect(lk.locator('.panel .lr-qr svg')).toBeVisible(); // QR-Code
+  expect(await lk.locator('.panel .lr-qr svg rect, .panel .lr-qr svg path').count()).toBeGreaterThan(0);
 
   // Schüler 1 kommt über den QR-Link, Schüler 2 tippt den Code ein.
   const s1 = await device(browser, { viewport: { width: 390, height: 844 } });
@@ -148,11 +152,11 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   await s2.locator('#go').click(); // Kalle wartet auf den Beschluss
   await expect(s2.getByText('Warte auf den Beschluss …')).toBeVisible();
   await lk.locator('[data-win="A"]').click();
-  await expect(lk.locator('h3', { hasText: 'Der Bundestag beschließt: Energiepreisbremse' })).toBeVisible();
+  await expect(lk.locator('h3', { hasText: 'Der Bundestag beschließt: Tankrabatt' })).toBeVisible();
   // Kalle springt automatisch zum Ergebnis, Testi nach dem Weitertippen
-  await expect(s2.locator('h3', { hasText: 'Beschluss: Energiepreisbremse' })).toBeVisible();
+  await expect(s2.locator('h3', { hasText: 'Beschluss: Tankrabatt' })).toBeVisible();
   await s1.locator('#go').click();
-  await expect(s1.locator('h3', { hasText: 'Beschluss: Energiepreisbremse' })).toBeVisible();
+  await expect(s1.locator('h3', { hasText: 'Beschluss: Tankrabatt' })).toBeVisible();
 
   // Fachbegriff-Check: Testi richtig, Kalle falsch
   await s1.locator('#go').click();
@@ -182,9 +186,9 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   expect(await readDoc(`rooms/${code}`)).not.toBeNull();
   await lk.locator('#close').click();
   await lk.locator('#close-y').click();
-  await expect(s1.getByText('Der Klassenraum wurde beendet oder ist abgelaufen.')).toBeVisible();
+  await expect(s1.getByText('Der Lernraum wurde beendet oder ist abgelaufen.')).toBeVisible();
   await expect.poll(() => readDoc(`rooms/${code}`)).toBeNull();
-  await expect(lk.locator('.hud')).toContainText('Klassencode');
+  await expect(lk.locator('.hud')).toContainText('Beschluss-Code');
   await expect(lk.locator('.hud')).not.toContainText(code);
 
   expect(s1.errors).toEqual([]);
@@ -193,7 +197,7 @@ test('Live-Klassenraum: Beitreten, Abstimmen, Dashboard, Beamer-Modus, Entfernen
   await s2.context().close();
 });
 
-test('Live-Klassenraum: ganze Partie, Bilanz im Dashboard stimmt mit dem Handy überein', async ({ page: lk, browser }) => {
+test('Lernraum (live): ganze Partie, Bilanz im Dashboard stimmt mit dem Handy überein', async ({ page: lk, browser }) => {
   test.setTimeout(180_000);
   await lk.goto(`${SECHSECK}#spiel`);
   await lk.locator('.mode-card[data-m="lk"]').click();
@@ -230,4 +234,52 @@ test('Live-Klassenraum: ganze Partie, Bilanz im Dashboard stimmt mit dem Handy �
 
   expect(s.errors).toEqual([]);
   await s.context().close();
+});
+
+test.describe('Planspiel ohne Verbindung', () => {
+  test('QR-Link ohne Verbindung: Fehlerfeld mit Code, Seite neu laden behält den Code, ohne Klasse weiterspielen', async ({ browser }) => {
+    const s = await device(browser, { offline: true, viewport: { width: 390, height: 844 } });
+    await s.goto(`${SECHSECK}#join=ABC234`);
+    const box = s.locator('#kv');
+    await expect(box).toContainText('Keine Verbindung zum Lernraum (Code ABC234). Prüfe das WLAN und lade die Seite neu.');
+    await expect(box).toHaveAttribute('role', 'alert');
+    await expect(s.locator('h3', { hasText: 'Keine Verbindung zum Lernraum' })).toBeFocused();
+    await expect(s.locator('[data-f]')).toHaveCount(0);
+    await Promise.all([s.waitForEvent('load'), s.locator('#lb-app [data-neu-laden]').click()]);
+    await expect(box).toContainText('Code ABC234');
+    await s.locator('#kv-ohne').click();
+    await expect(s.locator('[data-f]')).toHaveCount(8);
+    await s.locator('[data-f="mia"]').click();
+    await expect(s.locator('.hud')).toContainText('Ohne Live-Verbindung');
+    expect(s.errors).toEqual([]);
+    await s.context().close();
+  });
+
+  test('Kurzer Aussetzer beim QR-Link: Erneut versuchen führt zum Beitritt', async ({ page: lk, browser }) => {
+    await lk.goto(`${SECHSECK}#spiel`);
+    await lk.locator('.mode-card[data-m="lk"]').click();
+    await lk.locator('#mkroom').click();
+    await expect(lk.locator('.panel .code').first()).toHaveText(/^[A-Z2-9]{6}$/);
+    const code = (await lk.locator('.panel .code').first().textContent()).trim();
+    await expect(lk.locator('.panel', { hasText: 'Raumcode' }).first()).toContainText('→ Thema „Magisches Sechseck“ → Planspiel → Schüler → Code eingeben.');
+
+    const s = await device(browser);
+    let einmal = true;
+    await s.route('**/__/firebase/init.json', r => { if (einmal) { einmal = false; return r.abort(); } return r.continue(); });
+    await s.goto(`${SECHSECK}#join=${code}`);
+    await expect(s.locator('#kv')).toContainText(`Keine Verbindung zum Lernraum (Code ${code}). Prüfe das WLAN und versuch es noch einmal.`);
+    await s.locator('#kv-neu').click();
+    await expect(s.locator('#jc')).toHaveValue(code);
+    await expect(s.locator('#jn')).toBeFocused();
+    expect(s.errors).toEqual([]);
+    await s.context().close();
+  });
+
+  test('Lehrkraft ohne Firebase-Konfiguration: „nicht eingerichtet“, Stimmkarten', async ({ page }) => {
+    await page.route('**/__/firebase/init.json', r => r.fulfill({ status: 404, body: '' }));
+    await page.goto(`${SECHSECK}#spiel`);
+    await page.locator('.mode-card[data-m="lk"]').click();
+    await expect(page.getByText('Der Lernraum ist nicht eingerichtet.')).toBeVisible();
+    await expect(page.locator('#netz')).toHaveCount(0);
+  });
 });
