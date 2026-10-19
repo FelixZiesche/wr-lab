@@ -119,8 +119,8 @@ export const FAELLE=[
       'Ergebnis: Tom muss die Musikbox bezahlen.'],
     denkWeiter:'Anders wäre es, wenn ihm jemand heimlich etwas ins Getränk gemischt hätte: Dann wäre Tom ohne eigene Schuld in den Rausch geraten und müsste nicht haften (§ 827 S. 2 Halbsatz 2 BGB). Übrigens: Branntwein wie Wodka darf an Jugendliche unter 18 gar nicht abgegeben werden (§ 9 JuSchG).'},
   {titel:'Böller im Briefkasten',icon:'local_fire_department',foto:'silvester',
-    fakten:[['Wer','Noah, 13'],['Wann','Silvester, Erfurt'],['Was','steckt einen gezündeten Böller in den Briefkasten des Nachbarn'],['Schaden','Briefkasten und Post zerstört: 120 €']],
-    text:'Silvester in Erfurt: Noah (13) findet es witzig, einen gezündeten Böller in den Briefkasten des Nachbarn zu stecken. Der Briefkasten fliegt auseinander, die Post darin verbrennt. Noahs Eltern waren auf einer Silvesterfeier zwei Häuser weiter.',
+    fakten:[['Wer','Noah, 13'],['Wann','Silvester, Jena'],['Was','steckt einen gezündeten Böller in den Briefkasten des Nachbarn'],['Schaden','Briefkasten und Post zerstört: 120 €']],
+    text:'Silvester in Jena: Noah (13) findet es witzig, einen gezündeten Böller in den Briefkasten des Nachbarn zu stecken. Der Briefkasten fliegt auseinander, die Post darin verbrennt. Noahs Eltern waren auf einer Silvesterfeier zwei Häuser weiter.',
     frage:'Muss Noah den Briefkasten bezahlen?',weg:bis(A.s10,{einsicht:0,zustand:0,verschulden:0}),
     tipps:{einsicht:'Ein Dreizehnjähriger weiß, dass ein Böller einen Briefkasten zerfetzt. Hat er die nötige Einsicht?',verschulden:'Noah wollte, dass es knallt – mit Absicht.'},
     loesung:['Noah könnte nach § 823 Abs. 1 BGB verpflichtet sein, den Briefkasten zu ersetzen.',
@@ -145,7 +145,7 @@ export const FAELLE=[
 /* ---------- Ihr seid das Gericht: Straßenverkehr ---------- */
 export const GERICHT=[
   {id:'paul-gericht',titel:'Fahrrad gegen parkendes Auto',foto:'parkplatz',
-    fall:'Paul (9) fährt in Erfurt mit dem Fahrrad auf dem Gehweg und schaut sich nach seinem Freund um. Dabei kracht er gegen ein ordnungsgemäß geparktes Auto. Der Lack ist verkratzt: 800 €.',
+    fall:'Paul (9) fährt mit dem Fahrrad über den Markt in Apolda und schaut sich nach seinem Freund um. Dabei kracht er gegen ein ordnungsgemäß geparktes Auto. Der Lack ist verkratzt: 800 €.',
     frage:'Muss Paul den Kratzer bezahlen?',optionen:['Nein, mit 9 ist er im Straßenverkehr geschützt','Ja, die Sonderregel greift hier nicht – Paul war unaufmerksam','Nein, seine Eltern müssen zahlen'],r:1,
     e:'Der Bundesgerichtshof hat 2004 entschieden: Die Sonderregel des § 828 Abs. 2 BGB soll Kinder vor der Überforderung durch den fließenden Verkehr schützen. Ein parkendes Auto überfordert ein Kind nicht. Also kommt es auf die Einsicht an (§ 828 Abs. 3 BGB), und die hat ein Neunjähriger in der Regel. Paul haftet.'},
   {id:'emma-gericht',titel:'Stein von der Brücke',foto:'bruecke',

@@ -27,10 +27,10 @@ export const THEMEN = [
     text: 'Ball gegen den Zaun, Crash mit der Simson, Party-Chaos: Wer zahlt, wenn\'s kracht? Eine Lernstrecke in fünf Lektionen mit Live-Abstimmung, Rechts-Navi und Mission Simson.',
     stichworte: ['§§ 823, 827, 828 BGB', 'Haftung', 'Lernstrecke', 'Lernraum'],
     bild: 'deliktsfaehigkeit/img/simson.jpg',
-    alt: 'Rote Simson S51 von 1987, ein Moped aus Suhl in Thüringen',
-    foto: 'Max schwalbe / Wikimedia Commons, CC BY-SA 4.0',
-    fotoLink: 'https://commons.wikimedia.org/wiki/File:Simson_S_51_B1-3_von_1987_Bild1.jpg',
-    lizenzLink: 'https://creativecommons.org/licenses/by-sa/4.0/'
+    alt: 'Eine Simson S51 mit schwarzem Tank und roten Schutzblechen steht auf einem Parkplatz bei Eisenberg neben einem grauen Auto',
+    foto: 'Steffen Mokosch / Wikimedia Commons, CC BY-SA 3.0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:Simson_S51_at_McDonald%27s_Petersberg_near_Eisenberg_2026.jpg',
+    lizenzLink: 'https://creativecommons.org/licenses/by-sa/3.0/'
   },
   {
     id: 'sechseck',

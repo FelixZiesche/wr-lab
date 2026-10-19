@@ -290,6 +290,17 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
 
 ## Bildnachweise
 
+- **Deliktsfähigkeit** (Wikimedia Commons, verkleinert):
+  - Markt in Apolda: NatiSythen, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Apolda_Markt01.jpg)
+  - Simson S51 bei Eisenberg: Steffen Mokosch, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Simson_S51_at_McDonald%27s_Petersberg_near_Eisenberg_2026.jpg)
+  - Fußball: Tim Reckmann, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [Datei](https://commons.wikimedia.org/wiki/File:Fu%C3%9Fball_auf_Rasen_(40259829870).jpg)
+  - Kind auf dem Fahrrad: Skgbl, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Kidical_Mass_Hamburg_2024_September_26.jpg)
+  - Bunte Tassen: Erkaha, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Bunte_Tassen_wild_gemischt.jpg)
+  - Partykeller: Mr N, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Kinolino-Partykeller_01.jpg)
+  - Silvester in Jena: Rene Schwietzke, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [Datei](https://commons.wikimedia.org/wiki/File:Silvester_2010_in_Jena_(5311663151).jpg)
+  - E-Scooter auf dem Gehweg: Catatine, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:HAL-Vogelweide,_Scooter.jpg)
+  - Baustellenschild: Sascha Grosser, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Schild_-_Baustelle_verboten_-_Eltern_haften_f%C3%BCr_ihre_Kinder.jpg)
+  - Auto mit Delle: Garitzko, gemeinfrei, [Datei](https://commons.wikimedia.org/wiki/File:Damaged_car_door.jpg)
 - **Geschäftsfähigkeit** (Wikimedia Commons):
   - Goethe Galerie Jena: Andreas Praefcke, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_Goethe-Galerie_2010_1.jpg)
   - Simson S51: Max schwalbe, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Simson_S_51_B1-3_von_1987_Bild1.jpg)
