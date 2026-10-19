@@ -678,7 +678,7 @@ function bindAufloesung(box){
 
 /* ---------- Prüfschema (Rechts-Navi) und Fall-Akte ----------
    schema: {start, schritte:{sid:{frage, hilfe, gesetz:{p, t}, antworten:[{t, weiter: sid} | {t, ergebnis:{art, t}}]}}}
-     art: 'wirksam' | 'schwebend' | 'unwirksam' bestimmt Farbe und Symbol des Ergebnisses.
+     art: 'wirksam' | 'schwebend' | 'unwirksam' (Verträge) oder 'haftet' | 'haftetnicht' (Schadensersatz) bestimmt Farbe und Symbol.
    pruefschema({id, titel, schema, beispiel})   Probefahrt: frei durchklicken, dazu die ganze Route auf einen Blick
    fallakte({id, titel, schema, faelle:[{titel, icon, bild, fakten, text, frage, weg, tipps, loesung, denkWeiter}]})
      Fälle mit dem Navi lösen: Falsche Abzweigungen werden erklärt, die Lösung erscheint erst danach. Gelöste Fälle bleiben gespeichert.
@@ -688,7 +688,8 @@ function bindAufloesung(box){
      loesung: Text oder Liste von Sätzen im Gutachtenstil. Bei einer Liste bauen die Schüler das Gutachten
               erst selbst zusammen (Gutachten-Baukasten), dann erscheint die Lösung. */
 const SCHEMAS=new Map(), AKTEN=new Map();
-const ERG={wirksam:['ok','check_circle','Wirksam'],schwebend:['amb','hourglass_top','Schwebend unwirksam'],unwirksam:['bad','block','Unwirksam']};
+const ERG={wirksam:['ok','check_circle','Wirksam'],schwebend:['amb','hourglass_top','Schwebend unwirksam'],unwirksam:['bad','block','Unwirksam'],
+  haftet:['bad','payments','Haftet'],haftetnicht:['ok','shield','Haftet nicht']};
 const ergebnisHTML=e=>{const [k,ic,t]=ERG[e.art]||ERG.unwirksam;return `<li class="navi-ergebnis fb ${k}"><span class="ms" aria-hidden="true">${ic}</span><span><b>${e.titel||t}</b>${e.t?` – ${e.t}`:''}</span></li>`};
 function uebersichtHTML(schema){
   const ids=Object.keys(schema.schritte),nr=new Map(ids.map((s,i)=>[s,i+1]));

@@ -302,6 +302,10 @@ export function createWerkstatt(cfg){
   return {
     tool:o=>TOOLS.push(o),
     tools:TOOLS,
-    go,openTool,openModal,closeModal,erkHTML,bindErk,chapterHTML,resetWissen,openGlossar,openWissen,start
+    go,openTool,openModal,closeModal,erkHTML,bindErk,chapterHTML,resetWissen,openGlossar,openWissen,start,
+    /** true, wenn alle Merksätze der Werkstatt id gesichert sind (Erkenntnis mit dem Merksatz verglichen) */
+    gesichert:id=>!!MS[id]&&MS[id].every((_,i)=>msGot.has(id+'-'+i)),
+    /** id des gerade gezeigten Bereichs */
+    bereich:()=>curView
   };
 }

@@ -20,6 +20,19 @@ export const THEMEN = [
     lizenzLink: 'https://creativecommons.org/licenses/by/3.0/'
   },
   {
+    id: 'deliktsfaehigkeit',
+    titel: 'Deliktsfähigkeit',
+    stufe: 10,
+    bereich: 'Recht',
+    text: 'Ball gegen den Zaun, Crash mit der Simson, Party-Chaos: Wer zahlt, wenn\'s kracht? Eine Lernstrecke in fünf Lektionen mit Live-Abstimmung, Rechts-Navi und Mission Simson.',
+    stichworte: ['§§ 823, 827, 828 BGB', 'Haftung', 'Lernstrecke', 'Lernraum'],
+    bild: 'deliktsfaehigkeit/img/simson.jpg',
+    alt: 'Eine Simson S51 mit schwarzem Tank und roten Schutzblechen steht auf einem Parkplatz bei Eisenberg neben einem grauen Auto',
+    foto: 'Steffen Mokosch / Wikimedia Commons, CC BY-SA 3.0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:Simson_S51_at_McDonald%27s_Petersberg_near_Eisenberg_2026.jpg',
+    lizenzLink: 'https://creativecommons.org/licenses/by-sa/3.0/'
+  },
+  {
     id: 'sechseck',
     titel: 'Magisches Sechseck',
     stufe: 11,

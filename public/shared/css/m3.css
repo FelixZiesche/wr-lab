@@ -358,6 +358,47 @@ a.wr-logo{text-decoration:none}
 .wr-recht :is(p,ul){margin:0}
 .wr-recht ul{padding-left:24px;display:flex;flex-direction:column;gap:4px}
 .wr-recht .btn{margin-top:12px}
+/* Lernstrecke (lernstrecke.js): Übersicht, Lektionsplan, Tafelbild, Stationen einer Lektion */
+.ls-start{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.ls-start{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.ls-wege{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.ls-weg{display:flex;gap:16px;align-items:flex-start;background:var(--md-surface-container);border-radius:var(--r-xl);padding:16px}
+.ls-weg .ic{width:48px;height:48px;border-radius:var(--r-l);display:grid;place-items:center;background:var(--md-secondary-container);color:var(--md-on-secondary-container);flex:none}
+.ls-plan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-width:880px}
+.ls-plan-item{display:flex;flex-direction:column;gap:4px}
+.ls-plan-btn{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border:0;background:var(--md-surface-container);border-radius:var(--r-xl);padding:14px 16px;cursor:pointer;color:var(--md-on-surface);font:inherit}
+.ls-plan-btn:hover{background:var(--md-surface-container-high)}
+.aktuell>.ls-plan-btn{box-shadow:inset 0 0 0 2px var(--md-primary)}
+.ls-nr{width:40px;height:40px;border-radius:var(--r-full);display:grid;place-items:center;flex:none;background:var(--md-primary-container);color:var(--md-on-primary-container);font-weight:600}
+.erledigt .ls-nr{background:var(--md-primary);color:var(--md-on-primary)}
+.ls-plan-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ls-plan-ic{color:var(--md-on-surface-variant)}
+.ls-klasse{align-self:flex-start;margin-left:72px;display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--r-s);font-size:.8125rem;font-weight:500;background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)}
+.ls-tafel{border:2px solid var(--md-outline-variant);border-radius:var(--r-xl);background:var(--md-surface-container-low);padding:16px;display:flex;flex-direction:column;gap:12px}
+.ls-tafel-frage{display:flex;gap:8px;align-items:center;font-size:1.125rem;line-height:1.5rem;font-weight:500;color:var(--md-primary)}
+.ls-tafel-teile{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ls-tafel-teile li{background:var(--md-surface);border-radius:var(--r-l);border-left:4px solid var(--md-primary);padding:12px;display:flex;flex-direction:column;gap:6px;font-size:.875rem;line-height:1.25rem}
+.ls-tafel-teile li.leer{border-left:4px dashed var(--md-outline-variant);color:var(--md-on-surface-variant)}
+.ls-tafel-teile :is(ul,ol){margin:0;padding-left:18px}
+.ls-kopf{display:flex;flex-direction:column;gap:4px}
+.ls-schritte{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ls-schritt{width:100%;min-height:56px;display:flex;align-items:center;gap:10px;text-align:left;border:0;border-radius:var(--r-l);padding:8px 12px;background:var(--md-surface-container);color:var(--md-on-surface);cursor:pointer;font:inherit;font-weight:500}
+.ls-schritt:hover{background:var(--md-surface-container-high)}
+.ls-schritt .ls-ic{width:36px;height:36px;border-radius:var(--r-full);display:grid;place-items:center;flex:none;background:var(--md-surface-container-highest)}
+.ls-schritt .ls-st{display:flex;flex-direction:column;min-width:0}
+.ls-schritt.besucht .ls-ic{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.ls-schritt[aria-current="step"]{background:var(--md-primary-container);color:var(--md-on-primary-container)}
+.ls-schritt[aria-current="step"] .ls-ic{background:var(--md-primary);color:var(--md-on-primary)}
+.ls-schritt[aria-current="step"] .muted{color:inherit}
+@media (max-width:599px){.ls-schritte{gap:4px}.ls-schritt{flex-direction:column;gap:4px;padding:8px 4px;text-align:center;font-size:.8125rem}.ls-schritt .ls-st .small{display:none}}
+.ls-station-kopf{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--md-outline-variant)}
+.ls-station-kopf h3{scroll-margin-top:96px}
+.ls-sozial{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:var(--r-s);font-size:.875rem;font-weight:500;background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.ls-weiter{padding-top:8px}
+.ls-rueckblick{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container);border-radius:var(--r-l);padding:16px;display:flex;flex-direction:column;gap:6px}
+.ls-rueckblick .muted{color:inherit}
+.ls-rueckblick blockquote{margin:4px 0 0;font-size:1.0625rem;line-height:1.5rem;font-style:italic}
+.ls-schutz{display:flex;gap:6px;align-items:flex-start;max-width:80ch}
 /* Fehlerseite (404.html) */
 .wr-fehler{padding-top:24px}
 .wr-fehler>.ms{font-size:56px;color:var(--md-primary)}
