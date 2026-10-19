@@ -49,6 +49,7 @@ export function createWerkstatt(cfg){
       <button class="icon-btn" type="button" id="btn-fs" aria-pressed="false" aria-label="Größere Schrift" title="Größere Schrift"><span class="ms" aria-hidden="true">format_size</span></button>
     </header>
     <main id="view"></main>
+    <footer class="app-foot small wr-links"><a href="${cfg.start||'../'}impressum.html">Impressum</a><a href="${cfg.start||'../'}datenschutz.html">Datenschutz</a></footer>
   </div>
   <nav class="navbar" aria-label="Bereiche" id="nav-bar"></nav>
 </div>

@@ -18,6 +18,7 @@ Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und
 ```
 public/                 wird veröffentlicht
   index.html, start.js  Startseite mit Themenkarten
+  datenschutz.html, impressum.html, 404.html   Datenschutzerklärung, Impressum und Fehlerseite
   themen.js             Liste aller Themen mit Klassenstufe
   shared/               gemeinsam für alle Themen
     css/m3.css          Material Design 3 (Farbrollen, Google Sans, Komponenten, App-Shell)
@@ -31,6 +32,7 @@ public/                 wird veröffentlicht
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
     js/live.js          Verbindung zum Server (einzige Datei mit Firebase)
     vendor/qrcode.js    QR-Code-Bibliothek (MIT-Lizenz)
+    vendor/fonts/       Google Sans, Google Sans Code (OFL 1.1) und Material Symbols Rounded (Apache 2.0), selbst ausgeliefert
   sechseck/             Lernwerkstatt Magisches Sechseck
     sechseck.js         Werkstätten, Wissen, Navigation
     leben.js            Planspiel Sechseck-Leben (Figuren, Runden, Rechenmodell)
@@ -46,6 +48,7 @@ public/                 wird veröffentlicht
     img/                Fotos
 firestore.rules         Sicherheitsregeln der Datenbank
 firebase.json           Hosting, Firestore-Regeln, Emulatoren
+scripts/schriften.mjs   lädt Schriften und Icons von Google Fonts nach public/shared/vendor/fonts/ (npm run schriften)
 tests/                  Playwright-Tests und Regeltests
 .github/workflows/      Tests, Veröffentlichung und Vorschau
 CLAUDE.md               Standards und Checkliste für neue Themen
@@ -162,6 +165,7 @@ Voraussetzungen: [Node.js 22](https://nodejs.org) und Java 21 (für die Firebase
 npm ci          # einmalig
 npm run dev     # Seite mit Emulator: http://127.0.0.1:5000, Emulator-Oberfläche: http://127.0.0.1:4000
 npm test        # alle Tests: Werkstätten, Aufgaben, Planspiel, Lernraum (Playwright) und Sicherheitsregeln
+npm run schriften   # nur nach einem neuen Icon in public/shared/vendor/fonts/icons.txt: lädt Schriften und Icons neu
 ```
 
 `npm run dev` startet die Seite mit einer lokalen Datenbank (Demo-Projekt `demo-wr-lab`), es fließen keine echten Daten. Den Lernraum testest du mit zwei Browserfenstern, z. B. einem normalen und einem privaten Fenster.
@@ -270,14 +274,17 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Die Seite wird über Firebase Hosting ausgeliefert (Google Ireland Ltd.).
   - Dabei verarbeitet Google technisch notwendige Verbindungsdaten wie die IP-Adresse.
 - **Externe Dienste:**
-  - Schriften und Symbole kommen von Google Fonts.
+  - Schriften und Symbole liefert die Seite selbst aus. Beim Aufruf geht keine Anfrage an Google Fonts.
   - Die Firebase-Bibliothek kommt im Lernraum von gstatic.com (Google).
   - Die QR-Code-Bibliothek liefert die Seite selbst aus.
 - **Vertrag mit Google:** In der Firebase-Konsole unter **Projekteinstellungen → Datenschutz** die Kontaktdaten eintragen und den Bedingungen zur Datenverarbeitung (Data Processing and Security Terms) zustimmen.
 - **Abstimmung mit der Schule:**
   - Bitte vor dem Einsatz mit dem Datenschutzbeauftragten der Schule sprechen.
   - Je nach Schule kann ein Eintrag ins Verzeichnis der Verarbeitungstätigkeiten nötig sein.
-  - Ist die Seite öffentlich erreichbar, braucht sie unter Umständen ein Impressum und eine Datenschutzerklärung. Beides lässt sich als eigene Seite in `public/` ergänzen.
+- **Impressum und Datenschutzerklärung:**
+  - Sie stehen in `public/impressum.html` und `public/datenschutz.html`, verlinkt von der Startseite, der Fehlerseite, jedem Thema und dem Lernraum.
+  - Vor dem Veröffentlichen die Angaben in eckigen Klammern ersetzen: Name, Anschrift, E-Mail und den Satz zur automatischen Löschung.
+  - Ändert sich, was die Seite speichert, die Datenschutzerklärung mitziehen.
 
 ## Bildnachweise
 

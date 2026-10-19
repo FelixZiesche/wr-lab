@@ -7,6 +7,7 @@ WR-Lab ist eine Website mit interaktiven Lernwerkstätten für **Wirtschaft und 
 ```
 public/                 nur dieser Ordner wird veröffentlicht
   index.html, start.js  Startseite mit Themenkarten
+  datenschutz.html, impressum.html, 404.html   Rechtstexte (Vorlage mit Platzhaltern) und Fehlerseite
   themen.js             Liste aller Themen mit Klassenstufe (Startseite, Hinweis bei fremden Raumcodes)
   shared/               gemeinsam für alle Themen
     css/m3.css          Material Design 3: Farbrollen, Typografie, Komponenten, App-Shell
@@ -19,9 +20,10 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
-    vendor/             selbst ausgelieferte Bibliotheken (QR-Code)
+    vendor/             selbst ausgelieferte Bibliotheken (QR-Code) und Schriften (fonts/, mit icons.txt)
   <thema>/              ein Ordner pro Thema, z. B. sechseck/
 firestore.rules         Sicherheitsregeln für alle Themen
+scripts/schriften.mjs   lädt die Schriften und Icons nach shared/vendor/fonts/ (npm run schriften)
 tests/                  Playwright-Tests und Regeltests (laufen gegen den Firebase-Emulator)
 .github/workflows/      Tests, Veröffentlichung (main) und Vorschau (Pull Requests)
 ```
@@ -59,8 +61,8 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - Nur `public/shared/css/m3.css` benutzen und dort erweitern. Komponenten bekommen keine eigenen Kopien.
 - **Farben nur über M3-Farbrollen**, z. B. `--md-primary`, `--md-on-primary`, `--md-primary-container`, `--md-surface-container`, `--md-on-surface-variant`, `--md-outline-variant`. Komponenten enthalten keine festen Hex-Farben.
   - Themenfarben, z. B. die Zielfarben des Sechsecks, sind M3 Custom Colors: harmonisiert mit der Primärfarbe, mit `on-`- und `container`-Rollen, für hell und dunkel. Sie stehen in der CSS-Datei des Themas.
-- **Schrift:** Google Sans, für Codes Google Sans Code. Größen nach der M3-Typoskala: `.title-l`, `.body-m`, `.label-m` usw.
-- **Icons ausschließlich Material Symbols Rounded** (`<span class="ms">name</span>`). Keine Emojis als Icons, keine anderen Icon-Bibliotheken, keine selbst gezeichneten Icon-SVGs. Jedes neue Icon in `icon_names` der Font-URL im `<head>` eintragen, alphabetisch sortiert, sonst fehlt es.
+- **Schrift:** Google Sans, für Codes Google Sans Code, beide selbst ausgeliefert aus `shared/vendor/fonts/` (keine Verbindung zu Google Fonts). Größen nach der M3-Typoskala: `.title-l`, `.body-m`, `.label-m` usw.
+- **Icons ausschließlich Material Symbols Rounded** (`<span class="ms">name</span>`). Keine Emojis als Icons, keine anderen Icon-Bibliotheken, keine selbst gezeichneten Icon-SVGs. Jedes neue Icon in `shared/vendor/fonts/icons.txt` eintragen (alphabetisch) und `npm run schriften` ausführen, sonst fehlt es. Ein Test prüft das.
 - **WCAG 2.2 AA:**
   - Kontrast: Text mindestens 4,5:1, großer Text und Bedienelemente mindestens 3:1.
   - Alles muss per Tastatur bedienbar sein, mit sichtbarem Fokus.
@@ -128,7 +130,7 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
 
 ## Technik
 
-- **Kein Build-Schritt:** HTML, CSS und ES-Module direkt. Externe Bibliotheken nur, wenn nötig, und dann selbst in `shared/vendor/` ausliefern (mit Lizenzkopf). Ausnahmen: Google Fonts und das Firebase-SDK von gstatic.com.
+- **Kein Build-Schritt:** HTML, CSS und ES-Module direkt. Externe Bibliotheken nur, wenn nötig, und dann selbst in `shared/vendor/` ausliefern (mit Lizenzkopf). Einzige Ausnahme: das Firebase-SDK von gstatic.com, nur im Lernraum. Schriften und Icons liegen in `shared/vendor/fonts/` (erzeugt mit `npm run schriften`).
 - **Firebase nur in `shared/js/live.js`.** Die Schnittstelle oben in der Datei darf nicht brechen, denn so bleibt Firebase austauschbar. Die Zugangsdaten kommen automatisch von `/__/firebase/init.json`; Schlüssel gehören nie in den Code.
 - **Was mehrere Themen brauchen, gehört nach `shared/`.** Inhalte bleiben im Themenordner. Der Code eines Themas importiert nur aus `shared/` und dem eigenen Ordner.
 - **Code-Stil:** wie der vorhandene Code (kompakt, Kommentare auf Deutsch, Bezeichner wie im Umfeld).
@@ -140,13 +142,14 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
   - keine Klarnamen, keine Konten, keine Tracker oder Statistikdienste
   - keine neuen externen Dienste ohne Rücksprache
   - Live-Daten nur so lange wie nötig: `expireAt` nach 24 Stunden, „Raum beenden“ löscht sofort
+  - Ändert sich, was gespeichert oder geladen wird, `public/datenschutz.html` mitziehen
 
 ## Checkliste: neues Themenmodul
 
 1. **Ordner** `public/<id>/` anlegen. Die `id` besteht aus Kleinbuchstaben, Ziffern und Bindestrich, z. B. `kaufvertrag`. Sie ist zugleich das Thema im Live-Raum.
 2. **`index.html`** von `public/sechseck/index.html` kopieren und anpassen:
    - Titel, Beschreibung, Favicon
-   - `icon_names` (alle verwendeten Icons, alphabetisch)
+   - Schriften über `../shared/vendor/fonts/fonts.css`, neue Icons in `icons.txt` (siehe Design)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
    - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
    - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)

@@ -265,7 +265,7 @@ function startDialog(box,code){
       <div class="fb bad" id="lr-oerr" role="alert" hidden></div>
       <div class="cta"><button class="btn" type="button" id="lr-open"><span class="ms" aria-hidden="true">cast_for_education</span>Lernraum öffnen</button></div></div>
   </div>
-  <p class="small muted" id="lr-datenschutz">Gespeichert werden nur dein Spitzname, wo du gerade arbeitest (die geöffnete Werkstatt), Antworten, die du abschickst, deine Stimmen bei Abstimmungen und deine Punkte im Wissenscheck (keine Texte), im Planspiel auch deine Figur und dein Spielstand. „Raum verlassen“ löscht deinen Eintrag und deine Antworten, „Raum beenden“ löscht alles sofort.</p>`;
+  <p class="small muted" id="lr-datenschutz">Gespeichert werden nur dein Spitzname, wo du gerade arbeitest (die geöffnete Werkstatt), Antworten, die du abschickst, deine Stimmen bei Abstimmungen und deine Punkte im Wissenscheck (keine Texte), im Planspiel auch deine Figur und dein Spielstand. „Raum verlassen“ löscht deinen Eintrag und deine Antworten, „Raum beenden“ löscht alles sofort. <a href="/datenschutz.html">Mehr zum Datenschutz</a></p>`;
   const felder={code:'#lr-code',nick:'#lr-nick'},jerr=$('#lr-jerr',box),oerr=$('#lr-oerr',box);
   // Wer ein markiertes Feld korrigiert, bekommt es wieder als gültig angezeigt
   Object.values(felder).forEach(sel=>$(sel,box).addEventListener('input',e=>e.target.removeAttribute('aria-invalid')));

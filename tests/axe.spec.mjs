@@ -1,4 +1,4 @@
-// Barrierefreiheit automatisch mit axe-core (WCAG 2.2 AA): Startseite, Fehlerseite und jedes Thema aus themen.js
+// Barrierefreiheit automatisch mit axe-core (WCAG 2.2 AA): Startseite, Fehlerseite, Datenschutz, Impressum und jedes Thema aus themen.js
 // mit Startansicht, allen Bereichen und allen Werkstätten, bei 390 px (Handy) und 1280 px (Beamer), hell und dunkel.
 // Pro Kombination nur eine Seite: Die Ansichten wechseln über die Adresse hinter # (wie Zurück/Vor im Browser).
 // Nach dem Laden prüft AxeBuilder die ganze Seite und lädt dabei axe in die Seite. Für die weiteren Ansichten derselben
@@ -29,7 +29,7 @@ for (const breite of [390, 1280]) for (const schema of ['light', 'dark']) {
   test.describe(`${breite} px, ${schema === 'light' ? 'hell' : 'dunkel'}`, () => {
     test.use({ viewport: { width: breite, height: breite < 600 ? 844 : 800 }, colorScheme: schema });
 
-    test('Startseite, Fehlerseite und alle Themen ohne Verstöße gegen WCAG 2.2 AA', async ({ page }) => {
+    test('Startseite, Fehlerseite, Rechtstexte und alle Themen ohne Verstöße gegen WCAG 2.2 AA', async ({ page }) => {
       test.setTimeout(180_000);
       const fehler = [];
       await page.goto('/');
@@ -39,6 +39,11 @@ for (const breite of [390, 1280]) for (const schema of ['light', 'dark']) {
       await page.goto('/gibtsnicht');
       await expect(page.locator('h1')).toHaveText('Diese Seite gibt es nicht.');
       fehler.push(...await ganzeSeite(page, 'Fehlerseite'));
+      for (const [seite, titel] of [['datenschutz', 'Datenschutz'], ['impressum', 'Impressum']]) {
+        await page.goto(`/${seite}.html`);
+        await expect(page.locator('h1')).toHaveText(titel);
+        fehler.push(...await ganzeSeite(page, titel));
+      }
 
       const themen = await page.evaluate(async () => (await import('/themen.js')).THEMEN.map(t => t.id));
       for (const id of themen) {
