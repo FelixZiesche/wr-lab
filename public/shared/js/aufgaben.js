@@ -93,8 +93,12 @@ function aktualisiereSchreibfeld(box){
 function bindSchreibfeld(box){
   const id=box.dataset.schreib,ta=$('textarea',box),btn=$('[data-schreib-senden]',box),st=$('[data-schreib-status]',box);
   ta.value=store(key('sf',id))||'';
-  let t=null;
-  ta.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{store(key('sf',id),ta.value);aktualisiereSchreibfeld(box)},300)});
+  // Gespeichert wird kurz nach dem Tippen, sofort beim Verlassen des Felds und beim Verlassen der Seite,
+  // damit kein Text verloren geht, wenn jemand schnell weiterklickt
+  let t=null;const sichern=()=>{clearTimeout(t);t=null;store(key('sf',id),ta.value);aktualisiereSchreibfeld(box)};
+  ta.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(sichern,300)});
+  ta.addEventListener('change',sichern);
+  window.addEventListener('pagehide',()=>{if(t)sichern()});
   btn.addEventListener('click',async()=>{
     const text=ta.value.trim();store(key('sf',id),ta.value);
     if(!text){st.textContent='Schreib zuerst eine Antwort.';return}
