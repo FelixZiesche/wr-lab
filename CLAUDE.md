@@ -91,7 +91,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 
 Jedes Thema endet mit einem Wissenscheck, damit die Schüler ihr Wissen abschließend prüfen können. Baustein: `wissenscheck()` aus `shared/js/aufgaben.js`, Inhalte in `<id>/wissenscheck.js` mit dem Export `WISSENSCHECK` (Muster: `sechseck/wissenscheck.js`). Der Inhaltstest in `tests/wissenscheck.spec.mjs` prüft jedes Thema aus `themen.js` automatisch.
 
-- **Umfang:** mindestens 20 Aufgaben, gern mehr. Immer wieder neue Fragen ergänzen.
+- **Umfang selbst abwägen:** so viele Aufgaben, wie das Thema für eine sichere Selbstkontrolle braucht. Es müssen nicht immer 30 oder mehr sein, mehr ist nicht automatisch besser. Maßstab sind Umfang des Themas, Klassenstufe und Zeit (ein kleines Thema eher 12 bis 20, ein großes auch mehr). Untergrenze 12, damit drei Stufen und fünf Formate sinnvoll vertreten sind, Obergrenze 60 (Feld `wc`). Neue Fragen gezielt dort ergänzen, wo eine Werkstatt noch nicht abgefragt wird.
 - **Drei Stufen nach den Anforderungsbereichen:** I Grundlagen (nennen, beschreiben, zuordnen), II Anwenden (erklären, erläutern, berechnen, vergleichen), III Beurteilen (beurteilen, bewerten, Stellung nehmen). Operatoren stehen in `shared/js/feedback.js`.
 - **Mischung nach Klassenstufe** (Richtwert für die Punkte): Klasse 9 und 10 etwa 40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen; Klasse 11 und 12 etwa 25 %, 45 %, 30 %.
 - **Abwechslungsreich:** mindestens 5 der 7 Formate (Auswahl, Mehrfachauswahl, Richtig oder falsch, Zuordnen, Rechnen, Reihenfolge, offene Aufgabe). Aktuelle Anlässe, virale Inhalte und Thüringen-Bezug auch hier, mit „fiktiver Beitrag“, „Szenario“ oder „Schlagzeile (erfunden)“.

@@ -319,7 +319,7 @@ test('Lernraum: Punkte pro Stufe im Dashboard, keine Texte; KI-Coach mit AIS.cha
 // Gilt für jedes Thema mit <id>/wissenscheck.js: Regeln aus CLAUDE.md und Stimmigkeit der Lösungen
 // Punkteanteile der Stufen I/II/III nach Klassenstufe (Richtwert aus CLAUDE.md, erlaubt sind ±10 Prozentpunkte)
 const RICHTWERT = { 9: [40, 40, 20], 10: [40, 40, 20], 11: [25, 45, 30], 12: [25, 45, 30] };
-test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Formate, Lösungen passen zum Erwartungshorizont', async ({ page }) => {
+test('Inhalte aller Wissenschecks: mindestens 12 Aufgaben, alle Stufen, 5 Formate, Lösungen passen zum Erwartungshorizont', async ({ page }) => {
   await page.goto('/');
   const berichte = await page.evaluate(async () => {
     const F = await import('/shared/js/feedback.js');
@@ -365,7 +365,8 @@ test('Inhalte aller Wissenschecks: mindestens 20 Aufgaben, alle Stufen, 5 Format
   for (const b of berichte) {
     expect(b.fehlt, `${b.id}: wissenscheck.js fehlt`).toBeUndefined();
     expect(b.fehler, b.id).toEqual([]);
-    expect(b.n, `${b.id}: Aufgaben`).toBeGreaterThanOrEqual(20);
+    // Umfang wägt jedes Thema selbst ab (CLAUDE.md); unter 12 sind drei Stufen und fünf Formate nicht sinnvoll vertreten
+    expect(b.n, `${b.id}: Aufgaben`).toBeGreaterThanOrEqual(12);
     // Ein Zeichen pro Aufgabe im Feld wc: Ab der 61. Aufgabe kämen die Punkte nicht mehr im Dashboard an
     expect(b.n, `${b.id}: höchstens 60 Aufgaben, sonst firestore.rules (d.wc.size() <= 60) und lernraum.js (slice(0,60)) anpassen`).toBeLessThanOrEqual(60);
     expect(b.stufen.every(x => x > 0), `${b.id}: alle drei Stufen`).toBe(true);
