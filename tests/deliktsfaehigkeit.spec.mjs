@@ -30,7 +30,7 @@ test('Alle Lektionen und der Wissenscheck öffnen sich über ihre Adresse', asyn
   }
   await page.goto('about:blank');
   await page.goto(`${DF}#mission`);
-  await expect(page.locator('[data-labyrinth="simson-lab"]')).toBeVisible();
+  await expect(page.locator('[data-chat="simson-chat"]')).toBeVisible();
   await expect(page.locator('#view-title')).toHaveText('Mission Simson');
 });
 
@@ -68,6 +68,40 @@ test('Lektion: vier Stationen nacheinander, Fortschritt im Plan, Tafelbild füll
   await page.goto('about:blank'); await page.goto(`${DF}#eltern`);
   await page.locator('.ls-schritt[data-ls-zu="3"]').click();
   await expect(page.locator('.ls-rueckblick blockquote')).toHaveText('Ich glaube, meine Eltern müssen zahlen.');
+});
+
+test.describe('Mission Simson', () => {
+  test.use({ contextOptions: { reducedMotion: 'reduce' } });
+  test('Chat-Abenteuer: Entscheidungen mit Rechts-Check, Enden werden gesammelt und gemerkt', async ({ page }) => {
+    await page.goto(`${DF}#mission`);
+    const chat = page.locator('[data-chat="simson-chat"]'), verlauf = chat.locator('[data-chat-verlauf]');
+    const waehle = async t => { await chat.locator('[data-chat-wahl] button', { hasText: t }).click(); };
+    await expect(verlauf).toContainText('Wo bleibst du??');
+    await expect(chat.locator('[data-chat-n]')).toHaveText('0 von 4 entdeckt');
+    await expect(chat.locator('[data-chat-wahl] button').first()).toBeFocused();
+    // Bester Weg: anhalten, Ausrede „Ich bin 15“ (Rechts-Check), Daten, Versicherung, gültiges Kennzeichen
+    await waehle('Anhalten');
+    await waehle('Ich bin 15');
+    await expect(verlauf.locator('.chat-recht').last()).toContainText('§ 828 Abs. 3 BGB');
+    await expect(verlauf.locator('.chat-zeile.ich').last()).toContainText('Ich bin 15. Ich muss gar nichts zahlen.');
+    await waehle('Jonas antworten');
+    await waehle('Papa die Familienhaftpflicht');
+    await expect(verlauf.locator('.chat-recht').last()).toContainText('Privathaftpflicht zahlt keine Schäden');
+    await waehle('das schwarze für 2026/27');
+    await expect(verlauf.locator('.chat-ende')).toContainText('Schaden sauber geregelt');
+    await expect(verlauf.locator('.chat-ende')).toBeFocused();
+    await expect(chat.locator('[data-chat-n]')).toHaveText('1 von 4 entdeckt');
+    // Neues Spiel: abhauen
+    await chat.locator('[data-chat-nochmal]').click();
+    await expect(verlauf.locator('.chat-ende')).toHaveCount(0);
+    await waehle('Gas geben');
+    await waehle('Mama anrufen');
+    await expect(verlauf.locator('.chat-recht')).toContainText('§ 142 StGB');
+    await expect(chat.locator('[data-chat-enden] li.bad')).toContainText('Abgehauen');
+    // Nach dem Neuladen bleiben die gefundenen Enden
+    await page.reload();
+    await expect(page.locator('[data-chat="simson-chat"] [data-chat-n]')).toHaveText('2 von 4 entdeckt');
+  });
 });
 
 test('Altersschieber: Stufen mit Sonderregel im Straßenverkehr, Altersrätsel', async ({ page }) => {
