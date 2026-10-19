@@ -1,13 +1,79 @@
 // WR-Lab: Startseite, Navigation zwischen Themen und themenübergreifender Live-Klassenraum.
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { test, expect, device, readDoc, writeDoc, FIREBASE_VERSION } from './helpers.mjs';
+
+const datei = async f => readFile(new URL(`../${f}`, import.meta.url), 'utf8');
+const ICONS = async () => (await datei('public/shared/vendor/fonts/icons.txt')).split('\n').map(z => z.trim()).filter(z => z && !z.startsWith('#'));
 
 test('Firebase-SDK: live.js, package.json und das installierte Paket haben dieselbe Version', async () => {
   // Weicht live.js ab, greift die Umleitung in helpers.mjs nicht mehr, und die Tests laden still das echte SDK
-  const datei = async f => readFile(new URL(`../${f}`, import.meta.url), 'utf8');
   expect(FIREBASE_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   expect(await datei('public/shared/js/live.js'), 'live.js: const V').toContain(`const V = '${FIREBASE_VERSION}';`);
   expect(JSON.parse(await datei('node_modules/firebase/package.json')).version, 'node_modules/firebase (npm ci)').toBe(FIREBASE_VERSION);
+});
+
+test('Schriften kommen von der eigenen Seite: icons.txt ist vollständig und fonts.css aktuell', async () => {
+  const icons = await ICONS(), css = await datei('public/shared/vendor/fonts/fonts.css');
+  expect(css.match(/Icons: ([a-z0-9_,]+)/)?.[1], 'Nach jeder Änderung an icons.txt: npm run schriften').toBe(icons.join(','));
+  for (const [, f] of css.matchAll(/url\(([^)]+)\)/g)) expect(await datei(`public/shared/vendor/fonts/${f}`).then(() => true, () => false), f).toBe(true);
+  // Jedes fest im Code stehende Icon muss in icons.txt stehen, sonst zeigt die Seite nur seinen Namen
+  const benutzt = new Set();
+  for (const f of await readdir(new URL('../public/', import.meta.url), { recursive: true })) {
+    if (!/\.(html|js|css)$/.test(f) || f.includes('vendor')) continue;
+    const t = await datei(`public/${f}`);
+    for (const [, i] of t.matchAll(/class="ms[^"]*"[^>]*>([a-z0-9_]+)</g)) benutzt.add(i);
+    for (const [, i] of t.matchAll(/content:"([a-z0-9_]+)"/g)) benutzt.add(i);
+  }
+  expect([...benutzt].filter(i => !icons.includes(i)), 'in icons.txt eintragen, dann npm run schriften').toEqual([]);
+});
+
+test('Schriften: keine Anfrage an Google Fonts, Google Sans und Icons sind geladen', async ({ page }) => {
+  const fremd = [], icons = await ICONS();
+  page.on('request', r => { if (/fonts\.(googleapis|gstatic)\.com/.test(r.url())) fremd.push(r.url()); });
+  for (const url of ['/', '/sechseck/#preis', '/geschaeftsfaehigkeit/#haus', '/gibtsnicht']) {
+    await page.goto(url);
+    await expect(page.locator('.ms').first()).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const geladen = await page.evaluate(() => [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replace(/"/g, '')));
+    expect(geladen, url).toContain('Google Sans');
+    expect(geladen, url).toContain('Material Symbols Rounded');
+    // Auch Icons, die erst das Skript einsetzt
+    const sichtbar = await page.locator('.ms').evaluateAll(els => [...new Set(els.map(e => e.textContent.trim()).filter(Boolean))]);
+    expect(sichtbar.filter(i => !icons.includes(i)), url).toEqual([]);
+  }
+  expect(fremd).toEqual([]);
+});
+
+test('Impressum und Datenschutz: von jeder Seite erreichbar, mit Verantwortlichem und ehrlicher Liste der Daten', async ({ page }) => {
+  // Von der Startseite, aus einem Thema (auch am Handy unter der Ansicht), von der Fehlerseite und aus dem Lernraum
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Impressum' }).click();
+  await expect(page.locator('h1')).toHaveText('Impressum');
+  await expect(page.locator('main')).toContainText('§ 5 DDG');
+  await page.getByRole('link', { name: 'Datenschutz' }).click();
+  await expect(page.locator('h1')).toHaveText('Datenschutz');
+  const text = page.locator('main');
+  for (const t of ['Verantwortlich', 'Firebase Hosting', 'localStorage', 'Spitzname', 'Punkte im Wissenscheck, keine Texte', '„Raum beenden“ löscht sofort alle Daten', 'AIS.chat', 'Art. 6 Abs. 1 lit. f DSGVO', 'Thüringer Landesbeauftragten'])
+    await expect(text).toContainText(t);
+  // Was die Seite nicht tut, steht auch nicht drin: keine Schriften von Google Fonts mehr
+  await expect(text).not.toContainText('Google Fonts');
+  await page.getByRole('link', { name: 'Zur Startseite', exact: true }).click();
+  await expect(page).toHaveTitle('WR-Lab');
+  for (const [breite, url] of [[1280, '/sechseck/'], [390, '/geschaeftsfaehigkeit/#faelle']]) {
+    await page.setViewportSize({ width: breite, height: 800 });
+    await page.goto(url);
+    const link = page.locator('.app-foot').getByRole('link', { name: 'Datenschutz' });
+    await link.scrollIntoViewIfNeeded();
+    await expect(link, url).toBeInViewport();
+    await link.click();
+    await expect(page.locator('h1')).toHaveText('Datenschutz');
+  }
+  await page.goto('/gibtsnicht/tief/drin');
+  await page.getByRole('link', { name: 'Impressum' }).click();
+  await expect(page.locator('h1')).toHaveText('Impressum');
+  await page.goto('/sechseck/');
+  await page.locator('#btn-raum').click();
+  await expect(page.locator('#lr-datenschutz').getByRole('link', { name: 'Mehr zum Datenschutz' })).toHaveAttribute('href', '/datenschutz.html');
 });
 
 test('Falsche Adresse: deutsche Fehlerseite mit Weg zur Startseite', async ({ page }) => {
