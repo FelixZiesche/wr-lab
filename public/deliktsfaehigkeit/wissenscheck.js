@@ -1,0 +1,106 @@
+// Wissenscheck zur Deliktsfähigkeit (Klasse 10): Aufgaben in drei Stufen mit Erwartungshorizont.
+// Aufbau und Felder: siehe shared/js/aufgaben.js, wissenscheck(). Punkte etwa 40 % Grundlagen, 40 % Anwenden, 20 % Beurteilen.
+// werkstatt: Lektion, die bei Fehlern zum Wiederholen vorgeschlagen wird.
+// w in erwartung: Wortstämme (Groß- und Kleinschreibung und Umlaute egal), 'urteil' prüft auf ein eigenes Urteil.
+// Namen: Jeder Name hat in diesem Wissenscheck genau ein Alter (Anton 6, Clara 9, Paul 9 und Lisa 9 wie in Lektion 3,
+// Ida 16, Finn 17, Tom 17, Jakob 15, Emil 5, Greta 19).
+
+export const WISSENSCHECK={
+  id:'wissenscheck',
+  titel:'Wissenscheck: Deliktsfähigkeit',
+  thema:'Deliktsfähigkeit und Haftung (§§ 823, 827, 828, 832 BGB)',
+  stufe:10,
+  tipps:{1:'Wiederhole die Merksätze in „Mein Delikt-Wissen“ und das Tafelbild auf der Übersicht. Fachbegriffe wie Vorsatz, Fahrlässigkeit und Einsicht findest du unter „Begriffe nachschlagen“.',
+    2:'Geh Schritt für Schritt vor wie der Rechts-Navi: Schaden – Alter (unter 7, 7 bis 9 im Straßenverkehr, Einsicht) – Rausch – Vorsatz oder Fahrlässigkeit. Nenne bei jedem Schritt den Paragrafen.',
+    3:'Beim Beurteilen hilft das Schema: Rechtslage nennen, Argumente dafür und dagegen abwägen, am Ende begründet urteilen.'},
+  aufgaben:[
+  /* ---------- Stufe I: Grundlagen ---------- */
+  {afb:1,art:'wahl',werkstatt:'haftung',f:'Was bedeutet „deliktsfähig“?',
+    o:['Man kann für Schäden, die man anderen zufügt, verantwortlich gemacht werden.','Man kann selbst wirksam Verträge abschließen.','Man kann für eine Straftat bestraft werden.','Man darf ein Moped fahren.'],r:0,
+    fehler:{1:'Das ist die Geschäftsfähigkeit. Bei der Deliktsfähigkeit geht es um Schäden, nicht um Verträge.',2:'Das ist die Strafmündigkeit aus dem Strafrecht. Die Deliktsfähigkeit gehört zum Zivilrecht.',3:'Fürs Mopedfahren braucht man einen Führerschein. Mit Deliktsfähigkeit hat das nichts zu tun.'},
+    e:'Deliktsfähig ist, wer für Schäden, die er anderen zufügt, verantwortlich gemacht werden kann (§§ 827, 828 BGB).'},
+  {afb:1,art:'wahl',werkstatt:'stufen',f:'Bis zu welchem Alter ist man deliktsunfähig?',
+    o:['Unter 7 Jahren','Unter 10 Jahren','Unter 14 Jahren','Unter 18 Jahren'],r:0,
+    fehler:{1:'Bis 9 gilt nur die Sonderregel im Straßenverkehr. Für andere Schäden kann man schon ab 7 haften.',2:'14 ist die Grenze der Strafmündigkeit im Strafrecht, nicht im BGB.',3:'Bis 18 ist man beschränkt deliktsfähig – man kann also schon vorher haften.'},
+    e:'Wer nicht das siebente Lebensjahr vollendet hat, ist für einen Schaden nicht verantwortlich (§ 828 Abs. 1 BGB).'},
+  {afb:1,art:'mehrfach',p:2,werkstatt:'haftung',f:'Was muss vorliegen, damit jemand nach § 823 Abs. 1 BGB einen Schaden ersetzen muss?',
+    o:['Ein Schaden bei einem anderen, zum Beispiel an Eigentum oder Gesundheit','Vorsatz oder Fahrlässigkeit','Die Person ist deliktsfähig','Die Person ist volljährig','Die Eltern haben zugestimmt'],r:[0,1,2],
+    fehler:{3:'Auch Minderjährige ab 7 können haften, wenn sie die nötige Einsicht haben.',4:'Eine Zustimmung der Eltern spielt bei Verträgen eine Rolle, nicht bei Schäden.'},
+    e:'Haftung nach § 823 Abs. 1 BGB: Schaden, Vorsatz oder Fahrlässigkeit, und der Täter ist deliktsfähig.'},
+  {afb:1,art:'richtigfalsch',werkstatt:'eltern',f:'Eltern haften immer für ihre Kinder.',r:false,
+    e:'Falsch. Eltern haften nur, wenn sie ihre Aufsichtspflicht verletzt haben (§ 832 BGB). Das Schild an der Baustelle ändert daran nichts.'},
+  {afb:1,art:'richtigfalsch',werkstatt:'einsicht',f:'Wer sich selbst betrinkt, haftet trotzdem für die Schäden, die er im Rausch anrichtet.',r:true,
+    e:'Richtig. Wer sich durch Alkohol oder Drogen selbst in einen Rausch versetzt, ist verantwortlich, als hätte er fahrlässig gehandelt (§ 827 S. 2 BGB).'},
+  {afb:1,art:'richtigfalsch',werkstatt:'eltern',f:'Die private Haftpflichtversicherung der Familie zahlt auch Schäden, die man mit dem Moped verursacht.',r:false,
+    e:'Falsch. Schäden beim Fahren mit einem Kraftfahrzeug sind in der Privathaftpflicht ausgeschlossen. Dafür gibt es die Pflichtversicherung mit Versicherungskennzeichen.'},
+  {afb:1,art:'zuordnen',p:2,f:'Auf welcher Stufe der Deliktsfähigkeit steht die Person? Wähle für jede Person die passende Stufe.',
+    faecher:[{id:'unfaehig',t:'Deliktsunfähig'},{id:'beschraenkt',t:'Beschränkt deliktsfähig'},{id:'voll',t:'Voll deliktsfähig'}],
+    karten:[{t:'Anton, 6 Jahre',f:'unfaehig',werkstatt:'stufen'},{t:'Clara, 9 Jahre',f:'beschraenkt',werkstatt:'stufen'},{t:'Ida, 16 Jahre',f:'beschraenkt',werkstatt:'stufen'},
+      {t:'Greta, 19 Jahre',f:'voll',werkstatt:'stufen'},{t:'Greta, 19 Jahre, in dem Moment, in dem sie ohnmächtig wird',f:'unfaehig',werkstatt:'einsicht'}],
+    e:'Unter 7 und bei Bewusstlosigkeit: deliktsunfähig (§§ 827, 828 Abs. 1 BGB). Von 7 bis 17: beschränkt deliktsfähig (§ 828 Abs. 3 BGB). Ab 18: voll deliktsfähig.'},
+  {afb:1,art:'reihe',p:2,werkstatt:'einsicht',f:'Bring die Fragen des Rechts-Navis in die richtige Reihenfolge.',
+    schritte:['Ist ein Schaden entstanden?','Hat die Person ihn verursacht?','Wie alt ist die Person – greift eine Altersregel?','War sie bewusstlos oder selbst betrunken?','Hat sie vorsätzlich oder fahrlässig gehandelt?'],
+    e:'Erst Schaden und Verursachung, dann die Deliktsfähigkeit (Alter, Einsicht, Zustand), zuletzt das Verschulden.'},
+  {afb:1,art:'wahl',werkstatt:'strassenverkehr',f:'Welche Vorschrift schützt Kinder von 7 bis 9 Jahren bei Unfällen mit Autos und Bahnen?',
+    o:['§ 828 Abs. 2 BGB','§ 828 Abs. 1 BGB','§ 832 BGB','§ 110 BGB'],r:0,
+    fehler:{1:'§ 828 Abs. 1 BGB betrifft Kinder unter 7.',2:'§ 832 BGB regelt die Haftung der Eltern bei verletzter Aufsichtspflicht.',3:'§ 110 BGB ist der Taschengeldparagraf aus der Geschäftsfähigkeit.'},
+    e:'§ 828 Abs. 2 BGB: Sonderregel im Straßenverkehr für Kinder von 7 bis 9 Jahren, außer bei Absicht.'},
+
+  /* ---------- Stufe II: Anwenden ---------- */
+  {afb:2,art:'wahl',werkstatt:'strassenverkehr',f:'Clara (9) fährt mit dem Tretroller unaufmerksam gegen ein ordnungsgemäß geparktes Auto in Gera. Der Lack ist zerkratzt. Muss Clara haften?',
+    o:['Ja, wahrscheinlich – die Sonderregel greift bei parkenden Autos meist nicht, und eine Neunjährige hat in der Regel die nötige Einsicht.','Nein, mit 9 ist sie im Straßenverkehr immer geschützt.','Nein, Kinder unter 10 haften nie.','Ja, aber nur, wenn ihre Eltern zustimmen.'],r:0,
+    fehler:{1:'Die Sonderregel soll vor der Überforderung durch den fließenden Verkehr schützen. Bei einem parkenden Auto greift sie meist nicht (BGH, 2004).',2:'Kinder ab 7 können haften, wenn sie die nötige Einsicht haben.',3:'Die Zustimmung der Eltern spielt bei Schäden keine Rolle.'},
+    e:'Bei einem parkenden Auto fehlt die typische Überforderung durch den fließenden Verkehr. Dann zählt die Einsicht (§ 828 Abs. 3 BGB).'},
+  {afb:2,art:'wahl',werkstatt:'eltern',f:'Emil (5) bemalt mit Edding die Tapete im Wohnzimmer seiner Tante, während seine Mutter eine Stunde lang draußen telefoniert. Wer muss zahlen?',
+    o:['Emils Mutter, weil sie ihre Aufsichtspflicht verletzt hat','Emil selbst, weil er die Tapete bemalt hat','Niemand, weil Emil erst 5 ist','Die Tante, weil es ihre Wohnung ist'],r:0,
+    fehler:{1:'Mit 5 ist Emil deliktsunfähig (§ 828 Abs. 1 BGB).',2:'Emil haftet zwar nicht – aber seine Mutter hat einen Fünfjährigen eine Stunde allein gelassen.',3:'Die Tante ist die Geschädigte. Sie müsste den Schaden nur tragen, wenn niemand haftet.'},
+    e:'Emil ist deliktsunfähig. Seine Mutter hat ihre Aufsichtspflicht verletzt und haftet nach § 832 BGB.'},
+  {afb:2,art:'zuordnen',p:2,f:'Haftet die Person für den Schaden? Wähle für jeden Fall das passende Ergebnis.',
+    faecher:[{id:'ja',t:'Haftet'},{id:'nein',t:'Haftet nicht'}],
+    karten:[
+      {t:'Lisa (9) nimmt mit dem Rad einem Auto die Vorfahrt, das Auto rammt ein parkendes Auto.',f:'nein',werkstatt:'strassenverkehr'},
+      {t:'Paul (9) fährt mit dem Rad gegen ein parkendes Auto.',f:'ja',werkstatt:'strassenverkehr'},
+      {t:'Tom (17) stößt betrunken eine Musikbox vom Tisch.',f:'ja',werkstatt:'einsicht'},
+      {t:'Jakob (15) wird von einer Sturmböe gegen ein E-Bike gedrückt, das umfällt.',f:'nein',werkstatt:'haftung'}],
+    e:'Lisa: Sonderregel im Straßenverkehr (§ 828 Abs. 2 BGB). Paul: parkendes Auto, Einsicht vorhanden. Tom: selbst verschuldeter Rausch (§ 827 S. 2 BGB). Jakob: kein Verschulden.'},
+  {afb:2,art:'zahl',werkstatt:'eltern',einheit:'Jahre',
+    f:'Finn (17) zerkratzt beim Skaten in Jena ein Auto: 1.500 € Schaden. Eine gute Familienhaftpflicht kostet rund 50 € im Jahr (Stiftung Warentest, Mai 2026). Wie viele Jahre Beitrag entsprechen dem Schaden?',
+    r:30,tol:0,
+    fehler:[{wert:1550,text:'Du hast addiert. Gefragt ist, wie oft der Jahresbeitrag in den Schaden passt: teilen.'},{wert:0.03,text:'Andersherum: Teile den Schaden durch den Jahresbeitrag.'},{wert:3,text:'Prüf die Nullen: 1.500 geteilt durch 50.'}],
+    e:'1.500 € : 50 € = 30 Jahre Beitrag. Eine Haftpflicht lohnt sich vor allem bei großen Schäden, etwa wenn Menschen verletzt werden.'},
+  {afb:2,art:'zahl',werkstatt:'haftung',einheit:'€',
+    f:'Herr Labuhn hat einen Schaden von 1.500 €. Weil er selbst zu schnell war, trägt er ein Drittel davon selbst (Mitverschulden, § 254 BGB). Wie viel zahlt die Versicherung des Simson-Fahrers?',
+    r:1000,tol:0,
+    fehler:[{wert:500,text:'500 € ist das Drittel, das Herr Labuhn selbst trägt. Gefragt ist der Rest.'},{wert:1500,text:'Herr Labuhn trägt ein Drittel selbst. Zieh diesen Anteil ab.'},{wert:750,text:'Nicht die Hälfte – ein Drittel trägt Herr Labuhn selbst.'}],
+    e:'1.500 € : 3 = 500 € trägt Herr Labuhn. 1.500 € − 500 € = 1.000 € zahlt die Versicherung.'},
+  {afb:2,art:'offen',op:'erklären',werkstatt:'strassenverkehr',
+    f:'Lisa (9) nimmt mit dem Rad einem Auto die Vorfahrt, Paul (9) fährt gegen ein parkendes Auto. Erkläre, warum Lisa nicht haftet, Paul aber schon.',
+    anfaenge:['Lisa haftet nicht, weil …','Bei Paul ist es anders, denn …','Die Sonderregel soll …'],
+    erwartung:[
+      {t:'Lisa: Kinder von 7 bis 9 haften nicht bei einem Unfall mit einem fahrenden Kraftfahrzeug, wenn sie nicht absichtlich handeln (§ 828 Abs. 2 BGB).',w:[['828','sonderregel','straßenverkehr','strassenverkehr'],['fahrend','unfall','kraftfahrzeug','auto']],tipp:'Welche Sonderregel gilt für Kinder von 7 bis 9 Jahren?'},
+      {t:'Paul: Bei einem parkenden Auto greift die Sonderregel meist nicht, es kommt auf die Einsicht an (§ 828 Abs. 3 BGB), und die hat ein Neunjähriger in der Regel.',w:[['park','geparkt'],['einsicht']],tipp:'Warum hilft Paul die Sonderregel nicht – und was wird stattdessen geprüft?'},
+      {t:'Zweck: Kinder unter 10 können Tempo und Abstand fahrender Fahrzeuge noch nicht sicher einschätzen.',w:[['tempo','geschwindigkeit','abstand','entfernung','überford','einschätz']],tipp:'Warum gibt es die Sonderregel überhaupt?'}],
+    muster:'Lisa haftet nicht, weil für Kinder von 7 bis 9 Jahren die Sonderregel im Straßenverkehr gilt: Bei einem Unfall mit einem fahrenden Auto sind sie nicht verantwortlich, wenn sie nicht absichtlich handeln (§ 828 Abs. 2 BGB). Bei Paul ist es anders, denn das Auto war geparkt. Die Sonderregel soll Kinder schützen, weil sie Tempo und Abstand fahrender Autos noch nicht sicher einschätzen können. Ein parkendes Auto überfordert sie nicht. Deshalb kommt es bei Paul auf die Einsicht an (§ 828 Abs. 3 BGB), und die hat ein Neunjähriger in der Regel. Paul haftet.'},
+
+  /* ---------- Stufe III: Beurteilen ---------- */
+  {afb:3,art:'offen',op:'Stellung nehmen',werkstatt:'eltern',
+    material:'<b>Schlagzeile (erfunden):</b> „Thüringer fordern: Eltern sollen für alles haften, was ihre Kinder kaputtmachen!“',
+    f:'Nimm Stellung zu dieser Forderung.',
+    anfaenge:['Bisher gilt: …','Für die Forderung spricht …','Dagegen spricht …','Ich finde …, weil …'],
+    erwartung:[
+      {t:'Rechtslage: Eltern haften nur, wenn sie ihre Aufsichtspflicht verletzt haben (§ 832 BGB).',w:[['aufsichtspflicht','832']],tipp:'Wann haften Eltern heute?'},
+      {t:'Pro: Geschädigte blieben nicht mehr auf dem Schaden sitzen, etwa bei Kindern unter 7.',w:[['geschädigt','sitzen','opfer','nachbar']],tipp:'Wem würde die Forderung helfen?'},
+      {t:'Contra: Eltern können nicht jede Sekunde aufpassen, Jugendliche sollen selbst Verantwortung lernen, und Eltern würden für Dinge haften, die sie nicht verhindern konnten.',w:[['verantwort','selbst','jede sekunde','ständig','unfair','verhinder']],tipp:'Was spricht aus Sicht der Eltern und der Jugendlichen dagegen?'},
+      {t:'Eigenes, begründetes Urteil.',w:'urteil',tipp:'Komm am Ende zu deinem eigenen Urteil („Insgesamt finde ich …, weil …“).'}],
+    muster:'Bisher gilt: Eltern haften nur, wenn sie ihre Aufsichtspflicht verletzt haben (§ 832 BGB). Für die Forderung spricht, dass Geschädigte dann nicht mehr auf dem Schaden sitzen bleiben, zum Beispiel der Nachbar, dessen Zaun ein Fünfjähriger beschädigt. Dagegen spricht, dass Eltern nicht jede Sekunde aufpassen können und dann für Dinge haften würden, die sie gar nicht verhindern konnten. Außerdem sollen Jugendliche lernen, selbst Verantwortung zu übernehmen. Insgesamt finde ich die heutige Regel besser, weil sie Eltern nur dann in die Pflicht nimmt, wenn sie wirklich etwas falsch gemacht haben. Gegen große Schäden hilft eine Haftpflichtversicherung.'},
+  {afb:3,art:'offen',op:'beurteilen',werkstatt:'einsicht',
+    material:'<b>Fiktiver Beitrag:</b> „Bin auf der Party betrunken gegen den Fernseher gefallen. Kann ja nix dafür, war ja voll. 🤷“ – @tom.weimar, fiktiv',
+    f:'Beurteile, ob Tom (17) den Fernseher bezahlen muss.',
+    anfaenge:['Tom ist …','Er beruft sich darauf, dass …','Allerdings …','Im Ergebnis …'],
+    erwartung:[
+      {t:'Tom ist mit 17 beschränkt deliktsfähig und hat die nötige Einsicht (§ 828 Abs. 3 BGB).',w:[['beschränkt','einsicht','828']],tipp:'Auf welcher Stufe der Deliktsfähigkeit steht Tom?'},
+      {t:'Wer sich selbst betrinkt, haftet, als hätte er fahrlässig gehandelt (§ 827 S. 2 BGB). Die Ausrede zählt nicht.',w:[['827','selbst','rausch','betrunken']],tipp:'Was sagt § 827 BGB über einen Rausch, den man selbst verschuldet hat?'},
+      {t:'Begründetes Ergebnis: Tom muss den Fernseher bezahlen.',w:'urteil',tipp:'Komm zu einem klaren Ergebnis und begründe es.'}],
+    muster:'Tom ist 17 und damit beschränkt deliktsfähig. Er hat die nötige Einsicht, denn ein Siebzehnjähriger weiß, dass ein Fernseher kaputtgehen kann (§ 828 Abs. 3 BGB). Er beruft sich darauf, dass er betrunken war. Allerdings haftet nach § 827 S. 2 BGB trotzdem, wer sich selbst durch Alkohol in einen Rausch versetzt, so als hätte er fahrlässig gehandelt. Insgesamt muss Tom den Fernseher deshalb bezahlen, weil er selbst schuld an seinem Rausch ist.'}
+  ]
+};

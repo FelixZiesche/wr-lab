@@ -48,7 +48,7 @@ for (const breite of [390, 1280]) for (const schema of ['light', 'dark']) {
       const themen = await page.evaluate(async () => (await import('/themen.js')).THEMEN.map(t => t.id));
       for (const id of themen) {
         await page.goto(`/${id}/`);
-        await expect(page.locator('#view .card').first()).toBeVisible();
+        await expect(page.locator('#view :is(.card, .ls-plan-btn)').first()).toBeVisible();
         fehler.push(...await ganzeSeite(page, `${id} Start`));
         const bereiche = await page.locator('#rail-items [data-dest]').evaluateAll(b => b.map(x => x.dataset.dest));
         expect(bereiche.length, id).toBeGreaterThan(1);
@@ -57,10 +57,18 @@ for (const breite of [390, 1280]) for (const schema of ['light', 'dark']) {
           await expect(page.locator('#view-title')).toBeVisible();
           if (b !== 'start') fehler.push(...await ansicht(page, `${id}#${b}`));
           // Werkstätten: nur das Fenster, der gesperrte Hintergrund ist als Bereich schon geprüft
-          for (const w of await page.locator('#view [data-tool]').evaluateAll(els => els.map(e => e.dataset.tool))) {
+          for (const w of new Set(await page.locator('#view [data-tool]').evaluateAll(els => els.map(e => e.dataset.tool)))) {
             await zeige(page, w);
             await expect(page.locator('#modal-body > *').first()).toBeVisible();
             fehler.push(...await ansicht(page, `${id}#${w}`, '#modal'));
+            // Lektion einer Lernstrecke: auch die Stationen 2 bis 4 (zu sehen ist immer nur eine)
+            for (const [i, schritt] of (await page.locator('#modal .ls-schritt').all()).entries()) {
+              if (!i) continue;
+              await schritt.click();
+              await expect(page.locator(`#modal [data-ls-station="${i}"]`)).toBeVisible();
+              fehler.push(...await ansicht(page, `${id}#${w} Station ${i + 1}`, '#modal'));
+            }
+            if (await page.locator('#modal .ls-schritt').count()) await page.locator('#modal .ls-schritt').first().click();
             await zeige(page, b);
             await expect(page.locator('#modal')).toBeHidden();
           }

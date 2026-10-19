@@ -13,6 +13,7 @@ public/                 nur dieser Ordner wird veröffentlicht
     css/m3.css          Material Design 3: Farbrollen, Typografie, Komponenten, App-Shell
     js/ui.js            Hilfsfunktionen, Foto mit Infopunkten
     js/werkstatt.js     Gerüst einer Lernwerkstatt (Navigation, Werkstätten, Erkenntnisse, Glossar, Lehrerpanel)
+    js/lernstrecke.js   Lernstrecke: Übersichtsseite und Lektionen (Fall, Entdecken, Sichern, Anwenden), baut auf werkstatt.js auf
     js/lernraum.js      Lernraum: ein Live-Raum pro Thema für Werkstätten und Planspiel, Lehrkraft-Dashboard
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“
@@ -103,9 +104,9 @@ Jedes Thema endet mit einem Wissenscheck, damit die Schüler ihr Wissen abschlie
 - **Wiederholen:** Jede Aufgabe nennt in `werkstatt` die Werkstatt, die bei Fehlern vorgeschlagen wird.
 - **KI:** Das Feedback ohne KI kommt aus `feedback.js`. Eine KI direkt in der Seite nur nach Freigabe durch die Schule (Datenschutz, Vertrag zur Auftragsverarbeitung) und dann nur in `feedback.js`. Kostenlose KI-Schnittstellen mit Schülertexten sind tabu (Nutzungsbedingungen, Training mit den Daten, Server außerhalb der EU).
 
-## Muster für künftige Themen: Lernstrecke
+## Muster: Lernstrecke
 
-Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** geplant, angelehnt an die Methode der Lernwerkstätten von Steve Wagner (steve-wagner.de). Übernommen werden nur Idee und Aufbau. Code, Texte und Bilder von dort sind geschützt und werden nie kopiert.
+Neben den Lernwerkstätten (Werkstätten nach Bereichen) gibt es die **Lernstrecke**: `createLernstrecke()` aus `shared/js/lernstrecke.js`, Muster: `deliktsfaehigkeit/`. Sie ist angelehnt an die Methode der Lernwerkstätten von Steve Wagner (steve-wagner.de). Übernommen werden nur Idee und Aufbau. Code, Texte und Bilder von dort sind geschützt und werden nie kopiert.
 
 - **Übersichtsseite:** Leitfrage, „Was ihr danach könnt“ (Lernziele), zwei Wege (allein oder im Lernraum), Lektionsplan (zeigt im Lernraum, wo die Klasse steht), Tafelbild der ganzen Reihe, Datenschutz.
 - **Lektionen** als eigene Ansichten, immer im selben Rhythmus:
@@ -115,7 +116,7 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
   4. **Anwenden:** neuer Fall, Antwort an die Wand, Gesprächsimpuls
 - Pro Station Sozialform (Einzelarbeit, mit der Klasse) und gestufte Hilfen (Satzanfänge, Tipp, Denk weiter).
 - Die Leitfrage wird in Lektion 1 gestellt und in der letzten Lektion beantwortet, mit Blick zurück auf die eigene Vermutung. Am Ende der Wissenscheck.
-- Bausteine dafür gibt es schon (`aufgaben.js`, Lernraum). Neu zu bauen wären die Übersichtsseite und die Lektionsnavigation in `shared/`.
+- Technik: Jede Lektion ist eine Werkstatt mit vier Stationen (`L.lektion({…, stationen:[…], tafel})`). Die Erkenntnis steht automatisch in der Station „Sichern“, ihr Tafelbild-Teil erscheint auf der Übersicht, sobald sie gesichert ist. „Alle holen nach …“ im Lernraum zeigt allen im Lektionsplan, wo die Klasse steht. Neue Firestore-Felder braucht es nicht.
 
 ## Bilder
 
@@ -152,9 +153,9 @@ Für das nächste neue Thema ist (noch nicht umgesetzt) eine **Lernstrecke** gep
    - Schriften über `../shared/vendor/fonts/fonts.css`, neue Icons in `icons.txt` (siehe Design)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
    - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
-   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
+   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, bei einer Lernstrecke auch `lernstrecke.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
-4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
+4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen (für eine Lernstrecke `createLernstrecke({...})`, Muster `deliktsfaehigkeit/deliktsfaehigkeit.js`) mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
    - IDs von Bereichen und Werkstätten dürfen nicht gleich sein, sonst führen Adressen wie `#faelle` und Knöpfe zum Wiederholen an die falsche Stelle.
    - Werkstätten mit `tool({id, ch, title, sub, hinweise, html(), init(root)})` anlegen.
    - Jede Werkstatt hat einen Auftrag (`<p class="task">`), eine Frage an die Wand (`schreibfeld` mit Satzanfängen und `erwartung`) mit Gesprächsimpuls (`impuls`) und eine Erkenntnis (`erkHTML` / `bindErk`).
