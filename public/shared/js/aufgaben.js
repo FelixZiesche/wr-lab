@@ -16,6 +16,7 @@
 //   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
 //   labyrinth(…) aus labyrinth.js                                     Labyrinth-Spiel mit Figur, wird hier mitgebunden
 //   chatgeschichte(…) aus chat.js                                     Chat-Abenteuer mit Entscheidungen, wird hier mitgebunden
+//   Klassen-Quiz aus quiz.js                                          jeder Wissenscheck lässt sich im Lernraum als Quiz spielen
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
 // id: Kleinbuchstaben, Ziffern, Bindestrich (max. 40 Zeichen), eindeutig im Thema. Texte in frage, tipp usw. dürfen HTML enthalten.
@@ -24,6 +25,7 @@ import { raum, registriere } from './lernraum.js';
 import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
 import { bindLabyrinth } from './labyrinth.js';
 import { bindChat } from './chat.js';
+import { quizAnmelden, quizHTML, bindQuiz } from './quiz.js';
 
 const key=(art,id)=>`${raum.speicher()}-${art}-${id}`;
 const kopf=(icon,text)=>`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">${icon}</span>${text}</p>`;
@@ -253,7 +255,7 @@ const TIPP_STANDARD={1:'Wiederhole deine Merksätze und schlag Fachbegriffe unte
   3:'Beim Beurteilen hilft das Schema: Kriterien nennen, Pro und Contra abwägen, begründet urteilen.'};
 const ARTEN={wahl:['radio_button_checked','Auswahl'],mehrfach:['check_box','Mehrfachauswahl'],richtigfalsch:['rule','Richtig oder falsch'],
   zahl:['calculate','Rechnen'],reihe:['format_list_numbered','Reihenfolge'],zuordnen:['category','Zuordnen'],offen:['edit_note','Offene Aufgabe']};
-const CHECKS=new Map(), ERGEBNIS=new Map();
+const CHECKS=new Map(), ERGEBNIS=new Map(), NEU_LADEN=new Map();
 const punkteVon=a=>a.p??(a.art==='offen'?a.erwartung.length:a.afb);
 const fmtP=x=>String(Math.round(x*2)/2).replace('.',',');
 const streuwert=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -326,10 +328,11 @@ function aufgabeHTML(id,a,i){
 export function wissenscheck(def){
   const {id,titel,aufgaben}=def;
   CHECKS.set(id,def);
+  quizAnmelden(def,{bewerte,punkteVon,loesungHTML,mischen,streuwert,eintragen,STUFEN});
   registriere({id,frage:titel,loesung:aufgaben.map((a,i)=>`<b>Aufgabe ${i+1}</b> (${STUFEN[a.afb].name}): ${loesungHTML(a)}`),ki:kiAnweisung(def),
     check:{stufen:[1,2,3].map(k=>STUFEN[k].name),aufgaben:aufgaben.map((a,i)=>({afb:a.afb,p:punkteVon(a),kurz:`Aufgabe ${i+1}: ${plain(a.f).slice(0,70)}`}))}});
   const zahlen=k=>aufgaben.filter(a=>a.afb===k).length;
-  return `<section class="wc stack" data-wc="${id}">
+  return `<section class="wc stack" data-wc="${id}">${quizHTML(id)}
   <div class="panel stack wc-kopf"><div class="row" style="justify-content:space-between"><h3 class="title-m">${titel}</h3><span class="small muted num" data-wc-gesamt></span></div>
     <div class="wc-tabs" role="group" aria-label="Stufe wählen">${[1,2,3].map(k=>`<button type="button" data-wc-tab="${k}"><span>${STUFEN[k].name}</span><span class="wc-tab-n num" data-wc-n="${k}">0/${zahlen(k)}</span></button>`).join('')}<button type="button" data-wc-tab="0"><span class="ms sm" aria-hidden="true">insights</span><span>Auswertung</span></button></div></div>
   ${[1,2,3].map(k=>`<div class="stack" data-wc-stufe="${k}" hidden><p class="small muted"><b>${STUFEN[k].afb}:</b> ${STUFEN[k].was}</p>
@@ -380,6 +383,16 @@ function wcLaden(roh,A,K){
   // Sonst die Punkte aus der Antwort neu berechnen, falls sich Punktzahl oder Toleranz geändert haben.
   K.forEach((k,i)=>{const s=st.k[k];if(!s)return;if(!passt(A[i],s))delete st.k[k];else if(s.f)s.p=bewerte(A[i],s)});
   return st;
+}
+/** Klassen-Quiz: Antwort w (wie im Wissenscheck gespeichert) für Aufgabe i übernehmen, wenn sie dort noch offen ist.
+ *  So zählt sie auch in der Auswertung und im Dashboard. Ein offener Wissenscheck lädt den Stand neu. */
+function eintragen(id,i,w){
+  const def=CHECKS.get(id);if(!def)return;
+  const A=def.aufgaben,K=aufgabenSchluessel(A),st=wcLaden(store(key('wc',id)),A,K);
+  if(!A[i]||(st.k[K[i]]&&st.k[K[i]].f))return;
+  const x={w,f:true};x.p=bewerte(A[i],x);st.k[K[i]]=x;store(key('wc',id),st);
+  const code=ergebnisCode(A,j=>st.k[K[j]]);ERGEBNIS.set(id,code);raum.sendeErgebnis(code);
+  const f=NEU_LADEN.get(id);if(f)f();
 }
 raum.on(art=>{
   if(art==='start'||art==='verbunden')ERGEBNIS.forEach(code=>raum.sendeErgebnis(code));
@@ -544,6 +557,8 @@ function bindWissenscheck(box){
     });
     zeichne(i,true);
   });
+  // Klassen-Quiz: neuer Stand aus dem Speicher (eintragen())
+  NEU_LADEN.set(id,()=>{if(!document.body.contains(box))return NEU_LADEN.delete(id);st=wcLaden(store(key('wc',id)),A,K);$$('.wc-a',box).forEach(art=>zeichne(+art.dataset.wcI,true));kopf()});
   sichern();zeigeStufe(st.tab??1,false);
 }
 
@@ -882,4 +897,5 @@ export function bindAufgaben(root){
   einmal('[data-abst]',zeichneAbst);
   einmal('[data-labyrinth]',bindLabyrinth);
   einmal('[data-chat]',bindChat);
+  einmal('[data-quiz]',bindQuiz);
 }

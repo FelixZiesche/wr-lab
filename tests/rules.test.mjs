@@ -2,6 +2,8 @@
 import { test, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 
 let env;
 const CODE = 'K7Q2XM';
@@ -170,6 +172,47 @@ test('Live-Abstimmung: Umfrage nur von der Lehrkraft, Stimme nur als kleine Zahl
   await assertFails(ich.set({ stimme: { n: 1, w: 'wirksam' } }, { merge: true }));
   await assertFails(ich.set({ stimme: { n: 1, w: 1, text: 'Begründung' } }, { merge: true }));
   await assertFails(db('fremd').doc(`rooms/${CODE}/players/schueler`).set({ stimme: { n: 1, w: 0 } }, { merge: true }));
+});
+
+test('Klassen-Quiz: Steuerung nur von der Lehrkraft ohne Spitznamen, eine Antwort pro Frage mit Serverzeit, nur während die Frage läuft', async () => {
+  const raumRef = uid => db(uid).doc(`rooms/${CODE}`);
+  const quiz = (extra = {}) => ({ id: 'wissenscheck', n: 1, ph: 'frage', i: 3, nr: 1, von: 10, t: new Date(), s: 30, team: 0, ...extra });
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: quiz({ ph: 'lobby' }) }));
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: quiz({ ph: 'auf', pkt: { schueler: [870, 870, 1, 1] }, teams: [870, 0] }) }));
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: { id: '', n: 1, ph: '' } }));
+  await assertFails(raumRef('schueler').update({ quiz: quiz() }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ ph: 'gewonnen' }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ i: 60 }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ team: 7 }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ s: 601 }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ top: ['Testi'] }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: quiz({ teams: [1, 2, 3, 4, 5, 6, 7] }) }));
+  await assertFails(raumRef('lehrkraft').update({ quiz: { id: 'wissenscheck', n: 1 } }));
+
+  const jetzt = firebase.firestore.FieldValue.serverTimestamp();
+  const ich = db('schueler').doc(`rooms/${CODE}/players/schueler`);
+  // Läuft keine Frage, nimmt der Raum keine Antwort an
+  await assertFails(ich.set({ q: { n: 1, w: 2, at: jetzt } }, { merge: true }));
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: quiz() }));
+  // Zeitpunkt nur vom Server, Antwort nur als Zahl, nur zum laufenden Durchgang
+  await assertFails(ich.set({ q: { n: 1, w: 2, at: new Date(Date.now() - 20000) } }, { merge: true }));
+  await assertFails(ich.set({ q: { n: 1, w: 'die Inflation', at: jetzt } }, { merge: true }));
+  await assertFails(ich.set({ q: { n: 2, w: 2, at: jetzt } }, { merge: true }));
+  await assertFails(ich.set({ q: { n: 1, w: 2, at: jetzt, text: 'Begründung' } }, { merge: true }));
+  await assertSucceeds(ich.set({ q: { n: 1, w: 2, at: jetzt } }, { merge: true }));
+  // Eine Antwort pro Frage; andere Felder ändern geht weiter
+  await assertFails(ich.set({ q: { n: 1, w: 0, at: jetzt } }, { merge: true }));
+  await assertSucceeds(ich.set({ ort: 'wissenscheck', team: 2 }, { merge: true }));
+  await assertFails(ich.set({ team: 7 }, { merge: true }));
+  // Nach dem Ende der Frage keine Antwort mehr, in der nächsten Frage wieder
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: quiz({ ph: 'zu' }) }));
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}/players/lehrkraft`).set(player({ expireAt: new Date(Date.now() + 3600e3) })));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}/players/lehrkraft`).set({ q: { n: 1, w: 1, at: jetzt } }, { merge: true }));
+  await assertSucceeds(raumRef('lehrkraft').update({ quiz: quiz({ n: 2, i: 5, nr: 2 }) }));
+  await assertSucceeds(ich.set({ q: { n: 2, w: 1.5, at: jetzt } }, { merge: true }));
+  // Beim Beitreten noch keine Antwort, fremde Einträge nie
+  await assertFails(db('neu').doc(`rooms/${CODE}/players/neu`).set(player({ q: { n: 2, w: 1, at: jetzt }, expireAt: new Date(Date.now() + 3600e3) })));
+  await assertFails(db('fremd').doc(`rooms/${CODE}/players/schueler`).set({ q: { n: 2, w: 0, at: jetzt } }, { merge: true }));
 });
 
 test('Ablaufdatum: beim Anlegen Pflicht und höchstens 72 Stunden in der Zukunft, beim Ändern bleibt es', async () => {

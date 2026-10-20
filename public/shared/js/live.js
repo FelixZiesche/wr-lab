@@ -10,13 +10,14 @@
 //   live.uid                       → Kennung dieses Geräts
 //   live.createRoom(topic, gameId) → neuer Raumcode (6 Zeichen aus ABCDEFGHJKLMNPQRSTUVWXYZ23456789)
 //   live.getRoom(code)             → Raumdaten oder null: {owner, open, topic, gameId, round, phase, decisions}
-//                                    und für den Lernraum {pause, ziel, zielN, gesperrt, ki, umfrage:{id, n, auf}}
+//                                    und für den Lernraum {pause, ziel, zielN, gesperrt, ki, umfrage:{id, n, auf},
+//                                    quiz:{id, n, ph, i, nr, von, t, s, team, pkt, teams}}
 //   live.raumStatus(code)          → {raum} wie getRoom, {fehlt: true}, wenn es den Raum sicher nicht gibt,
 //                                    oder {fehler: true} bei einem Verbindungsproblem (dann nichts verwerfen)
 //   live.updateRoom(code, patch)   → nur das Gerät, das den Raum erstellt hat
 //   live.watchRoom(code, cb)       → cb(raum oder null), gibt eine Abmeldefunktion zurück (null nur, wenn der Server
 //                                    meldet, dass es den Raum nicht mehr gibt, nicht bei Verbindungsproblemen)
-//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, stimme:{n, w}, fig, r, ph, votes, checks, choices, stats, joinedAt}])
+//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, stimme:{n, w}, q:{n, w, at}, team, fig, r, ph, votes, checks, choices, stats, joinedAt}])
 //   live.watchMe(code, cb)         → cb(eigener Eintrag existiert: true/false)
 //   live.joinRoom(code, data)      → eigenen Eintrag anlegen
 //   live.updatePlayer(code, data)  → eigenen Eintrag ändern
@@ -25,6 +26,8 @@
 //   live.deleteAnswer(code, aufgabe, uid) → Antwort von der Wand löschen (ohne uid die eigene; fremde nur die Lehrkraft)
 //   live.watchAnswers(code, cb)    → cb([{uid, aufgabe, text, at}]), nur für die Lehrkraft
 //   live.closeRoom(code)           → Raum beenden: alle sehen „beendet“, danach werden alle Daten gelöscht
+//   live.zeit()                    → Platzhalter für die Uhrzeit des Servers (als Wert in updateRoom und updatePlayer).
+//                                    Gelesene Zeitstempel haben toMillis(); solange der Server sie noch nicht kennt, sind sie null.
 //
 // Die Zugangsdaten kommen automatisch von Firebase Hosting (/__/firebase/init.json).
 // Für Hosting außerhalb von Firebase kann vor dieser Datei window.FIREBASE_CONFIG gesetzt werden.
@@ -137,6 +140,7 @@ async function init() {
       return F.onSnapshot(F.collection(db, 'rooms', code, 'antworten'),
         s => cb(s.docs.map(d => d.data())), e => console.warn('Antworten', e));
     },
+    zeit: () => F.serverTimestamp(),
     async closeRoom(code) {
       // Zuerst schließen, damit alle Geräte „beendet“ anzeigen, dann löschen.
       // Einträge und Antworten der Schüler müssen vor dem Raum weg, weil die Regeln dafür den Raum prüfen.

@@ -6,6 +6,8 @@ rules_version = '2';
 // - Antworten „an die Wand“ sieht nur die Lehrkraft; jeder schreibt nur seine eigenen, solange er im Raum ist.
 // - Aus dem Wissenscheck kommen nur Punkte als kurze Zeichenkette (wc), nie Texte.
 // - Live-Abstimmung: Die Lehrkraft steuert die Umfrage im Raum, jede Stimme ist eine Zahl im eigenen Eintrag.
+// - Klassen-Quiz: Die Lehrkraft steuert das Quiz im Raum (ohne Spitznamen), jede Antwort ist eine Zahl im eigenen Eintrag,
+//   nur während die Frage läuft, nur eine pro Frage und mit der Uhrzeit des Servers (für die Punkte nach Tempo).
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 //   Ausnahme im Planspiel: Bei stats (Kennzahlen fürs Dashboard, je Thema verschieden) ist nur die Zahl der Schlüssel
@@ -29,7 +31,7 @@ service cloud.firestore {
     }
 
     function validRoom(d) {
-      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','createdAt','expireAt'])
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','quiz','createdAt','expireAt'])
         && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
         && d.owner is string
         && d.open is bool
@@ -48,12 +50,38 @@ service cloud.firestore {
         && (!('umfrage' in d) || (d.umfrage is map && d.umfrage.keys().hasOnly(['id','n','auf']) && d.umfrage.keys().hasAll(['id','n','auf'])
             && d.umfrage.id is string && (d.umfrage.id == '' || isSlug(d.umfrage.id, 40))
             && d.umfrage.n is int && d.umfrage.n >= 0 && d.umfrage.n <= 100000 && d.umfrage.auf is bool))
+        && (!('quiz' in d) || validQuiz(d.quiz))
         && (!('createdAt' in d) || isTime(d.createdAt))
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
+    // Klassen-Quiz: id des Wissenschecks (leer = keins), n = Durchgang (eine Frage), ph = Phase, i = Aufgabe im Wissenscheck,
+    // nr und von = Fortschritt, t = Start der Frage (Serverzeit), s = Sekunden (0 = ohne Zeitlimit), team = Zahl der Teams,
+    // pkt = Punkte pro Gerät (Kennung → [gesamt, plus, platz, serie]), teams = Punkte pro Team
+    function validQuiz(q) {
+      return q is map && q.keys().hasOnly(['id','n','ph','i','nr','von','t','s','team','pkt','teams']) && q.keys().hasAll(['id','n','ph'])
+        && q.id is string && (q.id == '' || isSlug(q.id, 40))
+        && q.n is int && q.n >= 0 && q.n <= 100000
+        && q.ph in ['', 'lobby', 'frage', 'zu', 'auf', 'ende']
+        && (!('i' in q) || (q.i is int && q.i >= 0 && q.i < 60))
+        && (!('nr' in q) || (q.nr is int && q.nr >= 0 && q.nr <= 60))
+        && (!('von' in q) || (q.von is int && q.von >= 0 && q.von <= 60))
+        && (!('t' in q) || isTime(q.t))
+        && (!('s' in q) || (q.s is int && q.s >= 0 && q.s <= 600))
+        && (!('team' in q) || (q.team is int && q.team >= 0 && q.team <= 6))
+        && (!('pkt' in q) || (q.pkt is map && q.pkt.size() <= 100))
+        && (!('teams' in q) || (q.teams is list && q.teams.size() <= 6));
+    }
+    // Neue Antwort im Klassen-Quiz: Uhrzeit des Servers, nur während die Frage läuft, nur eine pro Frage
+    function neueQuizAntwort(code) {
+      let q = request.resource.data.q;
+      let alt = resource.data.get('q', null);
+      let r = room(code).get('quiz', null);
+      return q.at == request.time && r != null && r.ph == 'frage' && q.n == r.n && (alt == null || alt.n != q.n);
+    }
+
     function validPlayer(d) {
-      return d.keys().hasOnly(['nick','ort','wc','stimme','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+      return d.keys().hasOnly(['nick','ort','wc','stimme','q','team','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
         && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
         && (!('ort' in d) || (d.ort is string && d.ort.size() <= 40))
         // Wissenscheck: ein Zeichen pro Aufgabe („-“ offen, „0“–„9“ Zehntel der Punkte, „a“ volle Punkte)
@@ -61,6 +89,10 @@ service cloud.firestore {
         // Stimme in der Live-Abstimmung: n = Durchgang, w = Index der Antwort
         && (!('stimme' in d) || (d.stimme is map && d.stimme.keys().hasOnly(['n','w']) && d.stimme.keys().hasAll(['n','w'])
             && d.stimme.n is int && d.stimme.n >= 0 && d.stimme.n <= 100000 && d.stimme.w is int && d.stimme.w >= 0 && d.stimme.w <= 9))
+        // Antwort im Klassen-Quiz: n = Durchgang, w = Antwort als Zahl (Index, 1/0, Bitmaske oder Ergebnis), at = Zeitpunkt
+        && (!('q' in d) || (d.q is map && d.q.keys().hasOnly(['n','w','at']) && d.q.keys().hasAll(['n','w','at'])
+            && d.q.n is int && d.q.n >= 0 && d.q.n <= 100000 && d.q.w is number && d.q.w >= -1000000000000 && d.q.w <= 1000000000000 && isTime(d.q.at)))
+        && (!('team' in d) || (d.team is int && d.team >= 0 && d.team <= 6))
         && (!('fig' in d) || isSlug(d.fig, 24))
         && (!('r' in d) || (d.r is int && d.r >= 0 && d.r <= 30))
         && (!('ph' in d) || (d.ph is string && d.ph.size() <= 20))
@@ -105,10 +137,12 @@ service cloud.firestore {
         allow create: if signedIn() && request.auth.uid == uid
           && room(code).open == true
           && validPlayer(request.resource.data)
+          && !('q' in request.resource.data)
           && validExpire(request.resource.data);
         allow update: if signedIn() && request.auth.uid == uid
           && room(code).open == true
           && validPlayer(request.resource.data)
+          && (request.resource.data.get('q', null) == resource.data.get('q', null) || neueQuizAntwort(code))
           && keepsExpire();
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(code));
       }

@@ -5,6 +5,8 @@
 // Aus dem Wissenscheck kommen nur Punkte (keine Texte); ein AIS.chat-Link der Lehrkraft schaltet den KI-Coach frei.
 // „Ihr seid das Gericht“: Die Lehrkraft startet eine Abstimmung (Raumfeld umfrage), die Handys zeigen sie in einem Fenster,
 // jede Stimme landet im eigenen Eintrag (Feld stimme), die Lehrkraft zählt und deckt auf.
+// Klassen-Quiz (quiz.js): Die Lehrkraft steuert das Quiz (Raumfeld quiz), jede Antwort ist eine Zahl im eigenen Eintrag (Feld q),
+// das Team steht im Feld team. Punkte und Plätze rechnet das Gerät der Lehrkraft aus, Spitznamen gehen nicht in den Raum.
 // Die Verbindung läuft ausschließlich über live.js. Eingebunden wird der Lernraum von werkstatt.js.
 // Bei einem Verbindungsproblem bleibt die Sitzung erhalten („Erneut verbinden“); verworfen wird nur ein Raum,
 // den es sicher nicht (mehr) gibt. Das Gerät der Lehrkraft merkt sich seinen offenen Raum pro Thema
@@ -152,7 +154,7 @@ export const raum={
     // Gibt es den eigenen Eintrag nicht mehr, wird er neu angelegt (mit Ablaufdatum, das verlangen die Regeln)
     try{if(gleich)await L.updatePlayer(code,{nick}).catch(()=>L.joinRoom(code,{nick,ort}));else await L.joinRoom(code,{nick,ort})}
     catch(e){console.warn(e);throw fehler('Beitreten hat nicht geklappt. Prüfe das WLAN und versuch es noch einmal.')}
-    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{},urteile:gleich?(s.urteile||{}):{}};speichern();gemeldet='';ergGemeldet='';
+    s={code,nick,rolle:'schueler',zielN:r.zielN||0,gesendet:gleich?(s.gesendet||{}):{},urteile:gleich?(s.urteile||{}):{},quiz:gleich?s.quiz:null,team:gleich?(s.team||0):0};speichern();gemeldet='';ergGemeldet='';
     await anbinden(true);melde('start');return r;
   },
   /** Schüler: Raum verlassen. Löscht den eigenen Eintrag und die eigenen Antworten an der Wand. */
@@ -199,6 +201,22 @@ export const raum={
   meineStimme(){const u=raum.umfrage();return s&&s.stimme&&u.id&&s.stimme.n===u.n?s.stimme.w:null},
   /** Schüler: eigenes Urteil zu einer aufgelösten Abstimmung {w} */
   urteil:id=>s&&s.urteile?s.urteile[id]:undefined,
+  /** Klassen-Quiz: laufendes Quiz {id, n, ph, i, nr, von, t, s, team, pkt, teams} oder {} */
+  quiz:()=>(z.raum&&z.raum.quiz&&z.raum.quiz.id)?z.raum.quiz:{},
+  /** Lehrkraft: das ganze Quiz-Feld setzen; zeit: true setzt t auf die Uhrzeit des Servers (Start der Frage) */
+  steuereQuiz:(q,zeit)=>steuern({quiz:zeit&&L?{...q,t:L.zeit()}:q}),
+  /** Schüler: Antwort auf die laufende Frage n (eine pro Frage, den Zeitpunkt setzt der Server) */
+  async quizAntwort(n,w){if(!s||s.rolle!=='schueler'||!L)return;s.quiz={n,w};speichern();melde('quiz');
+    try{await L.updatePlayer(s.code,{q:{n,w,at:L.zeit()}})}catch(e){if(s&&s.quiz&&s.quiz.n===n){s.quiz=null;speichern();melde('quiz')}throw e}},
+  /** Schüler: eigene Antwort auf die Frage n oder null */
+  quizMeins:n=>s&&s.quiz&&s.quiz.n===n?s.quiz.w:null,
+  /** Schüler: eigenes Team (0 = keins) und Team wählen */
+  team:()=>(s&&s.team)||0,
+  async waehleTeam(k){if(!s||s.rolle!=='schueler'||!L)return;s.team=k;speichern();melde('quiz');await L.updatePlayer(s.code,{team:k})},
+  /** Alle Werkstätten einmal zeichnen, damit ihre Aufgaben angemeldet sind (z. B. für ein Fenster, das der Raum öffnet) */
+  vorbereiten:()=>{if(cfg.vorbereiten)cfg.vorbereiten()},
+  /** Kennung dieses Geräts (für die eigenen Punkte im Quiz) */
+  uid:()=>L?L.uid:'',
   /** Titel einer Werkstatt oder eines Bereichs. */
   titel:id=>ortName(id),
   pause:b=>steuern({pause:!!b}),
@@ -218,11 +236,11 @@ export const raum={
 };
 
 /* ---------- Barrierefreiheit: Fehler an Feldern, Hintergrund sperren (neu zeichnen: neuZeichnen in ui.js) ---------- */
-/** Pause („Schau nach vorn“) und Abstimmungsfenster sind echt modal: alles dahinter wird inert (keine Tab-Stopps, kein Vorlesen). */
+/** Pause („Schau nach vorn“), Abstimmungsfenster und Quiz-Fenster sind echt modal: alles dahinter wird inert (keine Tab-Stopps, kein Vorlesen). */
 export function sperreHintergrund(){
-  const p=$('#lr-pause'),u=$('#lr-umfrage'),pause=!!p&&!p.hidden,umf=!!u&&!u.hidden;
-  ['.app','#modal'].forEach(sel=>{const e=$(sel);if(e)e.inert=pause||umf});
-  if(u)u.inert=pause;
+  const p=$('#lr-pause'),pause=!!p&&!p.hidden,fenster=['#lr-umfrage','#qz'].map(sel=>$(sel)).filter(Boolean),offen=fenster.some(f=>!f.hidden);
+  ['.app','#modal'].forEach(sel=>{const e=$(sel);if(e)e.inert=pause||offen});
+  fenster.forEach(f=>{f.inert=pause});
 }
 /** Fehlermeldung beim Beitreten zeigen (role=alert) und mit dem betroffenen Feld verknüpfen; felder = {code:'#…', nick:'#…'} */
 export function fehlerZeigen(root,box,err,felder){
@@ -265,7 +283,7 @@ function startDialog(box,code){
       <div class="fb bad" id="lr-oerr" role="alert" hidden></div>
       <div class="cta"><button class="btn" type="button" id="lr-open"><span class="ms" aria-hidden="true">cast_for_education</span>Lernraum öffnen</button></div></div>
   </div>
-  <p class="small muted" id="lr-datenschutz">Gespeichert werden nur dein Spitzname, wo du gerade arbeitest (die geöffnete Werkstatt), Antworten, die du abschickst, deine Stimmen bei Abstimmungen und deine Punkte im Wissenscheck (keine Texte), im Planspiel auch deine Figur und dein Spielstand. „Raum verlassen“ löscht deinen Eintrag und deine Antworten, „Raum beenden“ löscht alles sofort. <a href="/datenschutz.html">Mehr zum Datenschutz</a></p>`;
+  <p class="small muted" id="lr-datenschutz">Gespeichert werden nur dein Spitzname, wo du gerade arbeitest (die geöffnete Werkstatt), Antworten, die du abschickst, deine Stimmen bei Abstimmungen, deine Antworten im Klassen-Quiz (nur die gewählte Antwort und wann du sie gegeben hast) und deine Punkte im Wissenscheck (keine Texte), im Planspiel auch deine Figur und dein Spielstand. „Raum verlassen“ löscht deinen Eintrag und deine Antworten, „Raum beenden“ löscht alles sofort. <a href="/datenschutz.html">Mehr zum Datenschutz</a></p>`;
   const felder={code:'#lr-code',nick:'#lr-nick'},jerr=$('#lr-jerr',box),oerr=$('#lr-oerr',box);
   // Wer ein markiertes Feld korrigiert, bekommt es wieder als gültig angezeigt
   Object.values(felder).forEach(sel=>$(sel,box).addEventListener('input',e=>e.target.removeAttribute('aria-invalid')));
@@ -341,13 +359,13 @@ function dashboard(box){
   $('#lr-alle-zu',box).addEventListener('click',()=>raum.sperren(werk.map(o=>o.id)));
   // Knöpfe in den Teilen, die aktualisiere() neu zeichnet: Ereignisse per Delegation, damit nichts doppelt gebunden wird
   // Entfernen mit kurzer Rückfrage; die Antworten an der Wand nur auf Wunsch mitlöschen (Entfernen dient auch für doppelte Geräte)
-  $('#lr-dash',box).addEventListener('click',e=>{const b=e.target.closest('[data-lr-kick],[data-lr-wand],[data-lr-abst],#lr-druck,#lr-kick-y,#lr-kick-n');if(!b)return;
+  $('#lr-dash',box).addEventListener('click',e=>{const b=e.target.closest('[data-lr-kick],[data-lr-wand],[data-lr-abst],[data-lr-quiz],#lr-druck,#lr-kick-y,#lr-kick-n');if(!b)return;
     if(b.id==='lr-druck')return drucken();
     if(b.dataset.lrKick){kickFrage={uid:b.dataset.lrKick,antw:false};aktualisiere(box);$('#lr-kick-y',box)?.focus();return}
     if(b.id==='lr-kick-n'){const u=kickFrage&&kickFrage.uid;kickFrage=null;aktualisiere(box);$(`[data-lr-kick="${CSS.escape(u||'')}"]`,box)?.focus();return}
     if(b.id==='lr-kick-y'){const k=kickFrage;if(!k)return;b.disabled=true;
       raum.kick(k.uid,k.antw).then(()=>{kickFrage=null;aktualisiere(box)},x=>{console.warn(x);b.disabled=false;if(cfg.hinweis)cfg.hinweis('Entfernen hat nicht geklappt. Prüfe das WLAN und versuch es noch einmal.')});return}
-    if(cfg.gehZu)cfg.gehZu(b.dataset.lrWand||b.dataset.lrAbst)});
+    if(cfg.gehZu)cfg.gehZu(b.dataset.lrWand||b.dataset.lrAbst||b.dataset.lrQuiz)});
   $('#lr-dash',box).addEventListener('change',e=>{if(e.target.id==='lr-kick-antw'&&kickFrage)kickFrage.antw=e.target.checked});
   $('#lr-frei-liste',box).addEventListener('click',e=>{const b=e.target.closest('[data-frei]');if(!b)return;const id=b.dataset.frei,g=new Set((z.raum&&z.raum.gesperrt)||[]);g.has(id)?g.delete(id):g.add(id);raum.sperren([...g])});
   if($('#lr-ki',box)){
@@ -399,7 +417,9 @@ function wissenscheck(el,beamer){
   const stufen=[1,2,3].map(k=>({k,...quote(mit,a=>a.afb===k)}));
   const schwer=A.map((a,i)=>({i,a,...quote(mit,(b,j)=>j===i)})).filter(x=>x.n).sort((x,y)=>x.q-y.q).slice(0,3).filter(x=>x.q<75);
   const zelle=(sp,k)=>{const r=quote([sp],a=>a.afb===k);return r.n?`${r.q} %`:'–'};
+  const quiz=raum.quiz().id===chk.id;
   neuZeichnen(el,`<div class="row" style="justify-content:space-between"><h3 class="title-l">Wissenscheck</h3><span class="small muted">${mit.length} von ${z.spieler.length} haben Aufgaben bearbeitet</span></div>
+    ${chk.tool?`<div class="row"><button class="btn small" type="button" data-lr-quiz="${esc(chk.tool)}"><span class="ms" aria-hidden="true">quiz</span>Zum Klassen-Quiz</button>${quiz?'<span class="pill ok">läuft</span>':''}<span class="small muted">Alle spielen den Wissenscheck gleichzeitig, mit Rangliste. Die Antworten zählen auch hier.</span></div>`:''}
     ${mit.length?`<p class="small muted">Anteil der erreichten Punkte in den bearbeiteten Aufgaben</p>
     ${stufen.map(s=>`<div class="wc-erg"><div class="row" style="justify-content:space-between"><span class="title-s">${esc(N[s.k-1])}</span><span class="small num">${s.n?`${s.q} % · ${s.n} ${s.n===1?'Bearbeitung':'Bearbeitungen'}`:'noch nichts bearbeitet'}</span></div><div class="wc-balken" aria-hidden="true"><span style="width:${s.q||0}%"></span></div></div>`).join('')}
     ${schwer.length?`<div><p class="title-s">Am schwierigsten</p><ul class="small">${schwer.map(x=>`<li>${esc(x.a.kurz)} … – ${x.q} %</li>`).join('')}</ul></div>`:''}
