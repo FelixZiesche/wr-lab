@@ -19,6 +19,7 @@ public/                 nur dieser Ordner wird veröffentlicht
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“
     js/labyrinth.js     Labyrinth-Spiel: Figur steuern (Tastatur, Wischen, Steuerkreuz, Antippen), Nebel, Würfel-Tore
     js/chat.js          Chat-Abenteuer: Geschichte als Messenger-Chat mit Entscheidungen, Rechts-Checks und mehreren Enden
+    js/quiz.js          Klassen-Quiz: Wissenscheck im Lernraum gemeinsam spielen (Punkte nach Tempo, Teams, Rangliste)
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
@@ -77,7 +78,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 ## Lernraum und Aufgaben
 
 - **Ein Raum pro Stunde und Thema:** Die Lehrkraft öffnet ihn über das Symbol „Lernraum“ (`cast_for_education`) oder im Planspiel. Schüler treten mit Code oder QR-Code (`#raum=CODE`, im Planspiel `#join=CODE`) und **Spitzname** bei. Keine PIN, keine Tier- oder Farbkennungen.
-- **Dashboard der Lehrkraft:** Teilnehmer und ihr aktueller Ort, „Alle anhalten“, „Alle holen nach …“, Werkstätten freigeben oder sperren, Beamer-Modus (keine Spitznamen, kein Lehrerpanel), Antworten drucken, Raum beenden.
+- **Dashboard der Lehrkraft:** Teilnehmer und ihr aktueller Ort, „Alle anhalten“, „Alle holen nach …“, Werkstätten freigeben oder sperren, Beamer-Modus (keine Spitznamen, kein Lehrerpanel), Antworten drucken, Raum beenden. Einzige Ausnahme beim Beamer-Modus: die Rangliste im Klassen-Quiz zeigt die Top 5 mit Spitznamen (Knopf „Spitznamen“ blendet sie aus), nie die letzten Plätze.
 - **Antworten „an die Wand“** kommen nur aus `schreibfeld()`. Sie liegen in `rooms/{code}/antworten`, sind höchstens 1000 Zeichen lang und nur für die Lehrkraft lesbar. „Raum beenden“ löscht sie.
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
   - Zuordnen: Fächer mit Fachbegriffen bekommen eine Erklärung hinter dem Hilfeknopf (`info`) und einen kurzen Namen für Lösungen (`kurz`). Karten nennen Person, Alter und Handlung, damit sie eindeutig sind.
@@ -85,6 +86,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
   - Geschichten mit Entscheidungen und Folgen: `chatgeschichte()` aus `shared/js/chat.js` (Muster: Mission Simson in `deliktsfaehigkeit/`). Die Geschichte läuft wie ein Messenger-Chat, ein Rechts-Check erklärt die Folgen, mehrere Enden laden zum Weiterspielen ein.
   - Nicht jedes Spiel als Labyrinth bauen: Die Form passt zur Geschichte und wechselt zwischen den Themen.
 - **Wissenscheck im Lernraum:** Es gehen nur Punkte an die Lehrkraft (Feld `wc` der Teilnehmer, ein Zeichen pro Aufgabe), nie Texte. Das Dashboard zeigt die Punkte pro Stufe, die schwierigsten Aufgaben und (nicht im Beamer-Modus) eine Tabelle mit Spitznamen.
+- **Klassen-Quiz** (`shared/js/quiz.js`, bindet sich über den Wissenscheck automatisch in jedes Thema ein): Die Lehrkraft spielt den Wissenscheck im Lernraum mit der Klasse (Feld `quiz` im Raum, Feld `q` und `team` der Teilnehmer). Gespielt werden nur geschlossene Aufgaben (Auswahl, Mehrfachauswahl, Richtig oder falsch, Rechnen), deshalb gehören in jeden Wissenscheck genug davon. Den Zeitpunkt jeder Antwort setzt der Server, eine Antwort pro Frage. Punkte und Plätze rechnet das Gerät der Lehrkraft, in den Raum kommen nur Punkte pro Gerät, nie Spitznamen. Die Antworten übernimmt der Wissenscheck der Schüler (zählt im Dashboard). Zeitlimit wählbar oder aus (WCAG 2.2.1), Teams tragen Namen Thüringer Flüsse.
 - **Live-Abstimmung „Ihr seid das Gericht“** (`abstimmung()`): Die Lehrkraft startet einen Fall in der Werkstatt (Feld `umfrage` im Raum: `id`, `n`, `auf`), alle Handys zeigen ihn in einem Fenster, jede Stimme ist nur eine kleine Zahl (Feld `stimme` der Teilnehmer: `n`, `w`). Die Balken sieht nur die Lehrkraft, „Auflösen“ zeigt allen das Urteil. Ohne Lernraum urteilen die Schüler allein.
 - **Rechtsthemen:** Prüfungsschemata als Rechts-Navi (`pruefschema()`) und Fälle als Fall-Akte (`fallakte()`) mit demselben Schema, Einstieg mit einer verdeckten Blitzrunde (`blitz()`), deren Auflösung am Ende kommt (`blitzAufloesung()`). Muster: `geschaeftsfaehigkeit/`.
   - Jeder Fall bekommt einen Steckbrief (`fakten`) und ein Foto (`bild`). Die Lösung steht als Liste von Sätzen im Gutachtenstil in `loesung`, dann bauen die Schüler das Gutachten selbst (Gutachten-Baukasten).
@@ -156,7 +158,7 @@ Neben den Lernwerkstätten (Werkstätten nach Bereichen) gibt es die **Lernstrec
    - Schriften über `../shared/vendor/fonts/fonts.css`, neue Icons in `icons.txt` (siehe Design)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
    - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
-   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, bei einer Lernstrecke auch `lernstrecke.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `chat.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
+   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, bei einer Lernstrecke auch `lernstrecke.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `chat.js`, `quiz.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
 4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen (für eine Lernstrecke `createLernstrecke({...})`, Muster `deliktsfaehigkeit/deliktsfaehigkeit.js`) mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
    - IDs von Bereichen und Werkstätten dürfen nicht gleich sein, sonst führen Adressen wie `#faelle` und Knöpfe zum Wiederholen an die falsche Stelle.

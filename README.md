@@ -1,6 +1,6 @@
 # WR-Lab
 
-Interaktive Lernwerkstätten für **Wirtschaft und Recht in den Klassen 9 bis 12** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Alles lässt sich allein bearbeiten oder als ganze Klasse im **Lernraum**: Die Lehrkraft öffnet einen Raum, die Schüler treten mit Code oder QR-Code bei, schicken Antworten an die Wand und spielen das Planspiel gemeinsam.
+Interaktive Lernwerkstätten für **Wirtschaft und Recht in den Klassen 9 bis 12** (Thüringen). Die Seite läuft im Browser, ohne Anmeldung und ohne Installation: am Handy, am Tablet und am Beamer. Alles lässt sich allein bearbeiten oder als ganze Klasse im **Lernraum**: Die Lehrkraft öffnet einen Raum, die Schüler treten mit Code oder QR-Code bei, schicken Antworten an die Wand, spielen den Wissenscheck als Klassen-Quiz mit Rangliste und das Planspiel gemeinsam.
 
 Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
@@ -30,6 +30,7 @@ public/                 wird veröffentlicht
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Wissenscheck,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“, Hilfen, Impuls
     js/chat.js          Chat-Abenteuer: Geschichte im Messenger, Entscheidungen, Rechts-Checks, mehrere Enden
+    js/quiz.js          Klassen-Quiz: den Wissenscheck im Lernraum gemeinsam spielen, mit Punkten nach Tempo, Teams und Rangliste
     js/labyrinth.js     Labyrinth-Spiel: Figur mit Tastatur, Wischen, Steuerkreuz oder Antippen, Nebel, Würfel-Tore
     js/feedback.js      Feedback ohne KI für den Wissenscheck
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
@@ -192,7 +193,7 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
    - **Alle anhalten:** Auf allen Handys erscheint „Schau nach vorn“, bis du weitermachst
    - **Alle holen nach …:** Alle Handys springen in dieselbe Werkstatt
    - **Werkstätten freigeben:** Gesperrte Werkstätten können die Schüler nicht öffnen
-   - **Beamer-Modus:** blendet Spitznamen und das Lehrerpanel aus, sobald das Dashboard für alle sichtbar ist
+   - **Beamer-Modus:** blendet Spitznamen und das Lehrerpanel aus, sobald das Dashboard für alle sichtbar ist. Ausnahme ist die Rangliste im Klassen-Quiz (Top 5, lässt sich mit **Spitznamen** ausblenden)
    - **Alle Antworten drucken:** Druckansicht mit allen Antworten, auch „Als PDF speichern“
    - **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht. Klappt das Löschen nicht (z. B. WLAN weg), bleibt der Raum im Dashboard und „Raum löschen“ lässt sich wiederholen
 4. **An der Wand:** Jede Werkstatt hat eine Frage mit Schreibfeld. Die Schüler tippen **Abschicken**, die Lehrkraft öffnet dieselbe Werkstatt am Beamer und deckt mit **Antworten zeigen** auf, wann es passt. Eine unpassende Antwort nimmt sie mit dem Papierkorb an der Karte von der Wand (mit kurzer Rückfrage, auch im Beamer-Modus).
@@ -224,6 +225,19 @@ Bei der Geschäftsfähigkeit unter **Fälle → Ihr seid das Gericht**:
 5. **Abstimmung beenden** schließt die Fenster auf den Handys. Danach den nächsten Fall starten.
 
 Übertragen wird nur die Nummer der gewählten Antwort. Ohne Lernraum fällen die Schüler ihr Urteil allein und sehen es sofort aufgelöst.
+
+### Klassen-Quiz
+
+Jeder Wissenscheck lässt sich im Lernraum als Quiz mit der ganzen Klasse spielen, ähnlich wie bekannte Quiz-Apps:
+
+1. Lernraum öffnen, im Dashboard **Zum Klassen-Quiz** (oder den Wissenscheck am Beamer öffnen).
+2. Einstellen: Zahl der Fragen, Stufe, Zeit pro Frage (20 bis 90 Sekunden oder ohne Zeitlimit, Rechenaufgaben doppelt so lang) und ob jeder für sich oder in 2 bis 6 Teams gespielt wird (Team Saale, Ilm, Unstrut, Werra, Gera, Schwarza). Dann **Quiz starten**.
+3. **Lobby:** Am Beamer stehen die Zahl der Geräte und ein QR-Code für Nachzügler. Bei Teams wählt jeder auf dem Handy sein Team.
+4. **Frage:** Am Beamer und auf allen Handys erscheinen Frage, Countdown und Antwortfelder mit Form und Farbe. Gespielt werden Auswahl, Mehrfachauswahl, Richtig oder falsch und Rechnen. Haben alle geantwortet oder ist die Zeit um, löst das Quiz auf. Die Lehrkraft kann auch früher **Auflösen** oder **15 Sekunden mehr** geben.
+5. **Lösung:** Am Beamer die Verteilung der Antworten mit der richtigen Lösung und Erklärung, auf den Handys das eigene Ergebnis, die Punkte und der Platz. Danach **Rangliste** (Top 5, bei Teams auch die Teams) und **Nächste Frage**.
+6. **Endstand:** Siegertreppchen am Beamer, der eigene Platz auf dem Handy. **Quiz beenden** schließt die Fenster.
+
+Punkte: bis 1000 pro Frage, wer schneller richtig antwortet, bekommt mehr (mindestens die Hälfte), Teilpunkte bei der Mehrfachauswahl, Bonus für mehrere richtige Antworten in Folge. Den Zeitpunkt jeder Antwort setzt der Server, eine Antwort pro Frage. Die Antworten übernimmt der Wissenscheck auf dem Handy, wenn die Aufgabe dort noch offen ist. So zählen sie auch in der Auswertung im Dashboard. Spitznamen zeigt nur das Gerät der Lehrkraft, in den Raum gehen nur Punkte pro Gerät.
 
 ### Wissenscheck
 
