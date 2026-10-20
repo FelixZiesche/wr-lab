@@ -20,6 +20,7 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/labyrinth.js     Labyrinth-Spiel: Figur steuern (Tastatur, Wischen, Steuerkreuz, Antippen), Nebel, Würfel-Tore
     js/chat.js          Chat-Abenteuer: Geschichte als Messenger-Chat mit Entscheidungen, Rechts-Checks und mehreren Enden
     js/quiz.js          Klassen-Quiz: Wissenscheck im Lernraum gemeinsam spielen (Punkte nach Tempo, Teams, Rangliste)
+    js/praesentation.js Präsentationsansicht: zweites Fenster für den Beamer (erweiterter Bildschirm), zeigt nur, was die Lehrkraft schickt
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
     js/planspiel.js     Planspiel-Grundmechanik (Runden, Abstimmung, Dashboard, Beamer-Modus)
     js/live.js          Verbindung zum Server – die EINZIGE Datei, die Firebase kennt
@@ -79,6 +80,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 
 - **Ein Raum pro Stunde und Thema:** Die Lehrkraft öffnet ihn über das Symbol „Lernraum“ (`cast_for_education`) oder im Planspiel. Schüler treten mit Code oder QR-Code (`#raum=CODE`, im Planspiel `#join=CODE`) und **Spitzname** bei. Keine PIN, keine Tier- oder Farbkennungen.
 - **Dashboard der Lehrkraft:** Teilnehmer und ihr aktueller Ort, „Alle anhalten“, „Alle holen nach …“, Werkstätten freigeben oder sperren, Beamer-Modus (keine Spitznamen, kein Lehrerpanel), Antworten drucken, Raum beenden. Einzige Ausnahme beim Beamer-Modus: die Rangliste im Klassen-Quiz zeigt die Top 5 mit Spitznamen (Knopf „Spitznamen“ blendet sie aus), nie die letzten Plätze.
+- **Präsentationsansicht** (`shared/js/praesentation.js`): Ein zweites Fenster im selben Browser (`?praesentation`) ist der Beamer, der Laptop bleibt der Bildschirm der Lehrkraft (Dashboard, Lehrerpanel, Lösungen, Spitznamen). Der Beamer folgt nicht, er zeigt nur, was die Lehrkraft schickt (Startbild, Quiz, Wand, Werkstatt). Was sich an die Klasse richtet, geht von selbst auf den Beamer (Quiz starten, „Antworten zeigen“). Im Beamer-Fenster gilt `raum.istLehrkraft()` nicht, dafür `raum.praesentation()`: Es schreibt nie in den Raum und zeigt Spitznamen nur in der Quiz-Rangliste. Die Fenster sprechen über einen BroadcastChannel, ohne neue Firestore-Felder. Zusatzinfos für die Lehrkraft (z. B. Lösung vorab im Quiz) nur, wenn `praes.verbunden()`, sonst ist der Laptop womöglich gespiegelt.
 - **Antworten „an die Wand“** kommen nur aus `schreibfeld()`. Sie liegen in `rooms/{code}/antworten`, sind höchstens 1000 Zeichen lang und nur für die Lehrkraft lesbar. „Raum beenden“ löscht sie.
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
   - Zuordnen: Fächer mit Fachbegriffen bekommen eine Erklärung hinter dem Hilfeknopf (`info`) und einen kurzen Namen für Lösungen (`kurz`). Karten nennen Person, Alter und Handlung, damit sie eindeutig sind.
@@ -158,7 +160,7 @@ Neben den Lernwerkstätten (Werkstätten nach Bereichen) gibt es die **Lernstrec
    - Schriften über `../shared/vendor/fonts/fonts.css`, neue Icons in `icons.txt` (siehe Design)
    - eigene CSS-Datei und eigenes Modul (`<script type="module" src="<id>.js">`)
    - `../shared/vendor/qrcode.js` immer einbinden (QR-Code zum Beitreten im Lernraum)
-   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, bei einer Lernstrecke auch `lernstrecke.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `chat.js`, `quiz.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
+   - `<link rel="modulepreload">` für die gemeinsamen Module, die das Thema wirklich lädt, vor das Modul-Skript setzen (`werkstatt.js`, bei einer Lernstrecke auch `lernstrecke.js`, `lernraum.js`, `aufgaben.js`, `live.js`, `ui.js`, `feedback.js`, `labyrinth.js`, `chat.js`, `quiz.js`, `praesentation.js`, `../themen.js`, mit Planspiel auch `planspiel.js`)
 3. **`<id>.css`:** nur Themenfarben (M3 Custom Colors, hell und dunkel) und themeneigene Grafiken.
 4. **`<id>.js`:** `createWerkstatt({...})` aus `shared/js/werkstatt.js` aufrufen (für eine Lernstrecke `createLernstrecke({...})`, Muster `deliktsfaehigkeit/deliktsfaehigkeit.js`) mit `thema` (die `id`), `speicher` (neues Präfix), `logo`, `bereiche` (mit `kurz` für den Handy-Titel der Startansicht), `kapitel`, `merksaetze`, `wissenTitel`, `glossar` und `punkte`. Beispiel: `sechseck/sechseck.js`, für Rechtsthemen `geschaeftsfaehigkeit/geschaeftsfaehigkeit.js`.
    - IDs von Bereichen und Werkstätten dürfen nicht gleich sein, sonst führen Adressen wie `#faelle` und Knöpfe zum Wiederholen an die falsche Stelle.

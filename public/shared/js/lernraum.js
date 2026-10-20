@@ -11,15 +11,19 @@
 // Bei einem Verbindungsproblem bleibt die Sitzung erhalten („Erneut verbinden“); verworfen wird nur ein Raum,
 // den es sicher nicht (mehr) gibt. Das Gerät der Lehrkraft merkt sich seinen offenen Raum pro Thema
 // (<speicher>-eigener-raum) und beendet ihn, wenn es einen neuen öffnet.
+// Präsentationsansicht (praesentation.js): Ein zweites Fenster im selben Browser übernimmt die Sitzung der Lehrkraft
+// nur zum Anzeigen. Dort gilt istLehrkraft() nicht (keine Steuerung, kein Lehrerpanel), dafür praesentation().
+// Es speichert nichts und folgt der Sitzung des Laptops (storage-Ereignis).
 import { $, $$, esc, store, neuZeichnen } from './ui.js';
 import { connect, liveFehler } from './live.js';
+import { PRAES, praes } from './praesentation.js';
 import { THEMEN } from '../../themen.js';
 
 const CODE_ALPHA=/[^A-HJ-NP-Z2-9]/g;
 export const normCode=s=>String(s||'').toUpperCase().replace(CODE_ALPHA,'').slice(0,6);
 export function qrSVG(text){try{if(!window.qrcode)return '';const q=window.qrcode(0,'M');q.addData(text);q.make();return q.createSvgTag({cellSize:6,margin:2,scalable:true,alt:'QR-Code zum Beitreten'})}catch(e){return ''}}
-/** Beitrittslink: #raum=CODE öffnet den Lernraum, #join=CODE das Planspiel. */
-export const linkZu=(code,art='raum')=>location.href.split('#')[0]+'#'+art+'='+code;
+/** Beitrittslink: #raum=CODE öffnet den Lernraum, #join=CODE das Planspiel (ohne ?praesentation des Beamer-Fensters). */
+export const linkZu=(code,art='raum')=>location.href.split('#')[0].replace(/\?praesentation$/,'')+'#'+art+'='+code;
 
 /* ---------- Verzeichnis der Aufgaben ----------
    Aufgaben mit Lösung oder Antwort melden sich hier an: {id, frage, loesung:[…], wand:true|false, tool}.
@@ -35,7 +39,7 @@ export function registriere(def){AUFGABEN.set(def.id,{...def,tool:aktuellesTool|
 /* ---------- Sitzung ---------- */
 let cfg={}, L=null, s=null, z={raum:null,spieler:[],antworten:[],verbindung:''}, abos=[], ortT=null, gemeldet='', ergT=null, ergGemeldet='', schliesst=false;
 const hoerer=new Set();
-const speichern=()=>store(cfg.speicher+'-raum',s);
+const speichern=()=>{if(!PRAES)store(cfg.speicher+'-raum',s)};
 // Eigener offener Raum der Lehrkraft (bleibt auch, wenn die Sitzung verloren geht, bis der Raum sicher gelöscht ist)
 const eigenerRaum=v=>v===undefined?store(cfg.speicher+'-eigener-raum'):store(cfg.speicher+'-eigener-raum',v);
 function melde(art){hoerer.forEach(f=>{try{f(art)}catch(e){console.warn(e)}})}
@@ -71,6 +75,7 @@ async function anbinden(still){
     if(st.fehler)return getrennt('netz');
     const r=st.raum;
     if(!r||r.owner!==L.uid||r.phase==='closed'){
+      if(PRAES)return ende(null);
       // Abgebrochenes „Raum beenden“: den Rest still löschen
       if(r&&r.owner===L.uid&&r.phase==='closed')L.closeRoom(code).then(()=>{if(eigenerRaum()===code)eigenerRaum(null)},e=>console.warn(e));
       else if(eigenerRaum()===code)eigenerRaum(null);
@@ -105,7 +110,10 @@ export function beitrittsWeg(art){
 
 export const raum={
   /** c = {speicher, thema, hinweis(text), gehZu(id), ort(), orte(), modal(title, html, init), vorbereiten()} */
-  init(c){cfg=c;s=store(cfg.speicher+'-raum');if(s&&!s.code)s=null;if(s)anbinden()},
+  init(c){cfg=c;s=store(cfg.speicher+'-raum');if(s&&(!s.code||(PRAES&&s.rolle!=='lk')))s=null;if(s)anbinden();
+    // Präsentationsansicht: Öffnet oder beendet der Laptop einen Raum, zieht dieses Fenster mit
+    if(PRAES)window.addEventListener('storage',e=>{if(e.key!==cfg.speicher+'-raum')return;const n=store(cfg.speicher+'-raum');
+      if(n&&n.code&&n.rolle==='lk'){if(!s||s.code!==n.code){s=n;anbinden(true)}}else if(s)ende(null)})},
   /** Zustand der Verbindung einer gespeicherten Sitzung: '' (verbunden oder keine Sitzung), 'verbindet', 'netz', 'laden' */
   verbindung:()=>s?z.verbindung:'',
   /** Neuer Verbindungsversuch nach einem Verbindungsproblem („Erneut verbinden“) */
@@ -115,9 +123,11 @@ export const raum={
   speicher:()=>cfg.speicher||'wrlab',
   zustand:()=>z,
   live:()=>L,
-  istLehrkraft:()=>!!(s&&s.rolle==='lk'&&z.raum),
+  istLehrkraft:()=>!PRAES&&!!(s&&s.rolle==='lk'&&z.raum),
+  /** Präsentationsansicht: dieses Fenster ist der Beamer der Lehrkraft (nur anzeigen, nie schreiben) */
+  praesentation:()=>PRAES&&!!(s&&s.rolle==='lk'&&z.raum),
   istSchueler:()=>!!(s&&s.rolle==='schueler'),
-  beamer:()=>!!store(cfg.speicher+'-beamer'),
+  beamer:()=>PRAES||!!store(cfg.speicher+'-beamer'),
   setBeamer(b){store(cfg.speicher+'-beamer',!!b);melde('beamer')},
   gesperrt:id=>!!(s&&s.rolle==='schueler'&&z.raum&&(z.raum.gesperrt||[]).includes(id)),
   pausiert:()=>!!(s&&s.rolle==='schueler'&&z.raum&&z.raum.pause),
@@ -236,10 +246,10 @@ export const raum={
 };
 
 /* ---------- Barrierefreiheit: Fehler an Feldern, Hintergrund sperren (neu zeichnen: neuZeichnen in ui.js) ---------- */
-/** Pause („Schau nach vorn“), Abstimmungsfenster und Quiz-Fenster sind echt modal: alles dahinter wird inert (keine Tab-Stopps, kein Vorlesen). */
+/** Pause („Schau nach vorn“), Abstimmungsfenster, Quiz-Fenster und die Bühne der Präsentationsansicht sind echt modal: alles dahinter wird inert (keine Tab-Stopps, kein Vorlesen). */
 export function sperreHintergrund(){
-  const p=$('#lr-pause'),pause=!!p&&!p.hidden,fenster=['#lr-umfrage','#qz'].map(sel=>$(sel)).filter(Boolean),offen=fenster.some(f=>!f.hidden);
-  ['.app','#modal'].forEach(sel=>{const e=$(sel);if(e)e.inert=pause||offen});
+  const p=$('#lr-pause'),pause=!!p&&!p.hidden,fenster=['#lr-umfrage','#qz','#praes'].map(sel=>$(sel)).filter(Boolean),offen=fenster.some(f=>!f.hidden);
+  ['.app','#modal','#praes-leiste'].forEach(sel=>{const e=$(sel);if(e)e.inert=pause||offen});
   fenster.forEach(f=>{f.inert=pause});
 }
 /** Fehlermeldung beim Beitreten zeigen (role=alert) und mit dem betroffenen Feld verknüpfen; felder = {code:'#…', nick:'#…'} */
@@ -330,6 +340,7 @@ function dashboard(box){
   <div class="grid2 wide-left"><div class="panel stack"><p class="eyebrow">Raumcode</p><div class="code lr-code">${esc(s.code)}</div>
     <p class="small" id="lr-weg">${beitrittsWeg('raum')}</p><p class="small muted mono" style="word-break:break-all">${esc(url)}</p>
     <div class="row"><button class="btn small" type="button" id="lr-beamer" aria-pressed="${raum.beamer()}">Beamer-Modus</button><button class="btn text small" type="button" id="lr-ende"><span class="ms" aria-hidden="true">delete</span>Raum beenden</button></div>
+    ${praes.dashboardHTML()}
     <div class="fb bad" id="lr-ende-q" hidden>Lernraum ${esc(s.code)} beenden? Alle Einträge und Antworten der Schüler werden sofort gelöscht. <button class="btn small primary" type="button" id="lr-ende-y">Raum löschen</button> <button class="btn small text" type="button" id="lr-ende-n">Abbrechen</button>
       <p class="small" id="lr-ende-err" role="alert" hidden></p></div></div>
     <div class="panel stack" style="align-items:center"><div class="lr-qr">${qrSVG(url)}</div><p class="small muted">QR-Code zum Beitreten</p></div></div>

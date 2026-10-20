@@ -1,10 +1,11 @@
 // Gerüst einer Lernwerkstatt nach Material Design 3: Navigation (Rail ab 600 px, Bar darunter),
 // Bereiche, Werkstatt-Karten, Detailansicht, Erkenntnisse („Mein Wissen“), Glossar, Schriftgröße
-// und der Lernraum (lernraum.js) mit Lehrerpanel. Aufgaben-Bausteine (aufgaben.js) werden automatisch gebunden.
+// und der Lernraum (lernraum.js) mit Lehrerpanel und Präsentationsansicht (praesentation.js). Aufgaben-Bausteine (aufgaben.js) werden automatisch gebunden.
 // Jedes Thema ruft createWerkstatt() mit seinen Inhalten auf, siehe sechseck/sechseck.js.
 import { $, $$, esc, store, zeigeHinweis, suchtext } from './ui.js';
 import { raum, AUFGABEN, imTool, normCode, sperreHintergrund } from './lernraum.js';
 import { bindAufgaben } from './aufgaben.js';
+import { praes } from './praesentation.js';
 
 /**
  * cfg = {
@@ -92,7 +93,7 @@ export function createWerkstatt(cfg){
     if(!mBody.contains(document.activeElement))$('#modal-close').focus();
   }
   function closeModal(silent){
-    $('.pane').inert=false;modal.hidden=true;document.body.style.overflow='';mBody.innerHTML='';offenesTool=null;raum.sendeOrt(aktuellerOrt());try{history.replaceState(null,'','#'+curView)}catch(e){}
+    $('.pane').inert=false;modal.hidden=true;document.body.style.overflow='';mBody.innerHTML='';offenesTool=null;raum.sendeOrt(aktuellerOrt());praes.leiste();try{history.replaceState(null,'','#'+curView)}catch(e){}
     if(silent)return;
     // Zurück zum auslösenden Knopf; wurde die Ansicht inzwischen neu gezeichnet, zur Karte derselben Werkstatt
     const z=lastFocus&&lastFocus!==document.body&&document.body.contains(lastFocus)?lastFocus:lastTool?$(`#view [data-tool="${CSS.escape(lastTool)}"]`):null;
@@ -187,7 +188,7 @@ export function createWerkstatt(cfg){
     curView=DEST.find(d=>d.id===id)?id:'start';
     renderNav();renderView();window.scrollTo(0,0);
     try{history.replaceState(null,'','#'+curView)}catch(e){}
-    raum.sendeOrt(aktuellerOrt());
+    raum.sendeOrt(aktuellerOrt());praes.leiste();
   }
   /** Öffnet eine Werkstatt. art: 'neu' (Standard) legt einen Schritt im Browserverlauf an, 'verlauf' nicht (Zurück/Vor,
    *  eingetippte Adresse, Neuladen), 'geholt' (die Lehrkraft holt alle) legt einen Schritt an, aber ohne Herkunft. */
@@ -204,7 +205,7 @@ export function createWerkstatt(cfg){
     const html=imTool(t.id,()=>t.html());
     openModal(esc(t.title),lehrerpanelHTML(t)+html,root=>{t.init(root);bindAufgaben(root)});
     if(!lastTool)lastTool=id; // z. B. direkt über die Adresse geöffnet: beim Schließen auf die Karte
-    offenesTool=id;raum.sendeOrt(id);
+    offenesTool=id;raum.sendeOrt(id);praes.leiste();
     const vt=von&&TOOLS.find(x=>x.id===von);if(vt)$('#modal-close').setAttribute('aria-label',`Zurück zu „${vt.title}“`);
     // Zurück aus einer Werkstatt, die per „Wiederholen“ geöffnet wurde: Fokus wieder auf diesen Knopf
     const k=art==='verlauf'&&vorher&&$(`[data-gehzu="${CSS.escape(vorher)}"]`,mBody);
@@ -280,6 +281,7 @@ export function createWerkstatt(cfg){
     raum.init({speicher:P,thema:cfg.thema,hinweis:zeigeHinweis,gehZu,ort:aktuellerOrt,orte,modal:openModal,
       vorbereiten:()=>TOOLS.forEach(t=>{try{imTool(t.id,()=>t.html())}catch(e){console.warn(e)}})});
     raum.on(raumGeaendert);raumGeaendert('start');
+    praes.init({thema:cfg.thema,ort:aktuellerOrt,orte,gehZu:id=>gehZu(id),titel:id=>(orte().find(o=>o.id===id)||{}).titel||id});
     $$('[data-raum-btn]').forEach(b=>b.addEventListener('click',()=>raum.oeffneDialog()));
     // Knöpfe mit data-gehzu (z. B. „Wiederholen“ im Wissenscheck) öffnen eine Werkstatt oder einen Bereich
     // (gesperrte Werkstätten bleiben gesperrt)

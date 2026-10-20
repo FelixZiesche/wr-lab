@@ -13,8 +13,12 @@
 // Raum, nie Spitznamen. Die Rangliste mit Spitznamen (Top 5) zeigt nur das Gerät der Lehrkraft, auf Wunsch ohne Namen.
 // Antworten aus dem Quiz übernimmt der Wissenscheck der Schüler, wenn die Aufgabe dort noch offen ist (zählt im Dashboard).
 // Gespeichert auf dem Gerät der Lehrkraft: <speicher>-quiz (Spielstand), -quiz-wahl (Einstellungen), -quiz-namen.
+// Präsentationsansicht (praesentation.js): Das Beamer-Fenster zeigt das Quiz ohne Knöpfe, sobald die Lehrkraft es startet.
+// Der Laptop zeigt dann zusätzlich, was nur sie sieht: die Lösung schon während der Frage, wer noch nicht geantwortet hat,
+// und die nächste Frage. Weiter geht es dort auch mit Leertaste, Pfeil rechts oder Bild ab (Presenter).
 import { $, $$, esc, store, neuZeichnen } from './ui.js';
 import { raum, sperreHintergrund, qrSVG, linkZu } from './lernraum.js';
+import { praes } from './praesentation.js';
 import { zahl } from './feedback.js';
 
 const DEFS=new Map();let W=null;
@@ -67,7 +71,7 @@ function kasten(box){
       if(neuZeichnen(box,`<div class="panel stack"><h3 class="title-m"><span class="ms" aria-hidden="true">quiz</span> Klassen-Quiz</h3>
         <p class="small">Das Quiz läuft${q.nr?` (Frage ${q.nr} von ${q.von})`:''}.</p>
         <div class="row"><button class="btn primary small" type="button" data-qz-oeffnen><span class="ms" aria-hidden="true">open_in_full</span>Quiz-Fenster öffnen</button><button class="btn text small" type="button" data-qz-ende><span class="ms" aria-hidden="true">stop_circle</span>Quiz beenden</button></div></div>`,'[data-qz-oeffnen]')){
-        $('[data-qz-oeffnen]',box).addEventListener('click',()=>{lkOffen=true;fenster()});
+        $('[data-qz-oeffnen]',box).addEventListener('click',()=>{lkOffen=true;praes.zeige({art:'quiz'});fenster()});
         $('[data-qz-ende]',box).addEventListener('click',beenden);
       }
       return;
@@ -114,6 +118,7 @@ function starten(id,{anzahl,stufe,s,team:teams}){
   const alt=((raum.zustand().raum||{}).quiz||{}).n||0;
   LK={code:raum.sitzung().code,id,liste,pos:-1,s,team:teams,pkt:{}};lkSichern();lkOffen=true;ansicht='loesung';
   if(raum.umfrage().id)raum.beendeUmfrage();
+  praes.zeige({art:'quiz'});
   return raum.steuereQuiz({id,n:alt+1,ph:'lobby',nr:0,von:liste.length,s,team:teams,pkt:{},teams:Array(teams).fill(0)});
 }
 function weiter(){
@@ -157,7 +162,7 @@ function teamPunkte(k){
   if(!k)return [];const sp=raum.zustand().spieler;
   return Array.from({length:k},(x,j)=>{const m=sp.filter(p=>p.team===j+1),g=m.reduce((s,p)=>s+(LK&&LK.pkt[p.uid]?LK.pkt[p.uid].g:0),0);return m.length?Math.round(g/m.length):0});
 }
-function beenden(){const q=raum.quiz();LK=null;store(raum.speicher()+'-quiz',null);lkOffen=false;frist=0;
+function beenden(){const q=raum.quiz();LK=null;store(raum.speicher()+'-quiz',null);lkOffen=false;frist=0;if(praes.zeigt().art==='quiz')praes.zeige({art:'start'});
   return raum.steuereQuiz({id:'',n:q.n||((raum.zustand().raum||{}).quiz||{}).n||0,ph:''})}
 
 /* ---------- Fenster ---------- */
@@ -168,23 +173,29 @@ const meinEntwurf=n=>{if(entwurf.n!==n)entwurf={n,m:0,z:''};return entwurf};
 const namen=()=>store(raum.speicher()+'-quiz-namen')!==false;
 const geantwortet=q=>raum.zustand().spieler.filter(p=>p.q&&p.q.n===q.n).length;
 const restZeit=q=>{if(!q.s)return null;
+  // Beamer: dieselbe Frist wie der Laptop (sonst aus der Uhrzeit des Servers)
+  if(raum.praesentation()){const d=praes.quizDaten(),f=d.n===q.n&&d.frist?d.frist:(ms(q.t)||Date.now())+q.s*1000;return Math.max(0,Math.ceil((f-Date.now())/1000))}
   if(raum.istLehrkraft()){if(!frist)frist=(ms(q.t)||Date.now())+q.s*1000;return Math.max(0,Math.ceil((frist-Date.now())/1000))}
   if(startLokal.n!==q.n)startLokal={n:q.n,t:Date.now()};return Math.max(0,Math.ceil(q.s-(Date.now()-startLokal.t)/1000))};
 
 function schliesseFenster(el,entfernen){
   const war=el&&!el.hidden;if(!el)return;if(entfernen)el.remove();else el.hidden=true;
-  clearInterval(takt);takt=null;if(!war)return;sperreHintergrund();
+  takten();if(!war)return;sperreHintergrund();
   const v=vorher,a=document.activeElement;vorher=null;
   if((!a||a===document.body||!document.body.contains(a)||el.contains(a))&&v&&v!==document.body&&document.body.contains(v)&&!v.closest('[inert]'))v.focus();
 }
 function fenster(){
-  let el=$('#qz');const q=raum.quiz(),lk=raum.istLehrkraft();
-  if(!q.id||!(lk||raum.istSchueler())){if(el)schliesseFenster(el,true);if(!q.id&&lk){frist=0;schliesst=-1}return}
+  let el=$('#qz');const q=raum.quiz(),lk=raum.istLehrkraft(),pr=raum.praesentation();
+  if(!q.id||!(lk||pr||raum.istSchueler())){if(el)schliesseFenster(el,true);if(!q.id&&lk){frist=0;schliesst=-1}takten();return}
   let def=DEFS.get(q.id);if(!def){raum.vorbereiten();def=DEFS.get(q.id)}
   if(!def)return;
-  if(lk){lkLaden();if(lkOffen===null)lkOffen=true}
+  if(lk||pr)lkLaden();
+  if(lk){if(lkOffen===null)lkOffen=true;
+    // Beamer-Fenster: Ansicht (Lösung oder Rangliste), Frist und Spitznamen ja oder nein, auch bei geschlossenem Quiz-Fenster
+    praes.quiz({n:q.n,ansicht,frist:q.ph==='frage'?frist:0,namen:namen()})}
   const zustand=`${q.n}${q.ph}`;
-  if(lk?!lkOffen:zuBei===zustand){if(el)schliesseFenster(el);return}
+  // Beamer: nur, solange die Lehrkraft das Quiz auf den Beamer geschickt hat
+  if(lk?!lkOffen:pr?praes.zeigt().art!=='quiz':zuBei===zustand){if(el)schliesseFenster(el);return}
   if(!el){
     el=document.createElement('div');el.id='qz';el.className='qz';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','qz-t');
     el.innerHTML='<div class="qz-karte stack"><div class="qz-kopf"><p class="eyebrow" data-qz-kopf></p><span class="qz-knoepfe" data-qz-knoepfe></span></div><div class="stack" data-qz-inhalt></div><p class="small" role="status" data-qz-status></p></div>';
@@ -196,26 +207,30 @@ function fenster(){
   const neu=el.hidden;if(neu)vorher=document.activeElement;
   const a=def.aufgaben[q.i]||def.aufgaben[0],kopf=q.ph==='frage'||q.ph==='zu'||q.ph==='auf'?kopfText(q,a):`Klassen-Quiz · ${def.titel}`;
   if($('[data-qz-kopf]',el).textContent!==kopf)$('[data-qz-kopf]',el).textContent=kopf;
-  neuZeichnen($('[data-qz-knoepfe]',el),`${lk&&(q.ph==='auf'||q.ph==='ende')?`<button class="btn text small" type="button" data-qz-namen aria-pressed="${namen()}">Spitznamen</button>`:''}<button class="icon-btn" type="button" data-qz-zu aria-label="${lk?'Quiz-Fenster schließen, das Quiz läuft weiter':'Fenster schließen'}" title="Fenster schließen"><span class="ms" aria-hidden="true">close</span></button>`);
+  neuZeichnen($('[data-qz-knoepfe]',el),pr?'':`${lk&&(q.ph==='auf'||q.ph==='ende')?`<button class="btn text small" type="button" data-qz-namen aria-pressed="${namen()}">Spitznamen</button>`:''}<button class="icon-btn" type="button" data-qz-zu aria-label="${lk?'Quiz-Fenster schließen, das Quiz läuft weiter':'Fenster schließen'}" title="Fenster schließen"><span class="ms" aria-hidden="true">close</span></button>`);
   const inhalt=$('[data-qz-inhalt]',el),vorZustand=el._zustand;el._zustand=zustand+(lk?ansicht:'');
-  neuZeichnen(inhalt,lk?lehrkraftHTML(q,def,a):schuelerHTML(q,def,a),'#qz-t');
-  el.classList.toggle('qz-lk',lk);
+  neuZeichnen(inhalt,lk||pr?lehrkraftHTML(q,def,a,pr):schuelerHTML(q,def,a),'#qz-t');
+  el.classList.toggle('qz-lk',lk||pr);el.classList.toggle('qz-beamer',pr);
   el.hidden=false;sperreHintergrund();
-  zeit();
-  clearInterval(takt);takt=q.ph==='frage'&&q.s?setInterval(zeit,250):null;
+  zeit();takten();
+  if(pr)return;
   // Fokus beim Öffnen: auf die erste Antwort (Handy) oder den Hauptknopf (Lehrkraft). Bei einem neuen Abschnitt auf den Handys
   // auf die Überschrift (der Screenreader liest die neue Frage vor), bei der Lehrkraft nur, wenn der Fokus verloren ging.
   const haupt=()=>(lk?$('[data-qz-haupt]',inhalt):$('[data-qz-w]:not(:disabled),[data-qz-m]:not(:disabled),[data-qz-zahl],[data-qz-team]',inhalt))||$('#qz-t',el);
   if(neu)haupt()?.focus();
   else if(vorZustand!==el._zustand){const act=document.activeElement;if(!lk)$('#qz-t',el)?.focus();else if(!el.contains(act)||act===document.body)haupt()?.focus()}
 }
-// Countdown und automatisches Ende der Frage (Lehrkraft)
+// Countdown und automatisches Ende der Frage (Lehrkraft, auch wenn ihr Quiz-Fenster zu ist und nur der Beamer es zeigt)
 function zeit(){
-  const el=$('#qz');if(!el||el.hidden)return;const q=raum.quiz(),z=$('[data-qz-zeit]',el);
-  if(!z)return;const r=restZeit(q);if(r==null)return;
+  const q=raum.quiz(),r=q.ph==='frage'?restZeit(q):null;if(r==null)return;
+  if(raum.istLehrkraft()&&r<=0)schliessen();
+  const el=$('#qz'),z=el&&!el.hidden&&$('[data-qz-zeit]',el);if(!z)return;
   const t=r>0?`noch ${r} s`:'Zeit ist um';if(z.textContent!==t)z.textContent=t;
   const b=$('[data-qz-balken]',el);if(b)b.style.width=`${Math.round(r/Math.max(1,q.s)*100)}%`;
-  if(raum.istLehrkraft()&&r<=0&&q.ph==='frage')schliessen();
+}
+function takten(){
+  const q=raum.quiz(),el=$('#qz'),an=q.ph==='frage'&&!!q.s&&(raum.istLehrkraft()||(!!el&&!el.hidden));
+  if(an&&!takt)takt=setInterval(zeit,250);else if(!an&&takt){clearInterval(takt);takt=null}
 }
 // Ereignisse per Delegation, der Inhalt wird bei jeder Änderung neu gezeichnet
 function klick(e){
@@ -301,11 +316,29 @@ function rangHTML(q,titel){
     ${teams.length?`<ol class="qz-rang">${teams.map(t=>`<li><span class="qz-platz-n num">${1+teams.filter(x=>x.g>t.g).length}.</span><span class="ms" aria-hidden="true">groups</span><span class="qz-name">${team(t.k)}</span><span class="num">${zahlText(t.g)}</span></li>`).join('')}</ol><p class="small muted">Punkte im Schnitt pro Team</p>`:''}
     ${top.length?`${teams.length?'<p class="title-s">Beste Einzelwertung</p>':''}<ol class="qz-rang">${top.map(x=>{const e=LK&&LK.pkt[x.uid];return `<li${x.platz<=3?` class="qz-p${x.platz}"`:''}><span class="qz-platz-n num">${x.platz}.</span>${x.platz<=3?'<span class="ms" aria-hidden="true">emoji_events</span>':''}<span class="qz-name">${nm?esc(x.nick):`Platz ${x.platz}`}</span><span class="num">${zahlText(x.g)}${e&&e.plus&&q.ph!=='ende'?` <span class="small">(+${zahlText(e.plus)})</span>`:''}</span></li>`}).join('')}</ol>`:'<p class="small muted">Noch niemand im Raum.</p>'}`;
 }
-function lehrkraftHTML(q,def,a){
-  if(!LK)return `<h2 class="title-l" id="qz-t" tabindex="-1">Klassen-Quiz</h2><p>Der Spielstand dieses Quiz ist auf diesem Gerät nicht mehr gespeichert. Beende das Quiz und starte es im Wissenscheck neu.</p>
+// Nur auf dem Laptop, wenn ein Beamer-Fenster offen ist (Referentenansicht): Lösung schon während der Frage,
+// wer noch nicht geantwortet hat, und die nächste Frage
+function referentHTML(q,def,a){
+  if(!praes.verbunden()||!LK||q.ph==='ende')return '';
+  const sp=raum.zustand().spieler,teile=[];
+  if(q.ph==='frage'){
+    const fehlt=sp.filter(p=>!(p.q&&p.q.n===q.n));
+    teile.push(`<p><b>Lösung:</b> ${W.loesungHTML(a)}</p>`,`<p><b>Noch ohne Antwort:</b> ${fehlt.length?fehlt.map(p=>esc(raum.name(p.uid))).join(', '):'niemand'}</p>`);
+  }
+  const nx=LK.liste[LK.pos+1];
+  if(nx!=null){const b=def.aufgaben[nx];teile.push(`<p><b>${LK.pos<0?'Erste Frage':'Danach'}:</b> ${b.art==='richtigfalsch'?`Stimmt das? „${b.f}“`:b.f}</p>`)}
+  return teile.length?`<div class="qz-referent stack" data-qz-referent><p class="eyebrow"><span class="ms sm" aria-hidden="true">co_present</span> Nur auf deinem Bildschirm, nicht am Beamer</p>${teile.join('')}</div>`:'';
+}
+/** Ansicht der Lehrkraft; pr: Beamer-Fenster der Präsentationsansicht (ohne Knöpfe, Ansicht wie auf dem Laptop) */
+function lehrkraftHTML(q,def,a,pr){
+  if(!LK)return pr?`<h2 class="headline-s" id="qz-t" tabindex="-1">Klassen-Quiz</h2><p class="title-l">Gleich geht's weiter.</p>`
+    :`<h2 class="title-l" id="qz-t" tabindex="-1">Klassen-Quiz</h2><p>Der Spielstand dieses Quiz ist auf diesem Gerät nicht mehr gespeichert. Beende das Quiz und starte es im Wissenscheck neu.</p>
     <div class="row"><button class="btn primary" type="button" data-qz-ende data-qz-haupt><span class="ms" aria-hidden="true">stop_circle</span>Quiz beenden</button></div>`;
   const sp=raum.zustand().spieler,ende=`<button class="btn text" type="button" data-qz-ende><span class="ms" aria-hidden="true">stop_circle</span>Quiz beenden</button>`;
-  const letzte=LK.pos>=LK.liste.length-1;
+  const letzte=LK.pos>=LK.liste.length-1,ref=pr?'':referentHTML(q,def,a);
+  // Knöpfe nur auf dem Laptop
+  const reihe=html=>pr?'':`<div class="row">${html}</div>`;
+  const ans=pr?(praes.quizDaten().n===q.n&&praes.quizDaten().ansicht)||'loesung':ansicht;
   if(q.ph==='lobby'){
     const t=q.team?`<ul class="qz-rang">${Array.from({length:q.team},(x,j)=>`<li><span class="ms" aria-hidden="true">groups</span><span class="qz-name">${team(j+1)}</span><span class="num">${sp.filter(p=>p.team===j+1).length}</span></li>`).join('')}</ul><p class="small muted num">${sp.filter(p=>!p.team).length} noch ohne Team</p>`:'';
     return `<h2 class="headline-s" id="qz-t" tabindex="-1">Klassen-Quiz: Macht mit!</h2>
@@ -313,12 +346,12 @@ function lehrkraftHTML(q,def,a){
       <div class="qz-lobby"><div class="stack"><p class="headline-s num">${sp.length} ${sp.length===1?'Gerät':'Geräte'} im Raum</p>${t}</div>
         <figure class="qz-qr"><div class="lr-qr">${qrSVG(linkZu(raum.sitzung().code))}</div><figcaption class="small muted">Noch nicht dabei? QR-Code scannen</figcaption></figure></div>
       <p class="small muted">${q.von} Fragen · ${q.s?`${q.s} Sekunden pro Frage, Rechnen doppelt so lang`:'ohne Zeitlimit'} · bis 1000 Punkte pro Frage, schneller gibt mehr</p>
-      <div class="row"><button class="btn primary" type="button" data-qz-weiter data-qz-haupt><span class="ms" aria-hidden="true">play_arrow</span>Erste Frage</button>${ende}</div>`;
+      ${reihe(`<button class="btn primary" type="button" data-qz-weiter data-qz-haupt><span class="ms" aria-hidden="true">play_arrow</span>Erste Frage</button>${ende}`)}${ref}`;
   }
   if(q.ph==='ende')
     return `${rangHTML(q,'<span class="ms" aria-hidden="true">emoji_events</span> Endstand')}
-      <p class="small">Die Antworten stehen im Dashboard unter „Wissenscheck“, auf den Handys auch im eigenen Wissenscheck mit Lösungen.</p>
-      <div class="row"><button class="btn primary" type="button" data-qz-ende data-qz-haupt><span class="ms" aria-hidden="true">stop_circle</span>Quiz beenden</button></div>`;
+      <p class="small">${pr?'Eure Antworten stehen jetzt auch im eigenen Wissenscheck, mit Lösungen und Erklärungen.':'Die Antworten stehen im Dashboard unter „Wissenscheck“, auf den Handys auch im eigenen Wissenscheck mit Lösungen.'}</p>
+      ${reihe(`<button class="btn primary" type="button" data-qz-ende data-qz-haupt><span class="ms" aria-hidden="true">stop_circle</span>Quiz beenden</button>`)}`;
   const opts=a.art==='zahl'?[]:optionen(a);
   if(q.ph==='frage'){
     const n=geantwortet(q);
@@ -326,18 +359,18 @@ function lehrkraftHTML(q,def,a){
       ${a.art==='zahl'?`<p class="title-m"><span class="ms" aria-hidden="true">calculate</span> Ergebnis${a.einheit?` in ${a.einheit}`:''} auf dem Handy eintippen</p>`:`<div class="qz-felder">${opts.map((o,k)=>feld(o,k)).join('')}</div>`}
       ${a.art==='mehrfach'?'<p class="small">Mehrere Antworten sind richtig.</p>':''}
       <p class="title-m num" data-qz-n>${n} von ${sp.length} haben geantwortet</p>
-      <div class="row"><button class="btn primary" type="button" data-qz-schliessen data-qz-haupt><span class="ms" aria-hidden="true">visibility</span>Auflösen</button>${q.s?'<button class="btn" type="button" data-qz-mehr><span class="ms" aria-hidden="true">more_time</span>15 Sekunden mehr</button>':''}${ende}</div>`;
+      ${reihe(`<button class="btn primary" type="button" data-qz-schliessen data-qz-haupt><span class="ms" aria-hidden="true">visibility</span>Auflösen</button>${q.s?'<button class="btn" type="button" data-qz-mehr><span class="ms" aria-hidden="true">more_time</span>15 Sekunden mehr</button>':''}${ende}`)}${ref}`;
   }
-  if(q.ph==='zu')return `${frageHTML(a)}<p class="title-m"><span class="ms" aria-hidden="true">hourglass_top</span> Zeit ist um, die Antworten werden ausgewertet …</p>`;
+  if(q.ph==='zu')return `${frageHTML(a)}<p class="title-m"><span class="ms" aria-hidden="true">hourglass_top</span> Zeit ist um, die Antworten werden ausgewertet …</p>${ref}`;
   // Aufgelöst: erst Lösung mit Verteilung, dann Rangliste
   const knopf=`<button class="btn primary" type="button" data-qz-weiter data-qz-haupt><span class="ms" aria-hidden="true">${letzte?'emoji_events':'skip_next'}</span>${letzte?'Zum Endstand':'Nächste Frage'}</button>`;
-  if(ansicht==='rang')return `${rangHTML(q,`Rangliste nach Frage ${q.nr}`)}<div class="row">${knopf}${ende}</div>`;
+  if(ans==='rang')return `${rangHTML(q,`Rangliste nach Frage ${q.nr}`)}${reihe(knopf+ende)}${ref}`;
   const v=verteilung(q,a);
   const loesung=a.art==='zahl'?`<p class="title-m">Richtig ist: ${W.loesungHTML(a)}</p><p class="title-m num">${v.ok} richtig · ${v.falsch} falsch · ${sp.length-v.n} ohne Antwort</p>`
     :`<div class="qz-felder">${opts.map((o,k)=>{const r=richtig(a,o.w),c=v.z[o.w]||0,p=v.n?Math.round(c/v.n*100):0;
       return feld(o,k,`<span class="qz-zahl-n num">${r?'<span class="sr-only">Richtig, </span><span class="ms" aria-hidden="true">check_circle</span> ':''}${c}<span class="sr-only"> ${c===1?'Stimme':'Stimmen'}</span></span><span class="qz-anteil" aria-hidden="true"><span style="width:${p}%"></span></span>`,'',r?' richtig':' falsch')}).join('')}</div>`;
   return `${frageHTML(a)}${loesung}${a.e?`<p>${a.e}</p>`:''}<p class="small muted num">${v.n} von ${sp.length} haben geantwortet</p>
-    <div class="row"><button class="btn primary" type="button" data-qz-rang data-qz-haupt><span class="ms" aria-hidden="true">leaderboard</span>Rangliste</button>${knopf.replace(' primary','').replace(' data-qz-haupt','')}${ende}</div>`;
+    ${reihe(`<button class="btn primary" type="button" data-qz-rang data-qz-haupt><span class="ms" aria-hidden="true">leaderboard</span>Rangliste</button>${knopf.replace(' primary','').replace(' data-qz-haupt','')}${ende}`)}${ref}`;
 }
 
 /* ---------- Ereignisse ---------- */
@@ -350,6 +383,14 @@ raum.on(art=>{
   fenster();
   $$('[data-quiz]').forEach(kasten);
 });
-// Esc schließt das Quiz-Fenster (nicht während der Pause)
+// Präsentationsansicht: Beamer-Fenster geöffnet oder geschlossen, Quiz auf den Beamer geschickt, Ansicht gewechselt
+praes.on(()=>fenster());
+// Esc schließt das Quiz-Fenster (nicht während der Pause, nicht am Beamer)
 document.addEventListener('keydown',e=>{const el=$('#qz'),p=$('#lr-pause');
-  if(e.key!=='Escape'||!el||el.hidden||(p&&!p.hidden))return;e.stopPropagation();$('[data-qz-zu]',el).click()},true);
+  if(e.key!=='Escape'||!el||el.hidden||(p&&!p.hidden)||!$('[data-qz-zu]',el))return;e.stopPropagation();$('[data-qz-zu]',el).click()},true);
+// Lehrkraft: weiter mit Pfeil rechts, Bild ab (Presenter) oder der Leertaste (wenn kein Knopf den Fokus hat)
+document.addEventListener('keydown',e=>{const el=$('#qz');
+  if(!el||el.hidden||!raum.istLehrkraft()||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey)return;
+  const leer=e.key===' '&&!e.target.closest('button,a,input,select,textarea,summary');
+  if(e.key!=='ArrowRight'&&e.key!=='PageDown'&&!leer)return;
+  const b=$('[data-qz-haupt]',el);if(!b||b.disabled)return;e.preventDefault();b.click()});

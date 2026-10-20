@@ -61,6 +61,8 @@ format_list_numbered
 format_quote
 format_size
 forum
+fullscreen
+fullscreen_exit
 gavel
 group
 groups
@@ -107,6 +109,7 @@ person_remove
 personal_injury
 pets
 play_arrow
+present_to_all
 print
 psychology
 quiz

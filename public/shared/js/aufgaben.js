@@ -26,6 +26,7 @@ import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
 import { bindLabyrinth } from './labyrinth.js';
 import { bindChat } from './chat.js';
 import { quizAnmelden, quizHTML, bindQuiz } from './quiz.js';
+import { praes } from './praesentation.js';
 
 const key=(art,id)=>`${raum.speicher()}-${art}-${id}`;
 const kopf=(icon,text)=>`<p class="aufgabe-kopf"><span class="ms sm" aria-hidden="true">${icon}</span>${text}</p>`;
@@ -52,7 +53,9 @@ export function schreibfeld({id,frage,anfaenge,tipp,denkWeiter,erwartung}){
   ${hilfen({tipp,denkWeiter})}</section>`;
 }
 // Pro Wand: offen (Antworten gezeigt), frage (uid der Karte mit offener Rückfrage „löschen?“),
-// fokus ({weg, ziel}: nach dem Löschen von weg den Fokus auf die Karte ziel, sonst auf „Antworten zeigen“)
+// fokus ({weg, ziel}: nach dem Löschen von weg den Fokus auf die Karte ziel, sonst auf „Antworten zeigen“).
+// Mit Präsentationsansicht schickt „Antworten zeigen“ die Wand auch auf den Beamer (dort ohne Spitznamen),
+// „Auf den Beamer“ schickt sie erneut oder holt dort das Startbild zurück.
 const wandOffen=new Map(),wandFrage=new Map(),wandFokus=new Map();
 function aktualisiereSchreibfeld(box){
   const id=box.dataset.schreib,ein=$('[data-schreib-eingabe]',box),wand=$('[data-wand]',box);
@@ -62,8 +65,10 @@ function aktualisiereSchreibfeld(box){
     // Kopf mit Knopf nur einmal bauen: Neue Antworten ändern nur Zahl und Liste, der Tastaturfokus der Lehrkraft bleibt.
     if(!$('[data-wand-zeigen]',wand)){
       wand.innerHTML=`<div class="row" style="justify-content:space-between"><p class="title-s">An der Wand <span class="pill neu num" data-wand-n></span></p>
-        <button class="btn small" type="button" data-wand-zeigen aria-pressed="false" aria-controls="wand-${id}">Antworten zeigen</button></div><div id="wand-${id}" data-wand-liste></div>`;
-      $('[data-wand-zeigen]',wand).addEventListener('click',()=>{wandOffen.set(id,!wandOffen.get(id));aktualisiereSchreibfeld(box)});
+        <span class="row"><button class="btn small" type="button" data-wand-beamer aria-pressed="false" hidden><span class="ms" aria-hidden="true">present_to_all</span>Auf den Beamer</button>
+        <button class="btn small" type="button" data-wand-zeigen aria-pressed="false" aria-controls="wand-${id}">Antworten zeigen</button></span></div><div id="wand-${id}" data-wand-liste></div>`;
+      $('[data-wand-zeigen]',wand).addEventListener('click',()=>{wandOffen.set(id,!wandOffen.get(id));if(wandOffen.get(id))praes.zeige({art:'wand',id});aktualisiereSchreibfeld(box)});
+      $('[data-wand-beamer]',wand).addEventListener('click',()=>{const w=praes.zeigt();praes.zeige(w.art==='wand'&&w.id===id?{art:'start'}:{art:'wand',id});aktualisiereSchreibfeld(box)});
       // Einzelne Antwort löschen (z. B. beleidigend), mit kurzer Rückfrage in der Karte; auch im Beamer-Modus, denn dort zeigt die Lehrkraft die Wand
       wand.addEventListener('click',async e=>{const b=e.target.closest('[data-wand-weg],[data-wand-ja],[data-wand-nein]');if(!b)return;
         if(b.dataset.wandWeg){wandFrage.set(id,b.dataset.wandWeg);aktualisiereSchreibfeld(box);$('[data-wand-ja]',wand)?.focus();return}
@@ -77,6 +82,7 @@ function aktualisiereSchreibfeld(box){
     if(wandFrage.has(id)&&!liste.some(a=>a.uid===wandFrage.get(id)))wandFrage.delete(id);
     const frage=wandFrage.get(id);
     $('[data-wand-n]',wand).textContent=liste.length;$('[data-wand-zeigen]',wand).setAttribute('aria-pressed',String(offen));
+    const bb=$('[data-wand-beamer]',wand),w=praes.zeigt();bb.hidden=!praes.verbunden();bb.setAttribute('aria-pressed',String(w.art==='wand'&&w.id===id));
     neuZeichnen($('[data-wand-liste]',wand),offen?(liste.length?`<div class="wand-grid">${liste.map(a=>{const u=esc(a.uid),wer=namen?esc(raum.name(a.uid)):'';
       return `<article class="wand-karte" data-wand-karte="${u}"><p>${esc(a.text)}</p><div class="wand-fuss"><span class="small muted">${wer}</span><button class="icon-btn" type="button" data-wand-weg="${u}" aria-label="${wer?`Antwort von ${wer} löschen`:'Antwort löschen'}" title="Antwort löschen"><span class="ms" aria-hidden="true">delete</span></button></div>
         ${frage===a.uid?`<div class="fb bad stack" role="group" aria-labelledby="wf-${id}"><p id="wf-${id}">Diese Antwort von der Wand löschen?</p><div class="row"><button class="btn small primary" type="button" data-wand-ja="${u}"><span class="ms" aria-hidden="true">delete</span>Löschen</button><button class="btn small text" type="button" data-wand-nein="${u}">Abbrechen</button></div></div>`:''}</article>`}).join('')}</div>`:'<p class="small muted">Noch keine Antworten.</p>'):'');
@@ -112,6 +118,7 @@ function bindSchreibfeld(box){
   aktualisiereSchreibfeld(box);
 }
 raum.on(art=>{if(art!=='raum')$$('[data-schreib]').forEach(aktualisiereSchreibfeld)});
+praes.on(()=>$$('[data-schreib]').forEach(aktualisiereSchreibfeld));
 
 /* ---------- Zuordnen (Antippen oder Ziehen) ---------- */
 const ZU_INFO=new Map();
