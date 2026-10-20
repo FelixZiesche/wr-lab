@@ -31,6 +31,7 @@ public/                 wird veröffentlicht
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“, Hilfen, Impuls
     js/chat.js          Chat-Abenteuer: Geschichte im Messenger, Entscheidungen, Rechts-Checks, mehrere Enden
     js/quiz.js          Klassen-Quiz: den Wissenscheck im Lernraum gemeinsam spielen, mit Punkten nach Tempo, Teams und Rangliste
+    js/praesentation.js Präsentationsansicht: zweites Fenster für den Beamer, der Laptop bleibt der eigene Bildschirm der Lehrkraft
     js/labyrinth.js     Labyrinth-Spiel: Figur mit Tastatur, Wischen, Steuerkreuz oder Antippen, Nebel, Würfel-Tore
     js/feedback.js      Feedback ohne KI für den Wissenscheck
     js/planspiel.js     Planspiel-Grundmechanik: Runden, Abstimmung, Lehrkraft-Dashboard, Beamer-Modus
@@ -194,6 +195,7 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
    - **Alle holen nach …:** Alle Handys springen in dieselbe Werkstatt
    - **Werkstätten freigeben:** Gesperrte Werkstätten können die Schüler nicht öffnen
    - **Beamer-Modus:** blendet Spitznamen und das Lehrerpanel aus, sobald das Dashboard für alle sichtbar ist. Ausnahme ist die Rangliste im Klassen-Quiz (Top 5, lässt sich mit **Spitznamen** ausblenden)
+   - **Präsentationsansicht:** eigenes Fenster für den Beamer, wenn der Laptop einen erweiterten Bildschirm hat (siehe unten)
    - **Alle Antworten drucken:** Druckansicht mit allen Antworten, auch „Als PDF speichern“
    - **Raum beenden:** Alle Handys zeigen „beendet“, der Raum und alle Daten der Schüler werden sofort gelöscht. Klappt das Löschen nicht (z. B. WLAN weg), bleibt der Raum im Dashboard und „Raum löschen“ lässt sich wiederholen
 4. **An der Wand:** Jede Werkstatt hat eine Frage mit Schreibfeld. Die Schüler tippen **Abschicken**, die Lehrkraft öffnet dieselbe Werkstatt am Beamer und deckt mit **Antworten zeigen** auf, wann es passt. Eine unpassende Antwort nimmt sie mit dem Papierkorb an der Karte von der Wand (mit kurzer Rückfrage, auch im Beamer-Modus).
@@ -201,6 +203,19 @@ python3 -m http.server 8000 -d public   # dann http://localhost:8000 öffnen
 6. **Verbindungsprobleme:** Hakt das WLAN beim Neuladen, bleibt der Raum auf dem Gerät gespeichert. Im Lernraum-Fenster steht dann „Keine Verbindung zum Lernraum.“ mit **Erneut verbinden** (oder **Seite neu laden**, wenn die Firebase-Bibliothek nicht geladen werden konnte).
 
 Ohne Lernraum funktioniert alles genauso, die Antworten kommen dann ins Heft.
+
+### Präsentationsansicht (Laptop und Beamer getrennt)
+
+Wie die Referentenansicht in PowerPoint: Der Laptop bleibt dein eigener Bildschirm mit Dashboard, Lehrerpanel, Lösungen und Spitznamen. Der Beamer zeigt nur, was du schickst. Das geht, wenn der Beamer als **erweiterter** Bildschirm angeschlossen ist (nicht gespiegelt). Bei einem gespiegelten Bildschirm bleibt es beim Beamer-Modus.
+
+1. Lernraum öffnen, im Dashboard **Präsentationsansicht** tippen. Es öffnet sich ein zweites Fenster. In Chrome und Edge legt es sich nach einer einmaligen Erlaubnis selbst auf den zweiten Bildschirm, sonst ziehst du es hinüber. Im Beamer-Fenster **Vollbild** tippen oder die Taste **F** drücken.
+2. **Startbild:** Raumcode, QR-Code und die Zahl der Geräte im Raum.
+3. **Von selbst auf den Beamer** kommen: das Klassen-Quiz beim Starten und die Wand, sobald du **Antworten zeigen** tippst. Alles andere bleibt auf dem Laptop.
+4. **Leiste unten rechts auf dem Laptop:** zeigt, was der Beamer gerade zeigt. **Diese Werkstatt zeigen** schickt die geöffnete Werkstatt auf den Beamer, **Startbild** holt das Startbild zurück. An der Wand schickt **Auf den Beamer** sie erneut.
+5. **Wand:** Am Beamer groß und ohne Spitznamen, auf dem Laptop mit Spitznamen und Papierkorb. Gelöschte Antworten verschwinden sofort auch am Beamer.
+6. **Klassen-Quiz:** Am Beamer Frage, Countdown, Verteilung, Lösung und Rangliste ohne Knöpfe. Auf dem Laptop steuerst du wie gewohnt und siehst zusätzlich die Lösung schon während der Frage, wer noch nicht geantwortet hat und die nächste Frage. **Weiter** geht es auch mit Pfeil rechts, Bild ab (Presenter) oder der Leertaste. Schließt du das Quiz-Fenster auf dem Laptop, läuft das Quiz am Beamer weiter.
+
+Das Beamer-Fenster ist dieselbe Lehrkraft im selben Browser, es schreibt aber nichts in den Raum. Die beiden Fenster sprechen nur auf dem Laptop miteinander (BroadcastChannel), neue Daten auf dem Server gibt es nicht.
 
 ### Blitzrunde als Klassenrunde
 
