@@ -28,6 +28,7 @@ public/                 nur dieser Ordner wird veröffentlicht
   <thema>/              ein Ordner pro Thema, z. B. sechseck/
 firestore.rules         Sicherheitsregeln für alle Themen
 scripts/schriften.mjs   lädt die Schriften und Icons nach shared/vendor/fonts/ (npm run schriften)
+docs/lehrplan.md        Lehrplan Wirtschaft und Recht (Gymnasium Thüringen, 2026) zum Einordnen der Themen
 tests/                  Playwright-Tests und Regeltests (laufen gegen den Firebase-Emulator)
 .github/workflows/      Tests, Veröffentlichung (main) und Vorschau (Pull Requests)
 ```
@@ -37,7 +38,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 ## Arbeitsweise
 
 - **Erst der Plan, dann bauen:** Vor einem neuen Thema oder einer größeren Änderung den Plan kurz vorstellen und auf die Freigabe der Lehrkraft warten. Der Plan nennt Klassenstufe, Aufbau (Werkstätten oder Lektionen), Planspiel ja oder nein und neue Bausteine in `shared/`. Kleine Korrekturen direkt umsetzen.
-- **Lehrplan:** Lernbereich und Ziele aus dem Thüringer Lehrplan gibt die Lehrkraft vor, denn das Schulportal blockiert automatische Abrufe. Fehlt die Angabe, nachfragen statt raten.
+- **Lehrplan:** Der Thüringer Lehrplan Wirtschaft und Recht (Gymnasium, 2026) steht zusammengefasst in `docs/lehrplan.md`. Danach ordnest du Themen selbst ein: Klassenstufe, Kapitel und Lernbereich, in der Oberstufe auch grundlegendes oder erhöhtes Anforderungsniveau. Nur wo der Plan offen ist (in der Oberstufe Klasse 11 oder 12), nachfragen statt raten.
 - **Pushen:** Ist `npm test` grün, direkt auf den Arbeitsbranch pushen, ohne nachzufragen.
 - **Veröffentlichen:** Pull Request nach `main` öffnen, er bekommt eine Vorschau-Adresse. Erst der Merge veröffentlicht auf https://wr-lab.web.app. Gemergt wird nur, wenn die Lehrkraft es sagt.
 - **Geheime Schlüssel** trägt die Lehrkraft selbst in GitHub ein. Nie im Chat danach fragen.
@@ -58,7 +59,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
 - **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt. Ausnahme sind Übungen zur Selbstkontrolle (Wissenscheck, Zuordnen, Test, Blitzrunde, Fall-Akte, Abstimmung): Dort sehen die Schüler Lösung, Erklärung oder Erwartungshorizont, aber erst nach ihrer eigenen Antwort.
 - **Klassenstufen:** Jedes Thema gehört zu einer Klassenstufe: 9, 10, 11 oder 12 (Feld `stufe` in `themen.js`). Die Startseite sortiert die Themen danach. Sprache, Tempo und Anspruch passen zur Stufe: in Klasse 9 kürzere Texte und mehr Hilfen, in Klasse 11 und 12 mit Blick auf das Abitur.
-- **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht stehen in der README in der Themenübersicht.
+- **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht (mit Kapitel aus `docs/lehrplan.md`) stehen in der README in der Themenübersicht.
 
 ## Design: Material Design 3
 
