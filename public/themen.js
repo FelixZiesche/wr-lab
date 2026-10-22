@@ -7,6 +7,19 @@
 //   fotoLink, lizenzLink: bei CC-Lizenzen Link zur Datei und zur Lizenz (für die Fußzeile der Startseite)
 export const THEMEN = [
   {
+    id: 'geldanlage',
+    titel: 'Anlagemöglichkeiten',
+    stufe: 9,
+    bereich: 'Wirtschaft',
+    text: 'Sparbuch, Aktie, ETF oder Bitcoin? Geldschmelze, magisches Dreieck, Schneeball-Rechner, eine Depot-Zeitmaschine mit echten Kursen und der Wolf of Saale, der an dein Jugendweihe-Geld will.',
+    stichworte: ['Dreieck der Geldanlage', 'Zinseszins', 'Chat-Abenteuer', 'Klassen-Quiz'],
+    bild: 'geldanlage/img/boerse.jpg',
+    alt: 'Die Bronzefiguren Bulle und Bär vor der Frankfurter Wertpapierbörse',
+    foto: 'giesing / Flickr, CC BY 2.0',
+    fotoLink: 'https://www.flickr.com/photos/46074423@N00/14842086960',
+    lizenzLink: 'https://creativecommons.org/licenses/by/2.0/'
+  },
+  {
     id: 'geschaeftsfaehigkeit',
     titel: 'Geschäftsfähigkeit',
     stufe: 10,

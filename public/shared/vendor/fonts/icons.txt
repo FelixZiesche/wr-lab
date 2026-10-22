@@ -1,12 +1,16 @@
 # Alle Material-Symbols-Icons der Seite, alphabetisch, ein Name pro Zeile. Danach: npm run schriften
+account_balance
+account_balance_wallet
 add
 alt_route
+apartment
 apps
 arrow_back
 arrow_downward
 arrow_forward
 arrow_upward
 assignment
+auto_awesome
 backpack
 badge
 balance
@@ -42,16 +46,20 @@ diamond
 directions_car
 directions_run
 directions_walk
+donut_large
 edit
 edit_note
+elderly
 elderly_woman
 electric_scooter
 emoji_events
 expand_more
 explore
 explore_off
+face
 fact_check
 family_restroom
+fast_forward
 favorite
 fence
 flag
@@ -61,6 +69,7 @@ format_list_numbered
 format_quote
 format_size
 forum
+front_hand
 fullscreen
 fullscreen_exit
 gavel
@@ -75,6 +84,7 @@ hourglass_top
 how_to_vote
 info
 insights
+kebab_dining
 keyboard_arrow_down
 keyboard_arrow_left
 keyboard_arrow_right
@@ -89,6 +99,7 @@ live_tv
 local_drink
 local_fire_department
 lock
+lock_clock
 lock_open
 login
 logout
@@ -106,6 +117,7 @@ pedal_bike
 pentagon
 person
 person_remove
+person_search
 personal_injury
 pets
 play_arrow
@@ -114,6 +126,7 @@ print
 psychology
 quiz
 radio_button_checked
+receipt_long
 record_voice_over
 redeem
 refresh
@@ -127,10 +140,12 @@ schedule
 school
 science
 search
+sell
 send
 shield
 shopping_bag
 shopping_basket
+show_chart
 skateboarding
 skip_next
 smart_toy
@@ -145,7 +160,9 @@ storefront
 style
 support_agent
 swipe_left
+swords
 sync_alt
+table_view
 task_alt
 theater_comedy
 thumb_down
@@ -154,6 +171,7 @@ tips_and_updates
 touch_app
 toys
 traffic
+train
 trending_flat
 trending_up
 two_wheeler
@@ -161,6 +179,8 @@ undo
 verified
 videogame_asset
 visibility
+warning
+water_drop
 woman
 work
 workspace_premium
