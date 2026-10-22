@@ -18,7 +18,7 @@ public/                 nur dieser Ordner wird veröffentlicht
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld „an die Wand“, Zuordnen, Lückentext, Test, Wissenscheck, Hilfen, Impuls,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“
     js/labyrinth.js     Labyrinth-Spiel: Figur steuern (Tastatur, Wischen, Steuerkreuz, Antippen), Nebel, Würfel-Tore
-    js/chat.js          Chat-Abenteuer: Geschichte als Messenger-Chat mit Entscheidungen, Rechts-Checks und mehreren Enden
+    js/chat.js          Chat-Abenteuer: Geschichte als Messenger-Chat mit Entscheidungen, Rechts- oder Finanz-Checks und mehreren Enden
     js/quiz.js          Klassen-Quiz: Wissenscheck im Lernraum gemeinsam spielen (Punkte nach Tempo, Teams, Rangliste)
     js/praesentation.js Präsentationsansicht: zweites Fenster für den Beamer (erweiterter Bildschirm), zeigt nur, was die Lehrkraft schickt
     js/feedback.js      Feedback ohne KI für den Wissenscheck (austauschbar gegen eine KI)
@@ -28,6 +28,7 @@ public/                 nur dieser Ordner wird veröffentlicht
   <thema>/              ein Ordner pro Thema, z. B. sechseck/
 firestore.rules         Sicherheitsregeln für alle Themen
 scripts/schriften.mjs   lädt die Schriften und Icons nach shared/vendor/fonts/ (npm run schriften)
+docs/lehrplan.md        Lehrplan Wirtschaft und Recht (Gymnasium Thüringen, 2026) zum Einordnen der Themen
 tests/                  Playwright-Tests und Regeltests (laufen gegen den Firebase-Emulator)
 .github/workflows/      Tests, Veröffentlichung (main) und Vorschau (Pull Requests)
 ```
@@ -37,7 +38,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 ## Arbeitsweise
 
 - **Erst der Plan, dann bauen:** Vor einem neuen Thema oder einer größeren Änderung den Plan kurz vorstellen und auf die Freigabe der Lehrkraft warten. Der Plan nennt Klassenstufe, Aufbau (Werkstätten oder Lektionen), Planspiel ja oder nein und neue Bausteine in `shared/`. Kleine Korrekturen direkt umsetzen.
-- **Lehrplan:** Lernbereich und Ziele aus dem Thüringer Lehrplan gibt die Lehrkraft vor, denn das Schulportal blockiert automatische Abrufe. Fehlt die Angabe, nachfragen statt raten.
+- **Lehrplan:** Der Thüringer Lehrplan Wirtschaft und Recht (Gymnasium, 2026) steht zusammengefasst in `docs/lehrplan.md`. Danach ordnest du Themen selbst ein: Klassenstufe, Kapitel und Lernbereich, in der Oberstufe auch grundlegendes oder erhöhtes Anforderungsniveau. Nur wo der Plan offen ist (in der Oberstufe Klasse 11 oder 12), nachfragen statt raten.
 - **Pushen:** Ist `npm test` grün, direkt auf den Arbeitsbranch pushen, ohne nachzufragen.
 - **Veröffentlichen:** Pull Request nach `main` öffnen, er bekommt eine Vorschau-Adresse. Erst der Merge veröffentlicht auf https://wr-lab.web.app. Gemergt wird nur, wenn die Lehrkraft es sagt.
 - **Geheime Schlüssel** trägt die Lehrkraft selbst in GitHub ein. Nie im Chat danach fragen.
@@ -58,7 +59,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Daten mit Stand und Quelle:** Zahlen gerundet, mit Monat und Jahr. Die Quelle steht in der Quellenliste des Themas, z. B. Destatis, Bundesagentur für Arbeit, Thüringer Landesamt für Statistik oder Gesetzestexte.
 - **Die Seite richtet sich an Schüler.** Keine Kästen oder Hinweise „Für die Lehrkraft“ in Werkstätten und Planspielen. Didaktische Hinweise, Lösungen und Erwartungshorizonte gehören ausschließlich ins **Lehrerpanel** (`hinweise` einer Werkstatt, `erwartung` eines Schreibfelds). Das sieht nur die Lehrkraft, die den Lernraum geöffnet hat, und nicht im Beamer-Modus. Funktionen für die Lehrkraft (Lernraum-Dashboard, Lehrkraft-Modus im Planspiel) bleiben erlaubt. Ausnahme sind Übungen zur Selbstkontrolle (Wissenscheck, Zuordnen, Test, Blitzrunde, Fall-Akte, Abstimmung): Dort sehen die Schüler Lösung, Erklärung oder Erwartungshorizont, aber erst nach ihrer eigenen Antwort.
 - **Klassenstufen:** Jedes Thema gehört zu einer Klassenstufe: 9, 10, 11 oder 12 (Feld `stufe` in `themen.js`). Die Startseite sortiert die Themen danach. Sprache, Tempo und Anspruch passen zur Stufe: in Klasse 9 kürzere Texte und mehr Hilfen, in Klasse 11 und 12 mit Blick auf das Abitur.
-- **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht stehen in der README in der Themenübersicht.
+- **Lehrplanbezug:** Klassenstufe und Lernbereich im Thüringer Lehrplan Wirtschaft und Recht (mit Kapitel aus `docs/lehrplan.md`) stehen in der README in der Themenübersicht.
 
 ## Design: Material Design 3
 
@@ -85,7 +86,7 @@ Befehle: `npm ci` (einmalig), `npm run dev` (lokale Seite mit Emulator auf http:
 - **Bausteine aus `shared/js/aufgaben.js`** statt eigener Formulare benutzen. Die Schnittstelle steht oben in der Datei. IDs der Aufgaben: Kleinbuchstaben, Ziffern, Bindestrich, eindeutig im Thema (z. B. `preis-wand`).
   - Zuordnen: Fächer mit Fachbegriffen bekommen eine Erklärung hinter dem Hilfeknopf (`info`) und einen kurzen Namen für Lösungen (`kurz`). Karten nennen Person, Alter und Handlung, damit sie eindeutig sind.
   - Spiele mit Entscheidungen auf Wegen: `labyrinth()` aus `shared/js/labyrinth.js` (Muster: Mission Zwergspitz in `geschaeftsfaehigkeit/`). Die Schüler schätzen erst und laufen dann. Es muss auf PC (Tastatur) und Handy (Wischen, Steuerkreuz) spielbar sein.
-  - Geschichten mit Entscheidungen und Folgen: `chatgeschichte()` aus `shared/js/chat.js` (Muster: Mission Simson in `deliktsfaehigkeit/`). Die Geschichte läuft wie ein Messenger-Chat, ein Rechts-Check erklärt die Folgen, mehrere Enden laden zum Weiterspielen ein.
+  - Geschichten mit Entscheidungen und Folgen: `chatgeschichte()` aus `shared/js/chat.js` (Muster: Mission Simson in `deliktsfaehigkeit/`). Die Geschichte läuft wie ein Messenger-Chat, ein Rechts-Check erklärt die Folgen (bei Wirtschaftsthemen ein Finanz-Check, Feld `check`, Muster: Wolf of Saale in `geldanlage/`), mehrere Enden laden zum Weiterspielen ein.
   - Nicht jedes Spiel als Labyrinth bauen: Die Form passt zur Geschichte und wechselt zwischen den Themen.
 - **Wissenscheck im Lernraum:** Es gehen nur Punkte an die Lehrkraft (Feld `wc` der Teilnehmer, ein Zeichen pro Aufgabe), nie Texte. Das Dashboard zeigt die Punkte pro Stufe, die schwierigsten Aufgaben und (nicht im Beamer-Modus) eine Tabelle mit Spitznamen.
 - **Klassen-Quiz** (`shared/js/quiz.js`, bindet sich über den Wissenscheck automatisch in jedes Thema ein): Die Lehrkraft spielt den Wissenscheck im Lernraum mit der Klasse (Feld `quiz` im Raum, Feld `q` und `team` der Teilnehmer). Gespielt werden nur geschlossene Aufgaben (Auswahl, Mehrfachauswahl, Richtig oder falsch, Rechnen), deshalb gehören in jeden Wissenscheck genug davon. Den Zeitpunkt jeder Antwort setzt der Server, eine Antwort pro Frage. Punkte und Plätze rechnet das Gerät der Lehrkraft, in den Raum kommen nur Punkte pro Gerät, nie Spitznamen. Die Antworten übernimmt der Wissenscheck der Schüler (zählt im Dashboard). Zeitlimit wählbar oder aus (WCAG 2.2.1), Teams tragen Namen Thüringer Flüsse.

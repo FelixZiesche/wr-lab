@@ -2,7 +2,7 @@
 // Schüler, was sie antworten oder tun, und erleben die Folgen. Ein „Rechts-Check“ im Chat erklärt danach, was das
 // Gesetz dazu sagt. Mehrere Enden lassen sich nacheinander entdecken, gemerkt wird nur, welche schon gefunden sind.
 //
-//   chatgeschichte({id, titel, kontakte, start, szenen, enden, speicher})
+//   chatgeschichte({id, titel, kontakte, start, szenen, enden, speicher, check})
 //     kontakte {kid: {name, icon}}             Absender mit Material Symbol als Profilbild
 //     szenen   {sid: {n: [nachricht…], wahl: [{t, sag, n: [nachricht…], weiter: sid | ende: eid}]}}
 //              t   = Text des Knopfs; sag: true heißt, der Text wird als eigene Nachricht gesendet, sonst ist es eine Handlung
@@ -10,6 +10,7 @@
 //     nachricht {von: kid, t} | {ich: t} | {info: t} (Erzähler, mittig) | {recht: t} (Rechts-Check)
 //     enden    {eid: {titel, art: 'gut' | 'mittel' | 'schlecht', t}}
 //     speicher localStorage-Schlüssel (Standard: <Präfix>-chat-<id>)
+//     check    Name und Icon des Checks im Chat, Standard {name: 'Rechts-Check', icon: 'gavel'}, z. B. {name: 'Finanz-Check', icon: 'savings'}
 // Bei reduzierter Bewegung erscheinen die Nachrichten sofort, sonst mit kurzem „schreibt …“.
 // Icons, die das Thema in icons.txt braucht: chat, emoji_events, gavel, lock, more_horiz, replay und die Icons der Kontakte.
 import { $, $$, esc, store } from './ui.js';
@@ -38,7 +39,7 @@ export function chatgeschichte(def){
 
 const blase=(def,m)=>{
   if(m.info)return `<p class="chat-info">${m.info}</p>`;
-  if(m.recht)return `<div class="chat-recht"><p class="chat-recht-kopf"><span class="ms sm" aria-hidden="true">gavel</span>Rechts-Check</p><p>${m.recht}</p></div>`;
+  if(m.recht){const c=def.check||{name:'Rechts-Check',icon:'gavel'};return `<div class="chat-recht"><p class="chat-recht-kopf"><span class="ms sm" aria-hidden="true">${c.icon}</span>${c.name}</p><p>${m.recht}</p></div>`}
   if(m.ich)return `<div class="chat-zeile ich"><p class="chat-blase"><span class="sr-only">Du: </span>${esc(m.ich)}</p></div>`;
   if(m.tat)return `<div class="chat-zeile ich"><p class="chat-tat"><span class="sr-only">Du entscheidest: </span>${esc(m.tat)}</p></div>`;
   const k=def.kontakte[m.von]||{name:m.von,icon:'person'};

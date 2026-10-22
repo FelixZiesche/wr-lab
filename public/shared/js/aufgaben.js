@@ -13,7 +13,7 @@
 //   wissenscheck({id, titel, thema, stufe, aufgaben:[…], tipps})       ein Wissenscheck pro Thema, siehe unten
 //   blitz({id, titel, werkstatt, optionen, karten, verdeckt}), blitzAufloesung(def)   Bauchgefühl-Karten, auch als Klassenrunde, siehe unten
 //   pruefschema({id, titel, schema, beispiel}), fallakte({id, titel, schema, faelle})  Rechts-Navi und Fälle, siehe unten
-//   abstimmung({id, titel, fall, frage, optionen, r, e})               „Ihr seid das Gericht“: Live-Abstimmung im Lernraum
+//   abstimmung({id, titel, fall, frage, optionen, r, e, kopf, icon})   „Ihr seid das Gericht“: Live-Abstimmung im Lernraum (kopf: andere Rolle, z. B. „Ihr seid die Anlageberater“)
 //   labyrinth(…) aus labyrinth.js                                     Labyrinth-Spiel mit Figur, wird hier mitgebunden
 //   chatgeschichte(…) aus chat.js                                     Chat-Abenteuer mit Entscheidungen, wird hier mitgebunden
 //   Klassen-Quiz aus quiz.js                                          jeder Wissenscheck lässt sich im Lernraum als Quiz spielen
@@ -840,15 +840,17 @@ function bindAkte(box){
 
 /* ---------- Ihr seid das Gericht (Live-Abstimmung) ----------
    abstimmung({id, titel, fall, frage, optionen:[…], r, e})   r = Index des richtigen Urteils, e = Begründung, titel = kurzer Name des Falls
+   kopf, icon: Rolle und Icon statt „Ihr seid das Gericht“ (gavel), z. B. für Alltagsfragen. Dann ohne Wörter aus dem Gericht.
    Im Lernraum startet die Lehrkraft die Abstimmung, alle Handys zeigen den Fall (Fenster aus lernraum.js), die Lehrkraft
    sieht die Stimmen live und deckt auf. Ohne Lernraum fällt man das Urteil allein. */
 const URTEILE=new Map();
 export function abstimmung(def){
   const {id,titel,fall,frage,optionen,r,e}=def;URTEILE.set(id,def);
-  registriere({id,frage:titel?`${titel}: ${frage}`:frage,loesung:[`<b>${optionen[r]}</b>`,e].filter(Boolean),umfrage:{titel,fall,frage,optionen,r,e}});
-  return `<section class="aufgabe abst" data-abst="${id}">${kopf('gavel',titel?`Ihr seid das Gericht · ${titel}`:'Ihr seid das Gericht')}${fall?`<div class="wc-material">${fall}</div>`:''}<p class="aufgabe-frage">${frage}</p><div class="stack" data-abst-inhalt></div></section>`;
+  const rolle=def.kopf||'Ihr seid das Gericht',icon=def.icon||'gavel',kopfText=titel?`${rolle} · ${titel}`:rolle;
+  registriere({id,frage:titel?`${titel}: ${frage}`:frage,loesung:[`<b>${optionen[r]}</b>`,e].filter(Boolean),umfrage:{titel,fall,frage,optionen,r,e,...(def.kopf?{art:'frage',kopf:kopfText,icon}:{})}});
+  return `<section class="aufgabe abst" data-abst="${id}">${kopf(icon,kopfText)}${fall?`<div class="wc-material">${fall}</div>`:''}<p class="aufgabe-frage">${frage}</p><div class="stack" data-abst-inhalt></div></section>`;
 }
-const urteilHTML=(def,w)=>`<div class="fb ${w===def.r?'ok':'bad'}"><b>${w===def.r?'Richtig geurteilt!':'Das Gericht entscheidet anders.'}</b> Richtig ist: <b>${def.optionen[def.r]}</b>. ${def.e||''}</div>`;
+const urteilHTML=(def,w)=>`<div class="fb ${w===def.r?'ok':'bad'}"><b>${w===def.r?(def.kopf?'Richtig!':'Richtig geurteilt!'):(def.kopf?'Nicht ganz.':'Das Gericht entscheidet anders.')}</b> Richtig ist: <b>${def.optionen[def.r]}</b>. ${def.e||''}</div>`;
 // Gezeichnet wird über neuZeichnen(): Live-Ereignisse (Stimmen, Ortswechsel) zeichnen nur bei Änderungen neu, der Tastaturfokus bleibt.
 function zeichneAbst(box){
   const def=URTEILE.get(box.dataset.abst);if(!def)return;
@@ -861,7 +863,7 @@ function zeichneAbst(box){
     }
     const st=raum.stimmen(),n=st.reduce((a,b)=>a+b,0);
     if(neuZeichnen(el,`${balkenHTML(def.optionen,st,u.auf?def.r:-1)}${abgestimmtHTML(n)}
-      ${u.auf?`<div class="fb ok"><b>Urteil: ${def.optionen[def.r]}.</b> ${def.e||''}</div>`:''}
+      ${u.auf?`<div class="fb ok"><b>${def.kopf?'Lösung':'Urteil'}: ${def.optionen[def.r]}.</b> ${def.e||''}</div>`:''}
       <div class="row">${u.auf?'':'<button class="btn primary" type="button" data-abst-auf><span class="ms" aria-hidden="true">visibility</span>Auflösen</button>'}<button class="btn" type="button" data-abst-ende><span class="ms" aria-hidden="true">stop_circle</span>Abstimmung beenden</button></div>`,'[data-abst-auf],[data-abst-ende]')){
       $('[data-abst-auf]',el)?.addEventListener('click',()=>raum.deckeAuf());
       $('[data-abst-ende]',el).addEventListener('click',()=>raum.beendeUmfrage());
@@ -881,8 +883,8 @@ function zeichneAbst(box){
       $('[data-abst-neu]',el).addEventListener('click',()=>{store(key('abst',def.id),{});zeichneAbst(box);$('input',el)?.focus()});
     return;
   }
-  if(!neuZeichnen(el,`<fieldset class="wc-opts"><legend class="small">Dein Urteil</legend>${def.optionen.map((o,i)=>`<label class="test-opt"><input type="radio" name="abst-${def.id}" value="${i}"><span>${o}</span></label>`).join('')}</fieldset>
-    <div class="row"><button class="btn primary small" type="button" data-abst-urteil disabled><span class="ms" aria-hidden="true">gavel</span>Urteil fällen</button></div>`))return;
+  if(!neuZeichnen(el,`<fieldset class="wc-opts"><legend class="small">${def.kopf?'Deine Antwort':'Dein Urteil'}</legend>${def.optionen.map((o,i)=>`<label class="test-opt"><input type="radio" name="abst-${def.id}" value="${i}"><span>${o}</span></label>`).join('')}</fieldset>
+    <div class="row"><button class="btn primary small" type="button" data-abst-urteil disabled><span class="ms" aria-hidden="true">${def.kopf?'task_alt':'gavel'}</span>${def.kopf?'Antwort prüfen':'Urteil fällen'}</button></div>`))return;
   const btn=$('[data-abst-urteil]',el);
   el.onchange=()=>{btn.disabled=!$('input:checked',el)};
   btn.addEventListener('click',()=>{const r=$('input:checked',el);if(!r)return;store(key('abst',def.id),{w:+r.value});zeichneAbst(box);fokusAuf($('.fb',el))});

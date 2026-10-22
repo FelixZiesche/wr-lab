@@ -1,0 +1,122 @@
+/* Lernwerkstatt Anlagemöglichkeiten: Farben der drei Anlageziele (M3 Custom Colors, harmonisiert), Dreieck der Geldanlage,
+   Steckbriefe, Depot-Zeitmaschine und die Figur „Wolf of Saale“. Allgemeines Design: /shared/css/m3.css
+   s = Sicherheit (grün), l = Liquidität (orange), r = Rendite (blau) */
+:root{--md-ga-s:#3b6939;--md-on-ga-s:#ffffff;--md-ga-s-container:#bcf0b4;--md-on-ga-s-container:#002204;
+  --md-ga-l:#924c00;--md-on-ga-l:#ffffff;--md-ga-l-container:#ffdcc4;--md-on-ga-l-container:#2f1400;
+  --md-ga-r:#0061a6;--md-on-ga-r:#ffffff;--md-ga-r-container:#d2e4ff;--md-on-ga-r-container:#001c37;
+  --ga-s:var(--md-ga-s);--ga-l:var(--md-ga-l);--ga-r:var(--md-ga-r);
+  /* Figur Wolf of Saale */
+  --ga-wolf-bg:var(--md-primary-container);--ga-fell:#6e625a;--ga-fell-innen:#b49a8a;--ga-fell-hell:#d9cbc0;--ga-anzug:#2b3038;--ga-streifen:#c9ccd3;
+  --ga-revers:#1d2127;--ga-hemd:#ffffff;--ga-krawatte:#b6222c;--ga-brille:#191c20;--ga-glanz:#a0cafd;--ga-mund:#410005;--ga-geld:#bcf0b4;--ga-geld-linie:#235024;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-ga-s:#a1d39a;--md-on-ga-s:#0a390f;--md-ga-s-container:#235024;--md-on-ga-s-container:#bcf0b4;--md-ga-l:#ffb780;--md-on-ga-l:#4e2600;--md-ga-l-container:#6f3800;--md-on-ga-l-container:#ffdcc4;--md-ga-r:#a0c9ff;--md-on-ga-r:#00325a;--md-ga-r-container:#00497f;--md-on-ga-r-container:#d2e4ff;--ga-fell:#8a7d74;--ga-anzug:#3a4049;}}
+:root[data-theme="dark"]{--md-ga-s:#a1d39a;--md-on-ga-s:#0a390f;--md-ga-s-container:#235024;--md-on-ga-s-container:#bcf0b4;--md-ga-l:#ffb780;--md-on-ga-l:#4e2600;--md-ga-l-container:#6f3800;--md-on-ga-l-container:#ffdcc4;--md-ga-r:#a0c9ff;--md-on-ga-r:#00325a;--md-ga-r-container:#00497f;--md-on-ga-r-container:#d2e4ff;--ga-fell:#8a7d74;--ga-anzug:#3a4049;}
+
+/* Farbpunkte auf den Werkstatt-Karten */
+.ga-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.ga-dot.s{background:var(--ga-s)}.ga-dot.l{background:var(--ga-l)}.ga-dot.r{background:var(--ga-r)}
+
+/* Startseite: Leitfrage, Wolf-Beitrag, Lernziele */
+.ga-start{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.ga-start{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.banner .credit a{color:inherit}
+.ga-post{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:start;background:var(--md-surface-container);border-radius:var(--r-xl);padding:12px 16px}
+.ga-post .ga-wolf{width:88px;height:88px}
+.ga-post-kopf{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.ga-post-text{font-size:1rem;line-height:1.5rem;margin-top:4px}
+.ga-wolf{display:block;width:100%;height:auto}
+.ga-wolf-gross{max-width:260px;margin:0 auto}
+
+/* Fotos mit Bildnachweis darunter */
+.ga-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.ga-fig img{display:block;width:100%;height:auto;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.ga-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+
+/* Geldschmelze: Döner-Raster */
+.ga-raster{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px}
+.ga-raster .ms{font-size:20px;color:var(--md-ga-l)}
+.ga-raster .ms.weg{color:var(--md-outline-variant)}
+.ga-schaetzung{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ga-schaetzung input{width:7em}
+
+/* Dreieck der Geldanlage */
+.ga-ziele{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.ga-ziel{border-radius:var(--r-l);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.ga-ziel.s{background:var(--md-ga-s-container);color:var(--md-on-ga-s-container)}
+.ga-ziel.l{background:var(--md-ga-l-container);color:var(--md-on-ga-l-container)}
+.ga-ziel.r{background:var(--md-ga-r-container);color:var(--md-on-ga-r-container)}
+.ga-ziel .title-m{display:flex;align-items:center;gap:6px}
+.ga-dreieck svg{touch-action:none;cursor:crosshair}
+.ga-dreieck .ga-punkt{transition:cx .15s,cy .15s}
+@media (prefers-reduced-motion: reduce){.ga-dreieck .ga-punkt{transition:none}}
+.ga-regler input[type=range]{width:100%}
+.ga-regler .s{accent-color:var(--ga-s)}.ga-regler .l{accent-color:var(--ga-l)}.ga-regler .r{accent-color:var(--ga-r)}
+.ga-treffer{display:flex;align-items:center;gap:12px}
+.ga-treffer .ms{font-size:32px;color:var(--md-primary)}
+
+/* Steckbriefe der Anlageformen */
+.ga-briefe{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.ga-brief{border:1px solid var(--md-outline-variant);border-radius:var(--r-l);background:var(--md-surface-container-low);overflow:hidden}
+.ga-brief summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;min-height:48px}
+.ga-brief summary::-webkit-details-marker{display:none}
+.ga-brief summary .ga-ic{width:40px;height:40px;border-radius:var(--r-m);display:grid;place-items:center;background:var(--md-primary-container);color:var(--md-on-primary-container);flex:none}
+.ga-brief summary .ga-mehr{margin-left:auto;transition:transform .2s}
+.ga-brief[open] summary .ga-mehr{transform:rotate(180deg)}
+@media (prefers-reduced-motion: reduce){.ga-brief summary .ga-mehr{transition:none}}
+.ga-brief .ga-brief-text{padding:0 16px 16px;font-size:.875rem;line-height:1.25rem}
+
+/* Tabelle zum Ausfüllen */
+.ga-tab select{min-height:40px;padding:4px 8px;border-radius:var(--r-s);border:1px solid var(--md-outline);background:var(--md-surface-container-lowest);color:var(--md-on-surface);font:inherit;font-size:.875rem}
+.ga-tab td.right select{border-color:var(--md-ok);border-width:2px}
+.ga-tab td.wrong select{border-color:var(--md-error);border-width:2px;border-style:dashed}
+.ga-tab .ga-mark{margin-left:4px;vertical-align:middle}
+.ga-tab .ga-mark.ok{color:var(--md-ok)}.ga-tab .ga-mark.bad{color:var(--md-error)}
+.ga-tab th .ms{vertical-align:middle}
+.ga-tab th.s{color:var(--md-ga-s)}.ga-tab th.l{color:var(--md-ga-l)}.ga-tab th.r{color:var(--md-ga-r)}
+@media (max-width:599px){.ga-tab :is(th,td){padding:6px 4px}.ga-tab select{padding:4px;font-size:.8125rem}.ga-tab .th-lang{display:none}}
+.ga-tab .th-kurz{display:none}
+@media (max-width:599px){.ga-tab .th-kurz{display:inline}}
+
+/* Anlage-Duell */
+.ga-duell{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch}
+.ga-duell .ga-karte{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;padding:16px;border-radius:var(--r-xl);border:1px solid var(--md-outline-variant);background:var(--md-surface-container-low);cursor:pointer;font:inherit;color:var(--md-on-surface);text-align:center}
+.ga-duell .ga-karte .ms{font-size:36px;color:var(--md-primary)}
+.ga-duell .ga-karte.right{background:var(--md-ok-container);color:var(--md-on-ok-container);border-color:transparent}
+.ga-duell .ga-karte.wrong{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
+.ga-duell .ga-vs{align-self:center;font-weight:700;color:var(--md-on-surface-variant)}
+.ga-duell-frage{font-size:1.125rem;line-height:1.5rem;font-weight:500}
+.ga-duell-frage .ga-kat{padding:2px 10px;border-radius:var(--r-full);font-size:.875rem}
+.ga-kat.s{background:var(--md-ga-s-container);color:var(--md-on-ga-s-container)}.ga-kat.l{background:var(--md-ga-l-container);color:var(--md-on-ga-l-container)}.ga-kat.r{background:var(--md-ga-r-container);color:var(--md-on-ga-r-container)}
+
+/* Anlegertest */
+.ga-typ{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.ga-typ .ms{font-size:40px;color:var(--md-primary)}
+
+/* Schneeball-Rechner: gestapelte Balken */
+.ga-formel{font-size:1.5rem;line-height:2rem;font-weight:500;overflow-x:auto;white-space:nowrap}
+.ga-formel sub,.ga-formel sup{font-size:.7em}
+.ga-legende i.ein{background:var(--md-outline)}.ga-legende i.zins{background:var(--md-ga-r)}
+.ga-vergleich{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.ga-person{border-radius:var(--r-l);background:var(--md-surface-container);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+
+/* Depot-Zeitmaschine */
+.ga-depot{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ga-pos{border:1px solid var(--md-outline-variant);border-radius:var(--r-l);padding:12px 16px;display:flex;flex-direction:column;gap:6px;background:var(--md-surface-container-low)}
+.ga-pos-kopf{display:flex;align-items:center;gap:8px}
+.ga-pos-kopf .ms{color:var(--md-primary)}
+.ga-pos-kopf b{flex:1}
+.ga-pos input[type=range]{width:100%}
+.ga-rest{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ga-jahr{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ga-jahr .display-s{font-variant-numeric:tabular-nums}
+.ga-ereignis{border-left:4px solid var(--md-primary);padding:8px 16px;background:var(--md-surface-container);border-radius:0 var(--r-m) var(--r-m) 0}
+.ga-plus{color:var(--md-ok)}.ga-minus{color:var(--md-error)}
+.ga-entscheidung{border:2px solid var(--md-warn);border-radius:var(--r-l);padding:12px 16px;background:var(--md-warn-container);color:var(--md-on-warn-container)}
+.ga-strategien{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.ga-strategie{border-radius:var(--r-m);padding:8px 12px;background:var(--md-surface-container)}
+.ga-strategie.du{background:var(--md-primary-container);color:var(--md-on-primary-container)}
+.ga-linie-du{stroke:var(--md-primary)}.ga-linie-etf{stroke:var(--md-ga-l)}.ga-linie-tg{stroke:var(--md-ga-s)}.ga-linie-giro{stroke:var(--md-outline)}
+.legend i.ga-leg-du{background:var(--md-primary);height:6px}.legend i.ga-leg-etf{background:var(--md-ga-l)}.legend i.ga-leg-tg{background:var(--md-ga-s)}.legend i.ga-leg-giro{background:var(--md-outline)}
+
+/* Wolf im Chat */
+.ga-wolf-klein{width:72px;height:72px;flex:none}

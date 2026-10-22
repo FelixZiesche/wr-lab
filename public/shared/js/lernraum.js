@@ -442,7 +442,7 @@ function abstimmungen(el){
   const liste=[...AUFGABEN.values()].filter(a=>(a.umfrage&&!a.intern)||a.runde),u=raum.umfrage();
   const laeuft=a=>u.id===a.id||(a.runde&&String(u.id||'').startsWith(a.id+'-k'));
   el.hidden=!liste.length;if(!liste.length)return;
-  neuZeichnen(el,`<h3 class="title-l">Live-Abstimmungen</h3><p class="small muted">Ihr seid das Gericht und Blitzrunden als Klassenrunde: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
+  neuZeichnen(el,`<h3 class="title-l">Live-Abstimmungen</h3><p class="small muted">Abstimmungen wie „Ihr seid das Gericht“ und Blitzrunden als Klassenrunde: Starten und auflösen kannst du in der Werkstatt am Beamer.</p>
     <div class="tbl-wrap"><table><tbody>${liste.map(a=>`<tr><td>${a.runde?'Blitzrunde: ':''}${esc(a.frage)}<div class="small muted">${esc(ortName(a.tool))}</div></td><td class="r">${laeuft(a)?`<span class="pill ok">läuft</span>`:''}</td><td class="r">${a.tool?`<button class="btn text small" type="button" data-lr-abst="${esc(a.tool)}">Zur Abstimmung</button>`:''}</td></tr>`).join('')}</tbody></table></div>`,'h3');
 }
 
@@ -475,8 +475,8 @@ function umfrageFenster(){
       if(b.hasAttribute('data-u-zu')){umfrageZu=el._zustand;umfrageWeg(el)}else raum.stimme(+b.dataset.uW).catch(e=>console.warn('Abstimmung',e))})}
   if(neu)umfrageVorher=document.activeElement;
   el._zustand=zustand;el._n=u.n;
-  // Blitzrunde als Klassenrunde: keine Wörter aus dem Gericht („Dein Urteil“), es geht um Alltagsfragen
-  const blitz=q.art==='blitz';$('[data-u-wahl]',el).setAttribute('aria-label',blitz?'Deine Antwort':'Dein Urteil');
+  // Blitzrunde als Klassenrunde und Abstimmungen mit eigener Rolle (art 'frage'): keine Wörter aus dem Gericht („Dein Urteil“)
+  const blitz=q.art==='blitz'||q.art==='frage';$('[data-u-wahl]',el).setAttribute('aria-label',blitz?'Deine Antwort':'Dein Urteil');
   neuZeichnen($('[data-u-oben]',el),`<div class="row" style="justify-content:space-between"><p class="eyebrow"><span class="ms sm" aria-hidden="true">${q.icon||'gavel'}</span> ${q.kopf||`Ihr seid das Gericht${q.titel?` · ${q.titel}`:''}`}</p><button class="icon-btn" type="button" data-u-zu aria-label="Fenster schließen"><span class="ms" aria-hidden="true">close</span></button></div>
     ${q.fall?`<div class="wc-material">${q.fall}</div>`:''}<h2 class="title-l" id="lr-umfrage-t">${q.frage}</h2>`);
   // Antworten getrennt vom Fall: Eine Stimme oder das Auflösen zeichnet das Foto nicht neu (es würde kurz verschwinden)
