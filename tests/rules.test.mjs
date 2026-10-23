@@ -270,3 +270,61 @@ test('Raum verlassen und Wand aufräumen: Schüler löschen nur eigene Antworten
   await assertSucceeds(ref('lehrkraft', 'troll_preis-wand').delete());
   await assertSucceeds(ref('lehrkraft', 'kalle_preis-wand').get());
 });
+
+test('Klassenbank: Konto nur für sich, finden nur mit IBAN, Überweisung nur vom Absender an ein passendes Konto', async () => {
+  const IBAN_S = 'DE12002305000000000001', IBAN_K = 'DE34002305000000000002';
+  const in24 = () => new Date(Date.now() + 24 * 3600 * 1000);
+  await env.withSecurityRulesDisabled(ctx => ctx.firestore().doc(`rooms/${CODE}/players/kalle`).set(player({ nick: 'Kalle' })));
+  const konto = (uid, iban) => db(uid).doc(`rooms/${CODE}/konten/${iban}`);
+  // Konto anlegen: nur Teilnehmer, nur mit eigener uid, gültiger IBAN und Spitzname
+  await assertSucceeds(konto('schueler', IBAN_S).set({ uid: 'schueler', name: 'Testi', expireAt: in24() }));
+  await assertSucceeds(konto('kalle', IBAN_K).set({ uid: 'kalle', name: 'Kalle', expireAt: in24() }));
+  await assertFails(konto('fremd', 'DE56002305000000000003').set({ uid: 'fremd', name: 'Fremd', expireAt: in24() }));
+  await assertFails(konto('schueler', 'DE56002305000000000003').set({ uid: 'kalle', name: 'Kalle', expireAt: in24() }));
+  await assertFails(konto('schueler', 'XX56002305000000000003').set({ uid: 'schueler', name: 'Testi', expireAt: in24() }));
+  await assertFails(konto('schueler', 'DE56002305000000000003').set({ uid: 'schueler', name: 'x'.repeat(21), expireAt: in24() }));
+  await assertFails(konto('schueler', 'DE56002305000000000003').set({ uid: 'schueler', name: 'Testi', saldo: 99999, expireAt: in24() }));
+  await assertFails(konto('kalle', IBAN_S).set({ uid: 'kalle', name: 'Kalle', expireAt: in24() }));
+  // Finden mit IBAN ja, auflisten nur die Lehrkraft
+  await assertSucceeds(konto('schueler', IBAN_K).get());
+  await assertFails(db('schueler').collection(`rooms/${CODE}/konten`).get());
+  await assertSucceeds(db('lehrkraft').collection(`rooms/${CODE}/konten`).get());
+
+  const jetzt = firebase.firestore.FieldValue.serverTimestamp();
+  const b = extra => ({ von: 'schueler', an: 'kalle', vonIban: IBAN_S, anIban: IBAN_K, vonName: 'Testi', anName: 'Kalle', betrag: 650, zweck: 'Pizza', echtzeit: true, at: jetzt, expireAt: in24(), ...extra });
+  const buchung = (uid, id) => db(uid).doc(`rooms/${CODE}/buchungen/${id}`);
+  await assertSucceeds(buchung('schueler', 'schueler_1').set(b()));
+  await assertSucceeds(buchung('schueler', 'schueler_300').set(b({ echtzeit: false })));
+  // Nummer, Absender, Betrag, Namen und Konten werden geprüft
+  await assertFails(buchung('schueler', 'schueler_301').set(b()));
+  await assertFails(buchung('schueler', 'kalle_2').set(b()));
+  await assertFails(buchung('kalle', 'kalle_1').set(b()));
+  await assertFails(buchung('schueler', 'schueler_2').set(b({ betrag: 0 })));
+  await assertFails(buchung('schueler', 'schueler_3').set(b({ betrag: 100001 })));
+  await assertFails(buchung('schueler', 'schueler_4').set(b({ betrag: 6.5 })));
+  await assertFails(buchung('schueler', 'schueler_5').set(b({ anName: 'Paul' })));
+  await assertFails(buchung('schueler', 'schueler_6').set(b({ vonName: 'Kalle' })));
+  await assertFails(buchung('schueler', 'schueler_7').set(b({ an: 'lehrkraft' })));
+  await assertFails(buchung('schueler', 'schueler_8').set(b({ anIban: 'DE56002305000000000003' })));
+  await assertFails(buchung('schueler', 'schueler_9').set(b({ zweck: 'x'.repeat(141) })));
+  await assertFails(buchung('schueler', 'schueler_10').set(b({ at: new Date(0) })));
+  await assertFails(buchung('schueler', 'schueler_11').set(b({ geheim: 1 })));
+  // Nicht ändern, nicht überschreiben
+  await assertFails(buchung('schueler', 'schueler_1').update({ betrag: 1 }));
+  await assertFails(buchung('kalle', 'schueler_1').delete());
+  // Lesen: Absender und Empfänger, nicht die anderen; die Lehrkraft alle
+  await env.withSecurityRulesDisabled(ctx => ctx.firestore().doc(`rooms/${CODE}/players/mira`).set(player({ nick: 'Mira' })));
+  await assertSucceeds(buchung('schueler', 'schueler_1').get());
+  await assertSucceeds(buchung('kalle', 'schueler_1').get());
+  await assertFails(buchung('mira', 'schueler_1').get());
+  await assertSucceeds(db('kalle').collection(`rooms/${CODE}/buchungen`).where('an', '==', 'kalle').get());
+  await assertFails(db('mira').collection(`rooms/${CODE}/buchungen`).get());
+  await assertSucceeds(db('lehrkraft').collection(`rooms/${CODE}/buchungen`).get());
+  // Geschlossener Raum: keine neuen Konten und Überweisungen; Konto löschen: eigenes oder die Lehrkraft
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ open: false }));
+  await assertFails(buchung('schueler', 'schueler_12').set(b()));
+  await assertFails(konto('schueler', IBAN_K).delete());
+  await assertSucceeds(konto('kalle', IBAN_K).delete());
+  await assertSucceeds(konto('schueler', IBAN_S).delete());
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}/buchungen/schueler_1`).delete());
+});

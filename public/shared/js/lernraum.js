@@ -38,7 +38,7 @@ export function registriere(def){AUFGABEN.set(def.id,{...def,tool:aktuellesTool|
 
 /* ---------- Sitzung ---------- */
 let cfg={}, L=null, s=null, z={raum:null,spieler:[],antworten:[],verbindung:''}, abos=[], ortT=null, gemeldet='', ergT=null, ergGemeldet='', schliesst=false;
-const hoerer=new Set();
+const hoerer=new Set(),aufraeumen=new Set();
 const speichern=()=>{if(!PRAES)store(cfg.speicher+'-raum',s)};
 // Eigener offener Raum der Lehrkraft (bleibt auch, wenn die Sitzung verloren geht, bis der Raum sicher gelöscht ist)
 const eigenerRaum=v=>v===undefined?store(cfg.speicher+'-eigener-raum'):store(cfg.speicher+'-eigener-raum',v);
@@ -174,8 +174,10 @@ export const raum={
     // Die Liste der eigenen Antworten dürfen Schüler nicht lesen: alle Wand-Aufgaben probieren (fehlende lehnen die Regeln ab)
     const c=s.code,ids=new Set([...Object.keys(s.gesendet||{}),...[...AUFGABEN.values()].filter(a=>a.wand).map(a=>a.id)]);
     ende(null);if(!L)return;
-    await Promise.all([...[...ids].map(a=>L.deleteAnswer(c,a)),L.kick(c,L.uid)].map(p=>p.catch(()=>{})));
+    await Promise.all([...[...ids].map(a=>L.deleteAnswer(c,a)),...[...aufraeumen].map(f=>f(L,c)),L.kick(c,L.uid)].map(p=>Promise.resolve(p).catch(()=>{})));
   },
+  /** Bausteine mit eigenen Daten im Raum (z. B. das Übungskonto der Klassenbank) löschen sie beim „Raum verlassen“ mit: f(live, code) */
+  beimVerlassen(f){aufraeumen.add(f)},
   /** Lehrkraft: Raum beenden. Erst wenn alles gelöscht ist, endet die Sitzung; sonst wirft es (noch einmal versuchen). */
   async beenden(){
     if(!s)return;const c=s.code;schliesst=true;

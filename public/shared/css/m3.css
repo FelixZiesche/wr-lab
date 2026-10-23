@@ -794,3 +794,37 @@ button.qz-feld:disabled{cursor:default}
 .praes-leiste-an .modal-body{padding-bottom:112px}
 .praes-leiste-an .app-foot{padding-bottom:80px}
 @media (max-width:599px){.praes-leiste{bottom:calc(var(--nav-h) + 12px)}}
+
+/* Klassenbank (bank.js): Banking-App mit Übungskonto, Aufträgen und Bank-Monitor der Lehrkraft */
+.bank-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media (min-width:900px){.bank-grid{grid-template-columns:minmax(0,460px) minmax(0,1fr)}}
+.bank-handy{min-width:0;display:flex;flex-direction:column;gap:12px;border:1px solid var(--md-outline-variant);border-radius:var(--r-xl);background:var(--md-surface-container-lowest);padding:16px}
+.bank-kopf{background:var(--md-primary-container);color:var(--md-on-primary-container);border-radius:var(--r-l);padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.bank-kopf .eyebrow{color:inherit;margin-top:8px}
+.bank-kopf .big-num{color:inherit}
+.bank-iban{gap:4px;flex-wrap:nowrap}
+.bank-iban .mono{overflow-wrap:anywhere}
+.bank-tabs{display:flex;width:100%}
+.bank-tabs button{flex:1 1 0;min-width:0;justify-content:center;padding:0 6px;text-align:center}
+@media (max-width:479px){.bank-tabs .ms{display:none}}
+.seg button[aria-selected="true"]{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.bank-handy input:not([type=checkbox]){width:100%}
+.bank-zeile{align-items:flex-end;flex-wrap:wrap}
+.bank-zeile>.stack:first-child{width:8em;flex:none}
+.bank-kontakte{gap:6px;align-items:center}
+.bank-kontakte .chip{flex-direction:row;align-items:center;gap:6px;min-height:40px;padding:6px 12px;border:1px solid var(--md-outline-variant);border-radius:var(--r-s);background:transparent;font-size:.875rem;line-height:1.25rem;font-weight:500}
+.bank-umsaetze{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.bank-umsaetze li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 4px;border-bottom:1px solid var(--md-outline-variant)}
+.bank-umsaetze li>.ms{color:var(--md-on-surface-variant)}
+.bank-u-text{display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:0;overflow-wrap:anywhere}
+.bank-betrag{font-weight:600;white-space:nowrap}
+.bank-umsaetze li.rein .bank-betrag{color:var(--md-ok)}
+.bank-tan{border:2px solid var(--md-primary);border-radius:var(--r-l);padding:12px 16px;background:var(--md-surface-container)}
+.bank-tan dd{margin:0;overflow-wrap:anywhere}
+.bank-auftraege{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.bank-auftraege li{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:var(--r-l);background:var(--md-surface-container-low)}
+.bank-auftraege li>.ms{color:var(--md-on-surface-variant);margin-top:2px}
+.bank-auftraege li.ok{background:var(--md-ok-container);color:var(--md-on-ok-container)}
+.bank-auftraege li.ok>.ms{color:inherit}
+.bank-monitor{border:1px solid var(--md-outline-variant);border-radius:var(--r-xl);padding:16px}
+.bank-monitor .title-m{display:flex;align-items:center;gap:8px}

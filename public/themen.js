@@ -7,6 +7,19 @@
 //   fotoLink, lizenzLink: bei CC-Lizenzen Link zur Datei und zur Lizenz (für die Fußzeile der Startseite)
 export const THEMEN = [
   {
+    id: 'zahlungsmethoden',
+    titel: 'Zahlungsmethoden',
+    stufe: 9,
+    bereich: 'Wirtschaft',
+    text: 'Bar, Karte, Handy oder später bezahlen? Kassen-Rush durch Thüringen, eine Klassenbank, in der ihr euch gegenseitig Geld überweist, Fake-Detektor, Krypto-Achterbahn und ein Chat-Abenteuer übers Später-Zahlen.',
+    stichworte: ['Überweisung', 'Phishing', 'Buy now, pay later', 'Lernraum'],
+    bild: 'zahlungsmethoden/img/supermarkt.jpg',
+    alt: 'Lange Regale in einem Supermarkt, daneben Kühltruhen',
+    foto: 'The real Marcoman / Wikimedia Commons, CC0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:Netto_Marken-Discount_Innenansicht_(4).jpg',
+    lizenzLink: 'https://creativecommons.org/publicdomain/zero/1.0/'
+  },
+  {
     id: 'geldanlage',
     titel: 'Anlagemöglichkeiten',
     stufe: 9,

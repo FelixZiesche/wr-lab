@@ -488,7 +488,8 @@ test('Keine Verbindung beim Beitreten: ehrliche Meldung, neuer Versuch möglich,
 // (connect-src) sind erlaubt, jede andere zeigt eine Quelle, die auch auf wr-lab.web.app blockiert würde.
 test('Sicherheitsvorgaben: Lernraum mit Handy ohne Verstoß gegen die Content-Security-Policy, kein apis.google.com', async ({ page: lk, browser }) => {
   test.setTimeout(90_000);
-  const EMULATOR = /Refused to connect to '(https?|wss?):\/\/127\.0\.0\.1:(9099|8080)\//;
+  // Wortlaut je nach Chromium-Version: „Refused to connect to …“ oder „Connecting to … violates …“
+  const EMULATOR = /(Refused to connect to|Connecting to) '(https?|wss?):\/\/127\.0\.0\.1:(9099|8080)\//;
   const meldungen = [], fremd = [];
   const beobachte = page => {
     page.on('console', m => { if (/Content.Security.Policy/i.test(m.text()) && !EMULATOR.test(m.text())) meldungen.push(m.text().slice(0, 300)); });
