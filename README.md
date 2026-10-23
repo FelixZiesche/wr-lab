@@ -6,7 +6,7 @@ Adresse nach der Einrichtung: **https://wr-lab.web.app**
 
 ## Themen
 
-Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und 12.
+Die Startseite zeigt die Themen als Fotokarten, nach Klassenstufe sortiert (Klasse 9, 10, 11 und 12). Filter nach Klasse und nach Bereich (VWL, BWL, Recht) blenden die übrigen Themen aus.
 
 | Klasse | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- | --- |
@@ -158,7 +158,7 @@ Kurzfassung (die vollständige Checkliste steht in [CLAUDE.md](CLAUDE.md)):
 1. Ordner `public/<id>/` anlegen, z. B. `public/kaufvertrag/`, mit `index.html`, `<id>.css`, `<id>.js` und `img/`. Als Vorlage dient `public/sechseck/`.
 2. Navigation, Werkstätten, Erkenntnisse, Glossar, Lernraum und Lehrerpanel baut `shared/js/werkstatt.js` auf. Aufgaben (Schreibfeld an die Wand, Zuordnen mit Hilfeknopf, Lückentext, Test, Blitzrunde, Rechts-Navi, Fall-Akte, Live-Abstimmung) kommen aus `shared/js/aufgaben.js`, das Labyrinth-Spiel aus `shared/js/labyrinth.js`. Für Rechtsthemen ist `public/geschaeftsfaehigkeit/` ein gutes Muster. Das Thema liefert nur die Inhalte, Hinweise für die Lehrkraft stehen in `hinweise` und erscheinen nur im Lehrerpanel. Zum Abschluss kommt ein Wissenscheck in `<id>/wissenscheck.js`, Muster: `public/sechseck/wissenscheck.js`. Wie viele Aufgaben er hat, richtet sich nach dem Thema (mindestens 12).
 3. Für ein Planspiel die Inhalte nach dem Muster von `sechseck/leben.js` anlegen. Ablauf, Dashboard und Beamer-Modus kommen aus `shared/js/planspiel.js`, live läuft es im Lernraum des Themas.
-4. Das Thema mit seiner Klassenstufe (`stufe`: 9, 10, 11 oder 12) in `public/themen.js` eintragen. Es erscheint dann auf der Startseite als Karte unter dieser Klassenstufe.
+4. Das Thema mit seiner Klassenstufe (`stufe`: 9, 10, 11 oder 12) und Bereich (`bereich`: VWL, BWL oder Recht) in `public/themen.js` eintragen. Es erscheint dann auf der Startseite als Karte bei dieser Klassenstufe und in den Filtern.
 5. Tests in `tests/<id>.spec.mjs` ergänzen, `npm test` ausführen, Pull Request öffnen und die Vorschau prüfen.
 
 Der Lernraum und die Sicherheitsregeln funktionieren für jedes Thema ohne weitere Einrichtung: Jeder Raum speichert sein Thema. Wer einen Code auf der falschen Themenseite eingibt, bekommt einen Hinweis mit Link zum richtigen Thema.
@@ -389,7 +389,7 @@ Die Fotos zum Magischen Sechseck stammen von [Unsplash](https://unsplash.com) un
 - **Magisches Sechseck, Szenen:**
   - Tankstelle: engin akyurt
   - Containerschiff im Hamburger Hafen: Jacob Meissner
-  - Jena mit JenTower: Lukas D. (auch auf der Startseite)
+  - Jena mit JenTower: Lukas D. (auch auf der Startseite, groß als Titelbild)
   - Trockenes Feld: Md. Hasanuzzaman Himel
 - **Magisches Sechseck, Ziele:**
   - Preisniveaustabilität: Yosuke Ota

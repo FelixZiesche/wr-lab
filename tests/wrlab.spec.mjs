@@ -112,20 +112,38 @@ test('Startseite zeigt die Themen als Karten mit Foto und Bildnachweis', async (
   await expect(page).toHaveTitle('WR-Lab');
 });
 
-test('Startseite sortiert die Themen nach Klassenstufe 9 bis 12', async ({ page }) => {
+test('Startseite sortiert die Themen nach Klassenstufe und filtert nach Klasse und Bereich', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#themen .wr-stufe-h')).toHaveText(['Klasse 9', 'Klasse 10', 'Klasse 11', 'Klasse 12']);
   const themen = await page.evaluate(async () => (await import('/themen.js')).THEMEN);
+  const karten = page.locator('#themen-liste .topic:not([hidden])');
+  const sortiert = [...themen].sort((a, b) => a.stufe - b.stufe);
+  await expect(karten.locator('.topic-link')).toHaveText(sortiert.map(t => t.titel));
+  await expect(page.locator('#themen-anzahl')).toHaveText(`${themen.length} Themen`);
   for (const t of themen) {
     expect([9, 10, 11, 12], `Klassenstufe von ${t.id}`).toContain(t.stufe);
-    await expect(page.locator(`#klasse-${t.stufe} .topic a[href="${t.id}/"]`)).toBeVisible();
+    expect(['VWL', 'BWL', 'Recht'], `Bereich von ${t.id}`).toContain(t.bereich);
+    await expect(page.locator(`.topic[data-k="${t.stufe}"][data-b="${t.bereich}"] a[href="${t.id}/"]`)).toBeVisible();
   }
-  await expect(page.locator('#klasse-11 .topic a[href="sechseck/"]')).toContainText('Magisches Sechseck');
   // Stufen ohne Thema zeigen einen Hinweis statt einer leeren Fläche
-  for (const k of [9, 10, 11, 12]) {
-    const n = themen.filter(t => t.stufe === k).length;
-    await expect(page.locator(`#klasse-${k} .wr-leer`)).toHaveCount(n ? 0 : 1);
-  }
+  for (const k of [9, 10, 11, 12])
+    await expect(page.locator(`#themen-liste .wr-leer[data-k="${k}"]`)).toHaveCount(themen.some(t => t.stufe === k) ? 0 : 1);
+  // Filter nach Klasse (auch über die Links in der Kopfleiste) und nach Bereich, als Umschalter mit aria-pressed
+  const klasse = k => page.getByRole('group', { name: 'Klasse' }).getByRole('button', { name: k, exact: true });
+  const bereich = b => page.getByRole('group', { name: 'Bereich' }).getByRole('button', { name: b, exact: true });
+  await klasse('11').click();
+  await expect(klasse('11')).toHaveAttribute('aria-pressed', 'true');
+  await expect(karten.locator('.topic-link')).toHaveText(sortiert.filter(t => t.stufe === 11).map(t => t.titel));
+  await bereich('Recht').click();
+  await expect(karten).toHaveCount(0);
+  await expect(page.locator('#themen-anzahl')).toHaveText('0 Themen');
+  await page.getByRole('button', { name: 'Alle Themen zeigen' }).click();
+  await expect(karten).toHaveCount(themen.length);
+  await bereich('Recht').click();
+  await expect(karten.locator('.topic-link')).toHaveText(sortiert.filter(t => t.bereich === 'Recht').map(t => t.titel));
+  await page.getByRole('navigation', { name: 'Themen nach Klasse' }).getByRole('link', { name: 'Klasse 10' }).click();
+  await expect(klasse('10')).toHaveAttribute('aria-pressed', 'true');
+  await expect(bereich('Alle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(karten.locator('.topic-link')).toHaveText(sortiert.filter(t => t.stufe === 10).map(t => t.titel));
 });
 
 test('Auf dem Handy führt das Symbol in der Kopfleiste zur Startseite', async ({ browser }) => {

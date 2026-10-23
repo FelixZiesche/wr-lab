@@ -82,8 +82,8 @@ test('Icons in Navigation, Kopfleiste und Karten sind für Screenreader ausgeble
   const link = page.getByRole('link', { name: 'Geschäftsfähigkeit', exact: true });
   await expect(link).toHaveAccessibleDescription(/.+/);
   await page.locator('.topic', { has: link }).scrollIntoViewIfNeeded();
-  const tags = await page.locator('.topic', { has: link }).locator('.topic-tags').boundingBox();
-  await page.mouse.click(tags.x + 4, tags.y + tags.height / 2);
+  const text = await page.locator('.topic', { has: link }).locator('p').boundingBox();
+  await page.mouse.click(text.x + 4, text.y + text.height / 2);
   await expect(page).toHaveURL(/\/geschaeftsfaehigkeit\//);
   for (const url of [`${SECHSECK}#ziele`, `${GF}#regeln`, `${GF}#start`]) {
     await oeffne(page, url);
