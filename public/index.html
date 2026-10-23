@@ -22,24 +22,45 @@
 <script type="module" src="start.js"></script>
 </head>
 <body>
-<div class="wr">
-  <header class="wr-top">
+<div class="wr st">
+  <header class="st-bar">
     <span class="wr-logo" aria-hidden="true"><span class="ms" aria-hidden="true">science</span></span>
-    <div><h1 class="title-l">WR-Lab</h1><p class="small muted">Wirtschaft und Recht · Klasse 9 bis 12 · Thüringen</p></div>
+    <span class="title-l">WR-Lab</span>
+    <nav aria-label="Themen nach Klasse"><a href="#klasse-9">Klasse 9</a><a href="#klasse-10">Klasse 10</a><a href="#klasse-11">Klasse 11</a><a href="#klasse-12">Klasse 12</a></nav>
   </header>
   <main class="wr-main">
-    <section class="wr-hero">
-      <h2 class="headline-m">Wirtschaft und Recht zum Ausprobieren</h2>
-      <p class="body-l muted">Interaktive Lernwerkstätten: selbst rechnen, abwägen und entscheiden – allein am Handy oder als ganze Klasse im Lernraum.</p>
-      <ul class="wr-facts">
-        <li><span class="ms sm" aria-hidden="true">no_accounts</span>Ohne Anmeldung</li>
-        <li><span class="ms sm" aria-hidden="true">devices</span>Handy, Tablet und Beamer</li>
-        <li><span class="ms sm" aria-hidden="true">groups</span>Lernraum mit Code für die ganze Klasse</li>
-      </ul>
+    <section class="st-hero" aria-labelledby="start-h">
+      <img src="sechseck/img/szene-3-jena.jpg" alt="" fetchpriority="high">
+      <div class="st-hero-in">
+        <span class="eyebrow"><span class="ms sm" aria-hidden="true">school</span>Wirtschaft und Recht · Klasse 9 bis 12 · Thüringen</span>
+        <h1 id="start-h">Wirtschaft und Recht zum Ausprobieren</h1>
+        <p class="st-lead">Selbst rechnen, abwägen und entscheiden: allein am Handy oder als ganze Klasse im Lernraum.</p>
+        <p class="st-cta"><a class="btn primary" href="#themen">Themen entdecken<span class="ms trail" aria-hidden="true">arrow_downward</span></a><a class="btn glass" href="#lernraum"><span class="ms" aria-hidden="true">cast_for_education</span>So geht der Lernraum</a></p>
+      </div>
+      <p class="st-foto">Foto: Lukas D. / Unsplash</p>
     </section>
-    <section class="wr-section" aria-labelledby="themen-h">
-      <h2 class="headline-s" id="themen-h">Themen nach Klassenstufe</h2>
-      <div class="wr-stufen" id="themen"></div>
+    <ul class="wr-facts">
+      <li><span class="ms" aria-hidden="true">no_accounts</span><span><b>Ohne Anmeldung</b><span class="small muted">Einfach loslegen</span></span></li>
+      <li><span class="ms" aria-hidden="true">devices</span><span><b>Handy, Tablet, Beamer</b><span class="small muted">Passt sich jedem Bildschirm an</span></span></li>
+      <li><span class="ms" aria-hidden="true">groups</span><span><b>Lernraum mit Code</b><span class="small muted">Die ganze Klasse live dabei</span></span></li>
+    </ul>
+    <section class="st-themen" id="themen" aria-labelledby="themen-h">
+      <div class="st-head">
+        <div><p class="eyebrow" id="themen-anzahl" aria-live="polite"></p><h2 class="headline-m" id="themen-h">Wähle dein Thema</h2></div>
+        <div class="st-filter">
+          <div role="group" aria-labelledby="filter-klasse" id="filter-k"><span class="label-m" id="filter-klasse">Klasse</span></div>
+          <div role="group" aria-labelledby="filter-bereich" id="filter-b"><span class="label-m" id="filter-bereich">Bereich</span></div>
+        </div>
+      </div>
+      <div class="st-grid" id="themen-liste"></div>
+    </section>
+    <section class="st-lernraum" id="lernraum" aria-labelledby="lernraum-h">
+      <div><p class="eyebrow">Für die ganze Klasse</p><h2 class="headline-s" id="lernraum-h">So geht der Lernraum</h2></div>
+      <ol>
+        <li><b class="title-m">Raum öffnen</b><span class="body-m muted">Die Lehrkraft öffnet ein Thema und tippt auf „Lernraum“. Der Raum bekommt einen Code und einen QR-Code.</span></li>
+        <li><b class="title-m">Beitreten</b><span class="body-m muted">Ihr scannt den QR-Code oder gebt den Code ein und wählt einen Spitznamen. Ohne Anmeldung.</span></li>
+        <li><b class="title-m">Gemeinsam loslegen</b><span class="body-m muted">Antworten an die Wand, „Ihr seid das Gericht“, Klassen-Quiz mit Rangliste und Planspiele.</span></li>
+      </ol>
     </section>
   </main>
   <footer class="wr-foot small muted">

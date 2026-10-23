@@ -3,6 +3,7 @@
 //   id:     Ordnername, nur Kleinbuchstaben, Ziffern und Bindestrich (wird auch im Live-Raum gespeichert)
 //   stufe:  Klassenstufe nach dem Thüringer Lehrplan: 9, 10, 11 oder 12. Innerhalb einer Stufe gilt
 //           die Reihenfolge dieser Liste, am besten die des Lehrplans.
+//   bereich: 'VWL', 'BWL' oder 'Recht' (Abzeichen und Filter auf der Startseite, Lernbereiche wie in der Oberstufe)
 //   bild:   Foto im Themenordner, Seitenverhältnis etwa 16:9; foto: Bildnachweis (bei CC-Lizenzen mit Lizenz)
 //   fotoLink, lizenzLink: bei CC-Lizenzen Link zur Datei und zur Lizenz (für die Fußzeile der Startseite)
 export const THEMEN = [
@@ -10,7 +11,7 @@ export const THEMEN = [
     id: 'zahlungsmethoden',
     titel: 'Zahlungsmethoden',
     stufe: 9,
-    bereich: 'Wirtschaft',
+    bereich: 'BWL',
     text: 'Bar, Karte, Handy oder später bezahlen? Kassen-Rush durch Thüringen, eine Klassenbank, in der ihr euch gegenseitig Geld überweist, Fake-Detektor, Krypto-Achterbahn und ein Chat-Abenteuer übers Später-Zahlen.',
     stichworte: ['Überweisung', 'Phishing', 'Buy now, pay later', 'Lernraum'],
     bild: 'zahlungsmethoden/img/supermarkt.jpg',
@@ -23,7 +24,7 @@ export const THEMEN = [
     id: 'geldanlage',
     titel: 'Anlagemöglichkeiten',
     stufe: 9,
-    bereich: 'Wirtschaft',
+    bereich: 'BWL',
     text: 'Sparbuch, Aktie, ETF oder Bitcoin? Geldschmelze, magisches Dreieck, Schneeball-Rechner, eine Depot-Zeitmaschine mit echten Kursen und der Wolf of Saale, der an dein Jugendweihe-Geld will.',
     stichworte: ['Dreieck der Geldanlage', 'Zinseszins', 'Chat-Abenteuer', 'Klassen-Quiz'],
     bild: 'geldanlage/img/boerse.jpg',
@@ -62,7 +63,7 @@ export const THEMEN = [
     id: 'sechseck',
     titel: 'Magisches Sechseck',
     stufe: 11,
-    bereich: 'Wirtschaft',
+    bereich: 'VWL',
     text: 'Sechs Ziele der Wirtschaftspolitik messen, Zielkonflikte aufdecken und im Planspiel „Sechseck-Leben“ vier Jahre Politik für Menschen aus Thüringen entscheiden.',
     stichworte: ['StabG 1967', 'Zielkonflikte', 'Planspiel', 'Lernraum'],
     bild: 'sechseck/img/szene-3-jena.jpg',

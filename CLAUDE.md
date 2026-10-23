@@ -185,7 +185,7 @@ Neben den Lernwerkstätten (Werkstätten nach Bereichen) gibt es die **Lernstrec
    - Daten mit Stand und Quelle, Lehrplanbezug in der README
    - keine Hinweise „Für die Lehrkraft“ auf der Seite
 7. **Fotos** in `img/` mit Bildnachweis am Bild, in der Quellenliste und in der README.
-8. **Startseite:** Eintrag in `public/themen.js` mit `id`, `titel`, `stufe` (9, 10, 11 oder 12), `bereich`, `text`, `stichworte`, `bild`, `alt` und `foto`.
+8. **Startseite:** Eintrag in `public/themen.js` mit `id`, `titel`, `stufe` (9, 10, 11 oder 12), `bereich` (`VWL`, `BWL` oder `Recht`, für Abzeichen und Filter), `text`, `stichworte`, `bild`, `alt` und `foto`.
 9. **Tests:** `tests/<id>.spec.mjs` nach dem Muster der Sechseck-Tests:
    - Navigation
    - alle Werkstätten öffnen
