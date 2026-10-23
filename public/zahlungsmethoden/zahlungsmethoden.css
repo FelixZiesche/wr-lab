@@ -1,0 +1,66 @@
+/* Lernwerkstatt Zahlungsmethoden: Farben der drei Bezahlwege (M3 Custom Colors, harmonisiert), Kassen-Rush,
+   Fake-Detektor und Krypto-Achterbahn. Die Klassenbank steht in /shared/css/m3.css (Baustein bank.js).
+   b = Bargeld (grün), k = Karte und Konto (blau), d = digital und neu (violett) */
+:root{--md-zm-b:#3b6939;--md-on-zm-b:#ffffff;--md-zm-b-container:#bcf0b4;--md-on-zm-b-container:#002204;
+  --md-zm-k:#0061a6;--md-on-zm-k:#ffffff;--md-zm-k-container:#d2e4ff;--md-on-zm-k-container:#001c37;
+  --md-zm-d:#6f528a;--md-on-zm-d:#ffffff;--md-zm-d-container:#f1daff;--md-on-zm-d-container:#290c42;
+  --zm-b:var(--md-zm-b);--zm-k:var(--md-zm-k);--zm-d:var(--md-zm-d)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-zm-b:#a1d39a;--md-on-zm-b:#0a390f;--md-zm-b-container:#235024;--md-on-zm-b-container:#bcf0b4;--md-zm-k:#a0c9ff;--md-on-zm-k:#00325a;--md-zm-k-container:#00497f;--md-on-zm-k-container:#d2e4ff;--md-zm-d:#dbb9f9;--md-on-zm-d:#3f2459;--md-zm-d-container:#563b71;--md-on-zm-d-container:#f1daff}}
+:root[data-theme="dark"]{--md-zm-b:#a1d39a;--md-on-zm-b:#0a390f;--md-zm-b-container:#235024;--md-on-zm-b-container:#bcf0b4;--md-zm-k:#a0c9ff;--md-on-zm-k:#00325a;--md-zm-k-container:#00497f;--md-on-zm-k-container:#d2e4ff;--md-zm-d:#dbb9f9;--md-on-zm-d:#3f2459;--md-zm-d-container:#563b71;--md-on-zm-d-container:#f1daff}
+
+/* Farbpunkte auf den Werkstatt-Karten */
+.zm-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.zm-dot.b{background:var(--zm-b)}.zm-dot.k{background:var(--zm-k)}.zm-dot.d{background:var(--zm-d)}
+
+/* Startseite: Leitfrage, verblüffende Zahl, Lernziele */
+.zm-start{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.zm-start{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.banner .credit a{color:inherit}
+.zm-zahl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;background:var(--md-zm-k-container);color:var(--md-on-zm-k-container);border-radius:var(--r-xl);padding:16px 20px}
+.zm-zahl .display-s{font-weight:600}
+.zm-zahl .muted{color:inherit;opacity:.85}
+
+/* Fotos mit Bildnachweis darunter */
+.zm-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.zm-fig img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.zm-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+.zm-fig figcaption a{color:inherit}
+.zm-fig-klein{max-width:320px}
+
+/* Kassen-Rush und Auswahl-Knöpfe */
+.zm-kasse-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:760px){.zm-kasse-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}}
+.zm-optionen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.zm-opt{justify-content:flex-start;text-align:left;min-height:48px;height:auto;padding:10px 16px;white-space:normal}
+.zm-opt.ok{background:var(--md-ok-container);color:var(--md-on-ok-container);border-color:transparent}
+.zm-opt.amb{background:var(--md-warn-container);color:var(--md-on-warn-container);border-color:transparent}
+.zm-opt.bad{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
+.zm-opt[aria-pressed="true"]{outline:3px solid var(--md-on-surface);outline-offset:2px}
+.zm-opt:disabled{opacity:1;cursor:default}
+.zm-opt:disabled:not(.ok):not(.amb):not(.bad){opacity:.6}
+.zm-bilanz{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.zm-bilanz li{display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:var(--r-m)}
+.zm-bilanz li.ok{background:var(--md-ok-container);color:var(--md-on-ok-container)}
+.zm-bilanz li.amb{background:var(--md-warn-container);color:var(--md-on-warn-container)}
+.zm-bilanz li.bad{background:var(--md-error-container);color:var(--md-on-error-container)}
+.zm-bilanz .muted{color:inherit;opacity:.85}
+
+/* Fake-Detektor: Nachricht wie auf dem Handy */
+.zm-nachricht{max-width:520px;background:var(--md-surface-container-high);color:var(--md-on-surface);border-radius:var(--r-xl) var(--r-xl) var(--r-xl) 4px;padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.zm-nachricht p{margin:0}
+.zm-n-kopf{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.zm-n-kopf .ms{color:var(--md-zm-d)}
+.zm-warn{background:var(--md-error-container);color:var(--md-on-error-container);border-radius:4px;padding:0 3px;text-decoration:underline wavy var(--md-error);text-underline-offset:3px}
+.zm-fd-wahl .btn{min-width:120px}
+
+/* Krypto-Achterbahn */
+.zm-krypto-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.zm-krypto-grid{grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr)}}
+.zm-chart{background:var(--md-surface-container-low);border-radius:var(--r-l)}
+.zm-gitter{stroke:var(--md-outline-variant);stroke-width:1}
+.zm-achse{fill:var(--md-on-surface-variant);font-size:12px;font-family:var(--font)}
+.zm-zukunft{fill:var(--md-surface-container-highest)}
+.zm-linie{fill:none;stroke:var(--md-zm-d);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.zm-punkt{fill:var(--md-zm-d);stroke:var(--md-surface);stroke-width:3}
+.zm-fakten ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.zm-fakten .title-s{display:flex;align-items:center;gap:6px}

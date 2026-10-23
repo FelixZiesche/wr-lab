@@ -53,6 +53,7 @@ elderly
 elderly_woman
 electric_scooter
 emoji_events
+event_repeat
 expand_more
 explore
 explore_off
@@ -103,6 +104,7 @@ lock_clock
 lock_open
 login
 logout
+mail
 man
 map
 menu_book
@@ -120,6 +122,7 @@ person_remove
 person_search
 personal_injury
 pets
+photo_camera
 play_arrow
 present_to_all
 print
@@ -150,6 +153,7 @@ skateboarding
 skip_next
 smart_toy
 smartphone
+sms
 speaker
 sports_esports
 sports_soccer

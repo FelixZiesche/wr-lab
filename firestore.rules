@@ -8,6 +8,10 @@ rules_version = '2';
 // - Live-Abstimmung: Die Lehrkraft steuert die Umfrage im Raum, jede Stimme ist eine Zahl im eigenen Eintrag.
 // - Klassen-Quiz: Die Lehrkraft steuert das Quiz im Raum (ohne Spitznamen), jede Antwort ist eine Zahl im eigenen Eintrag,
 //   nur während die Frage läuft, nur eine pro Frage und mit der Uhrzeit des Servers (für die Punkte nach Tempo).
+// - Klassenbank (bank.js): Jeder Teilnehmer hat ein Übungskonto (konten/{IBAN}) mit Spielgeld. Ein Konto findet nur,
+//   wer die IBAN kennt (Empfängerprüfung), auflisten darf nur die Lehrkraft. Überweisungen (buchungen) schreibt nur der
+//   Absender, höchstens 300 pro Gerät, nur an ein vorhandenes Konto und mit den Namen aus den Konten. Lesen dürfen sie
+//   nur Absender, Empfänger und die Lehrkraft. Ändern lässt sich eine Buchung nicht.
 // - Räume lassen sich nicht auflisten: Wer keinen Code hat, findet nichts.
 // - Alle Felder sind nach Typ und Größe begrenzt, damit niemand die Datenbank vollschreiben kann.
 //   Ausnahme im Planspiel: Bei stats (Kennzahlen fürs Dashboard, je Thema verschieden) ist nur die Zahl der Schlüssel
@@ -116,6 +120,31 @@ service cloud.firestore {
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
 
+    function isMember(code) {
+      return signedIn() && exists(/databases/$(database)/documents/rooms/$(code)/players/$(request.auth.uid));
+    }
+    function konto(code, iban) { return get(/databases/$(database)/documents/rooms/$(code)/konten/$(iban)).data; }
+    function validKonto(iban, d) {
+      return iban.matches('^DE[0-9]{20}$')
+        && d.keys().hasOnly(['uid','name','expireAt'])
+        && d.uid == request.auth.uid
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 20;
+    }
+    // Buchung: Betrag in Cent (1 Cent bis 1.000 €), Namen und Konten müssen zu den Übungskonten passen
+    function validBuchung(code, d) {
+      return d.keys().hasOnly(['von','an','vonIban','anIban','vonName','anName','betrag','zweck','echtzeit','at','expireAt'])
+        && d.von == request.auth.uid
+        && d.an is string && d.an != d.von
+        && d.vonIban is string && d.vonIban.matches('^DE[0-9]{20}$')
+        && d.anIban is string && d.anIban.matches('^DE[0-9]{20}$')
+        && d.betrag is int && d.betrag >= 1 && d.betrag <= 100000
+        && d.zweck is string && d.zweck.size() <= 140
+        && d.echtzeit is bool
+        && d.at == request.time
+        && konto(code, d.vonIban).uid == request.auth.uid && konto(code, d.vonIban).name == d.vonName
+        && konto(code, d.anIban).uid == d.an && konto(code, d.anIban).name == d.anName;
+    }
+
     match /rooms/{code} {
       allow get: if signedIn();
       allow list: if false;
@@ -159,6 +188,33 @@ service cloud.firestore {
           && (resource == null ? validExpire(request.resource.data) : keepsExpire());
         // Löschen: die eigene Antwort („Raum verlassen“) oder als Lehrkraft jede (einzelne Antwort von der Wand nehmen)
         allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isOwner(code));
+      }
+
+      // Klassenbank: Übungskonto, Dokument-ID ist die Übungs-IBAN
+      match /konten/{iban} {
+        allow get: if isMember(code) || isOwner(code);
+        allow list: if isOwner(code);
+        allow create: if isMember(code)
+          && room(code).open == true
+          && validKonto(iban, request.resource.data)
+          && validExpire(request.resource.data);
+        allow update: if isMember(code)
+          && room(code).open == true
+          && resource.data.uid == request.auth.uid
+          && validKonto(iban, request.resource.data)
+          && keepsExpire();
+        allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isOwner(code));
+      }
+
+      // Klassenbank: Überweisung, Dokument-ID <uid>_<Nummer 1 bis 300>
+      match /buchungen/{id} {
+        allow get, list: if signedIn() && (resource.data.von == request.auth.uid || resource.data.an == request.auth.uid || isOwner(code));
+        allow create: if isMember(code)
+          && room(code).open == true
+          && id.matches(request.auth.uid + '_([1-9][0-9]?|[12][0-9][0-9]|300)')
+          && validBuchung(code, request.resource.data)
+          && validExpire(request.resource.data);
+        allow delete: if signedIn() && (resource.data.von == request.auth.uid || isOwner(code));
       }
     }
   }

@@ -25,6 +25,12 @@
 //   live.sendAnswer(code, aufgabe, text) → eigene Antwort „an die Wand“ schicken (überschreibt die vorige)
 //   live.deleteAnswer(code, aufgabe, uid) → Antwort von der Wand löschen (ohne uid die eigene; fremde nur die Lehrkraft)
 //   live.watchAnswers(code, cb)    → cb([{uid, aufgabe, text, at}]), nur für die Lehrkraft
+//   live.oeffneKonto(code, iban, name) → Übungskonto der Klassenbank (bank.js) anlegen: rooms/{code}/konten/{iban}
+//   live.konto(code, iban)         → {uid, name} oder null (nur mit bekannter IBAN, auflisten dürfen nur Lehrkräfte)
+//   live.loescheKonto(code, iban)  → eigenes Übungskonto löschen (oder als Lehrkraft jedes)
+//   live.ueberweise(code, nr, b)   → Buchung nr (1–300) schicken: {an, vonIban, anIban, vonName, anName, betrag (Cent), zweck, echtzeit}
+//   live.watchBuchungen(code, cb, alle) → cb([{id, von, an, vonIban, anIban, vonName, anName, betrag, zweck, echtzeit, at}]):
+//                                    Schüler bekommen nur eigene und an sie gerichtete Buchungen, die Lehrkraft mit alle = true alle
 //   live.closeRoom(code)           → Raum beenden: alle sehen „beendet“, danach werden alle Daten gelöscht
 //   live.zeit()                    → Platzhalter für die Uhrzeit des Servers (als Wert in updateRoom und updatePlayer).
 //                                    Gelesene Zeitstempel haben toMillis(); solange der Server sie noch nicht kennt, sind sie null.
@@ -140,12 +146,30 @@ async function init() {
       return F.onSnapshot(F.collection(db, 'rooms', code, 'antworten'),
         s => cb(s.docs.map(d => d.data())), e => console.warn('Antworten', e));
     },
+    oeffneKonto: (code, iban, name) => F.setDoc(F.doc(db, 'rooms', code, 'konten', iban), { uid, name, expireAt: expire() }),
+    async konto(code, iban) {
+      const s = await F.getDoc(F.doc(db, 'rooms', code, 'konten', iban));
+      return s.exists() ? s.data() : null;
+    },
+    loescheKonto: (code, iban) => F.deleteDoc(F.doc(db, 'rooms', code, 'konten', iban)),
+    ueberweise: (code, nr, b) => F.setDoc(F.doc(db, 'rooms', code, 'buchungen', `${uid}_${nr}`),
+      { ...b, von: uid, at: F.serverTimestamp(), expireAt: expire() }),
+    // Schüler dürfen nur Buchungen lesen, die sie selbst betreffen: zwei Abfragen (gesendet, empfangen)
+    watchBuchungen(code, cb, alle) {
+      const sammlung = F.collection(db, 'rooms', code, 'buchungen'), teile = {};
+      const melde = (k, s) => { teile[k] = s.docs.map(d => ({ id: d.id, ...d.data() })); cb(Object.values(teile).flat()); };
+      const fehler = e => console.warn('Buchungen', e);
+      if (alle) return F.onSnapshot(sammlung, s => melde('alle', s), fehler);
+      const stopp = [F.onSnapshot(F.query(sammlung, F.where('von', '==', uid)), s => melde('von', s), fehler),
+        F.onSnapshot(F.query(sammlung, F.where('an', '==', uid)), s => melde('an', s), fehler)];
+      return () => stopp.forEach(f => f());
+    },
     zeit: () => F.serverTimestamp(),
     async closeRoom(code) {
       // Zuerst schließen, damit alle Geräte „beendet“ anzeigen, dann löschen.
       // Einträge und Antworten der Schüler müssen vor dem Raum weg, weil die Regeln dafür den Raum prüfen.
       await F.updateDoc(roomRef(code), { open: false, phase: 'closed' }).catch(() => {});
-      for (const sammlung of ['antworten', 'players']) {
+      for (const sammlung of ['antworten', 'buchungen', 'konten', 'players']) {
         const s = await F.getDocs(F.collection(db, 'rooms', code, sammlung));
         await Promise.all(s.docs.map(d => F.deleteDoc(d.ref)));
       }

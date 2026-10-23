@@ -16,6 +16,7 @@
 //   abstimmung({id, titel, fall, frage, optionen, r, e, kopf, icon})   „Ihr seid das Gericht“: Live-Abstimmung im Lernraum (kopf: andere Rolle, z. B. „Ihr seid die Anlageberater“)
 //   labyrinth(…) aus labyrinth.js                                     Labyrinth-Spiel mit Figur, wird hier mitgebunden
 //   chatgeschichte(…) aus chat.js                                     Chat-Abenteuer mit Entscheidungen, wird hier mitgebunden
+//   bank(…) aus bank.js                                               Klassenbank: Übungskonto, Überweisungen im Lernraum, wird hier mitgebunden
 //   Klassen-Quiz aus quiz.js                                          jeder Wissenscheck lässt sich im Lernraum als Quiz spielen
 //   hilfen({tipp, denkWeiter}), impuls(text)
 //
@@ -25,6 +26,7 @@ import { raum, registriere } from './lernraum.js';
 import { OPERATOREN, textFeedback, zahl, zahlFeedback } from './feedback.js';
 import { bindLabyrinth } from './labyrinth.js';
 import { bindChat } from './chat.js';
+import { bindBank } from './bank.js';
 import { quizAnmelden, quizHTML, bindQuiz } from './quiz.js';
 import { praes } from './praesentation.js';
 
@@ -906,5 +908,6 @@ export function bindAufgaben(root){
   einmal('[data-abst]',zeichneAbst);
   einmal('[data-labyrinth]',bindLabyrinth);
   einmal('[data-chat]',bindChat);
+  einmal('[data-bank]',bindBank);
   einmal('[data-quiz]',bindQuiz);
 }

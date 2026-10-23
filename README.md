@@ -10,6 +10,7 @@ Die Startseite zeigt die Themen nach Klassenstufe sortiert: Klasse 9, 10, 11 und
 
 | Klasse | Thema | Inhalt | Lehrplan Thüringen |
 | --- | --- | --- | --- |
+| 9 | [Zahlungsmethoden](public/zahlungsmethoden/) | Leitfrage: Bar, Karte, Handy oder später – wie bezahlst du clever und sicher? Verdeckte Blitzrunde „Stimmt das?“ (allein oder als Klassenrunde), Kassen-Rush durch sechs Kassen in Thüringen (Bäckerei, Weihnachtsmarkt ohne Kartengerät, bargeldloser Automat, verdächtiger Online-Shop, Gaming-Messe, Café mit Freunden), die **Klassenbank**: ein Übungskonto mit Spielgeld, mit dem sich die Schüler im Lernraum gegenseitig Geld überweisen (IBAN mit Prüfziffer, Empfängerprüfung, Freigabe, Echtzeitüberweisung, Dauerauftrag und eine unberechtigte Lastschrift zum Zurückgeben; Bank-Monitor für die Lehrkraft), Fake-Detektor mit acht Nachrichten (Phishing, „Hallo Mama“, Paket-SMS, Kleinanzeigen), Krypto-Achterbahn (T-Shirt mit Bitcoin bezahlen, Szenario-Kurs, Key aufbewahren) und das Chat-Abenteuer „Jetzt kaufen, später zahlen“ (Finanz-Checks, fünf Enden). Dazu Hefteintrag, Vor- und Nachteile zuordnen, Bauchgefühl-Check und ein Wissenscheck mit 19 Aufgaben in drei Stufen, auch als Klassen-Quiz. | Handeln als Konsument, Umgang mit Geld: aktuelle Entwicklungen im Zahlungsverkehr, lebensnahe Bankgeschäfte, Verschuldung (Klasse 9, Kapitel 2.1.1) |
 | 9 | [Anlagemöglichkeiten](public/geldanlage/) | Leitfrage: Jugendweihe-Geld, erster Lohn, Erspartes – wie legst du dein Geld clever an? Verdeckte Blitzrunde „Stimmt das?“ (allein oder als Klassenrunde), Geldschmelze mit Schätzfrage (Döner und Deutschlandtickets statt Euro, Realzins), magisches Dreieck aus Sicherheit, Liquidität und Rendite zum Ziehen und Schieben, acht Anlagen im Check (Steckbriefe, Tabelle aus dem Unterrichtsmaterial, Anlage-Duell), „Ihr seid die Anlageberater“ als Live-Abstimmung mit sechs Anlegern aus Thüringen und ein Anlegertest, Schneeball-Rechner zum Zinseszins mit der Rechenaufgabe aus dem Material, frühem Start, Kosten-Killer und Frühstart-Rente, Depot-Zeitmaschine mit echten Kursen von 2018 bis 2025 (Tagesgeld bis Bitcoin und die Jenoptik-Aktie aus Jena, mit Krisen-Entscheidungen), die zehn goldenen Regeln als Lückentext und das Chat-Abenteuer mit dem Wolf of Saale (fiktiver Finfluencer, Finanz-Checks, vier Enden). Dazu Hefteintrag, Bauchgefühl-Check und ein Wissenscheck mit 23 Aufgaben in drei Stufen, auch als Klassen-Quiz. | Handeln als Konsument, Umgang mit Geld (Klasse 9, Kapitel 2.1.1) |
 | 10 | [Geschäftsfähigkeit](public/geschaeftsfaehigkeit/) | Welche Verträge darf ich mit 15 schon allein abschließen? Bauchgefühl-Blitzrunde (allein oder als Klassenrunde), Altersschieber mit Mopedführerschein und Einwilligung in Apps, Haus der Geschäftsfähigkeit mit Hilfeknopf an jedem Raum und Hefteintrag, Rechts-Navi mit Zitiertechnik, Fall-Akte mit neun Fällen (darunter ein Job-Fall zu § 113 BGB) und Gutachten-Baukasten, Taschengeld-Detektiv mit sechs Fällen zu § 110 BGB, Live-Abstimmung „Ihr seid das Gericht“ mit sieben Fällen (darunter das Kind als Bote), Gaming, Abos und Klarna, der erste Job (§ 113 BGB, auch: Warum gilt er nicht für den Ausbildungsvertrag?), Mission Zwergspitz als Labyrinth-Spiel (Figur steuern, schätzen, Sackgassen, Würfel an den Toren) und ein Wissenscheck mit 42 Aufgaben in drei Stufen. Eigene Erkenntnis zuerst formulieren, dann mit dem Merksatz vergleichen. Fälle mit Fotos, Trends wie Labubu, Pokémon-Karten und TikTok-LIVE und erfundenen Influencern. | Lernbereich Recht |
 | 10 | [Deliktsfähigkeit](public/deliktsfaehigkeit/) | Die erste **Lernstrecke**: Leitfrage „Wer zahlt, wenn's kracht?“, fünf Lektionen im Rhythmus Fall – Entdecken – Sichern – Anwenden, Lektionsplan und Tafelbild der Reihe auf der Übersicht. Einstieg mit dem Simson-Unfall (Vermutung an die Wand) und einer verdeckten Blitzrunde „Wer zahlt?“. Haftung nach § 823 Abs. 1 BGB mit Vorsatz, Fahrlässigkeit oder Pech, Altersschieber mit den Stufen der Deliktsfähigkeit, Straßenverkehr-Check zur Sonderregel für Kinder von 7 bis 9 (§ 828 Abs. 2 BGB), „Ihr seid das Gericht“ mit vier Fällen, Rechts-Navi und Fall-Akte mit acht Fällen und Gutachten-Baukasten, Party-Abrechnung zur Aufsichtspflicht (§ 832 BGB), Haftpflicht-Rechner, Mission Simson als Chat-Abenteuer nach dem Crash (Nachrichten von Mama, Papa, Jonas und der Versicherung, Rechts-Checks, vier Enden zum Entdecken) und ein Wissenscheck mit 17 Aufgaben. Die Fälle aus dem Unterrichtsmaterial (Ben, Michael, Lisa, Marie) spielen in Apolda, Weimar und Jena. | Lernbereich Recht |
@@ -30,6 +31,7 @@ public/                 wird veröffentlicht
     js/lernraum.js      Lernraum: ein Live-Raum für Werkstätten und Planspiel, Dashboard der Lehrkraft
     js/aufgaben.js      Aufgaben-Bausteine: Schreibfeld an die Wand, Zuordnen, Lückentext, Test, Wissenscheck,
                         Blitzrunde, Rechts-Navi und Fall-Akte, Live-Abstimmung „Ihr seid das Gericht“, Hilfen, Impuls
+    js/bank.js          Klassenbank: Übungskonto mit Spielgeld, Überweisungen im Lernraum, Empfängerprüfung, Dauerauftrag, Lastschrift
     js/chat.js          Chat-Abenteuer: Geschichte im Messenger, Entscheidungen, Rechts- oder Finanz-Checks, mehrere Enden
     js/quiz.js          Klassen-Quiz: den Wissenscheck im Lernraum gemeinsam spielen, mit Punkten nach Tempo, Teams und Rangliste
     js/praesentation.js Präsentationsansicht: zweites Fenster für den Beamer, der Laptop bleibt der eigene Bildschirm der Lehrkraft
@@ -123,7 +125,7 @@ Unter **Actions → Veröffentlichen → Run workflow** (Branch `main`) die erst
 Jeder Raum, jeder Schülereintrag und jede Antwort hat das Feld `expireAt` (24 Stunden nach dem Anlegen, berechnet mit der Uhr des Geräts). Die Sicherheitsregeln verlangen es beim Anlegen und lassen höchstens 72 Stunden in der Zukunft zu, weil Geräteuhren falsch gehen können. Firestore kann solche Einträge automatisch löschen:
 
 1. **Firestore Database → Time-to-live (TTL)** öffnen.
-2. Je eine Richtlinie mit dem Feld `expireAt` für die Sammlungsgruppen `rooms`, `players` und `antworten` anlegen.
+2. Je eine Richtlinie mit dem Feld `expireAt` für die Sammlungsgruppen `rooms`, `players`, `antworten`, `konten` und `buchungen` anlegen.
 
 Das geht nur im kostenpflichtigen Blaze-Tarif: Löschungen per TTL haben laut Firebase-Preisliste kein kostenloses Kontingent. Wer das will, bucht Blaze mit einer Budgetwarnung (z. B. 1 €) und legt die Richtlinien in der Konsole an. Bitte keine TTL-Einstellungen in die Dateien des Projekts schreiben: Im kostenlosen Spark-Tarif würde sonst die Veröffentlichung scheitern. Auch mit TTL löscht Firestore erst einige Zeit nach dem Ablauf, typischerweise innerhalb von 24 Stunden.
 
@@ -242,6 +244,18 @@ Bei der Geschäftsfähigkeit unter **Fälle → Ihr seid das Gericht**:
 
 Übertragen wird nur die Nummer der gewählten Antwort. Ohne Lernraum fällen die Schüler ihr Urteil allein und sehen es sofort aufgelöst.
 
+### Klassenbank (Überweisen üben)
+
+Bei den Zahlungsmethoden unter **Banking → Die Klassenbank**:
+
+1. Lernraum öffnen und alle beitreten lassen, dann **Alle holen nach … Die Klassenbank**.
+2. Jeder Schüler bekommt ein Übungskonto mit 250 € Spielgeld. Kontoinhaber ist sein Spitzname, die IBAN steht oben im Konto.
+3. Die Schüler tauschen ihre IBAN aus (mündlich, über den Banknachbarn) und überweisen sich Geld. Die Empfängerprüfung warnt, wenn der Name nicht zur IBAN passt. Standardüberweisungen kommen nach einer Minute an, Echtzeitüberweisungen sofort.
+4. Die Lehrkraft sieht statt eines Kontos den **Bank-Monitor** mit allen Überweisungen (im Beamer-Modus ohne Spitznamen).
+5. Daueraufträge, das Vorspulen eines Monats und die Lastschrift laufen nur auf dem eigenen Gerät. Ohne Lernraum übt jeder mit erfundenen Konten.
+
+Die Bankleitzahl der Übungs-IBANs gibt es nicht, echte Konten lassen sich damit nicht ansprechen. Ein Schüler sieht nur Überweisungen, die er geschickt oder bekommen hat. Konten anderer findet er nur mit der IBAN.
+
 ### Klassen-Quiz
 
 Jeder Wissenscheck lässt sich im Lernraum als Quiz mit der ganzen Klasse spielen, ähnlich wie bekannte Quiz-Apps:
@@ -296,12 +310,12 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
   - Es gibt keine Anmeldung, keine Statistikdienste und keine Werbung.
 - **Lernraum:**
   - Die Verbindung zu Firebase entsteht erst, wenn jemand einen Lernraum öffnet oder ihm beitritt.
-  - Gespeichert werden nur ein frei gewählter Spitzname, die gerade geöffnete Werkstatt, abgeschickte Antworten (höchstens 1000 Zeichen, nur für die Lehrkraft lesbar), die Punkte im Wissenscheck (ohne Texte), bei Live-Abstimmungen die Nummer der gewählten Antwort und im Planspiel die Figur und Spieldaten (Stimmen, Check-Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
+  - Gespeichert werden nur ein frei gewählter Spitzname, die gerade geöffnete Werkstatt, abgeschickte Antworten (höchstens 1000 Zeichen, nur für die Lehrkraft lesbar), die Punkte im Wissenscheck (ohne Texte), bei Live-Abstimmungen die Nummer der gewählten Antwort, in der Klassenbank ein Übungskonto (Spitzname, Übungs-IBAN) und Überweisungen mit Spielgeld (Betrag, Verwendungszweck, Namen der Konten) und im Planspiel die Figur und Spieldaten (Stimmen, Check-Antworten, Kontostand der Figur). Es gibt keine E-Mail-Adresse, kein Passwort und kein Konto.
   - Der KI-Coach schickt selbst nichts an AIS.chat. Er kopiert nur die Antwort in die Zwischenablage, die Schüler fügen sie in AIS.chat selbst ein.
   - Die Schüler sollen keinen vollen echten Namen verwenden. Die Seite weist darauf hin.
 - **Speicherort und Dauer:**
   - Die Daten liegen in Firestore am Standort eur3 (Europa).
-  - „Raum beenden“ löscht alle Daten eines Raums sofort. „Raum verlassen“ löscht den eigenen Eintrag und die eigenen Antworten. Öffnet die Lehrkraft auf demselben Gerät einen neuen Raum im selben Thema, wird der alte beendet.
+  - „Raum beenden“ löscht alle Daten eines Raums sofort. „Raum verlassen“ löscht den eigenen Eintrag, die eigenen Antworten und das Übungskonto der Klassenbank. Öffnet die Lehrkraft auf demselben Gerät einen neuen Raum im selben Thema, wird der alte beendet.
   - Jeder Eintrag trägt ein Ablaufdatum (`expireAt`, 24 Stunden nach dem Anlegen). Automatisch gelöscht wird nur, wenn die TTL-Richtlinie eingerichtet ist (Abschnitt 5, kostenpflichtiger Blaze-Tarif), und dann erst einige Zeit nach dem Ablauf. Die Seite verspricht den Schülern deshalb keine feste Frist.
 - **Hosting:**
   - Die Seite wird über Firebase Hosting ausgeliefert (Google Ireland Ltd.).
@@ -321,6 +335,16 @@ Die Lehrkraft sollte den Raum vom selben Gerät und Browser aus steuern, mit dem
 
 ## Bildnachweise
 
+- **Zahlungsmethoden** (Wikimedia Commons, dieselben Dateien wie bei der Geschäftsfähigkeit):
+  - Goethe Galerie Jena: Andreas Praefcke, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_Goethe-Galerie_2010_1.jpg)
+  - Bäckerei in Jena (Ausschnitt): Timk70, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Baeckerei_Zwiebel_%26_CiZ,_Jena,_Johannisplatz_9_%26_10.jpg)
+  - Neumarkt Gotha: Roeland P., [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg)
+  - Pokémon-Automat: KKPCW (Kyu3), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Pok%C3%A9mon_Trading_Card_Vending_machine.jpg)
+  - Air Force 1: Xanor, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:Air_Force_1.JPG)
+  - Messe Erfurt: Messe Erfurt AG, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Datei](https://commons.wikimedia.org/wiki/File:Panorama_Messe_Erfurt.jpg)
+  - Café Stilbruch Jena: Sebastian Wallroth, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [Datei](https://commons.wikimedia.org/wiki/File:Jena_2023_002.jpg)
+  - Supermarkt-Regale: The real Marcoman, [CC0](https://creativecommons.org/publicdomain/zero/1.0/), [Datei](https://commons.wikimedia.org/wiki/File:Netto_Marken-Discount_Innenansicht_(4).jpg) (auch Startseite und Vorschaubild beim Teilen)
+  - Bitcoin: Jorge Franganillo, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [Datei](https://commons.wikimedia.org/wiki/File:Bitcoin_%2850799812413%29.jpg)
 - **Anlagemöglichkeiten**:
   - Bulle und Bär vor der Frankfurter Börse: giesing / Flickr, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [Datei](https://www.flickr.com/photos/46074423@N00/14842086960) (ohne Ortsdaten gespeichert)
   - Der Wolf of Saale ist eine erfundene Figur und eine eigene Illustration von WR-Lab (auch als Vorschaubild beim Teilen).
