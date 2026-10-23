@@ -63,7 +63,7 @@ const CH={1:['Kapitel 1 – Einstieg','Dein Bauchgefühl'],2:['Kapitel 2 – Bez
 const DEST=[
   {id:'start',icon:'home',label:'Start',title:'Lernwerkstatt Zahlungsmethoden',kurz:'Bezahlen',render:startHTML},
   {id:'alltag',icon:'storefront',label:'Alltag',title:'Bezahlen im Alltag',kurz:'Alltag',ch:[2],desc:'Sechs Kassen von der Bäckerei bis zum Fake-Shop: Wie bezahlst du am besten?'},
-  {id:'banking',icon:'account_balance',label:'Banking',title:'Online-Banking',kurz:'Banking',ch:[3],desc:'Die Klassenbank: Überweist euch gegenseitig Geld. Dazu der Fake-Detektor'},
+  {id:'banking',icon:'account_balance',label:'Banking',title:'Online-Banking',kurz:'Banking',ch:[3],desc:'Dein Konto bei Z-Invest: sechs Monate, sechs Ereignisse, Überweisungen in der Klasse. Dazu der Fake-Detektor'},
   {id:'neu',icon:'currency_bitcoin',label:'Neue Wege',title:'Krypto und „später bezahlen“',kurz:'Neue Wege',ch:[4],desc:'Die Krypto-Achterbahn und ein Chat-Abenteuer über „Jetzt kaufen, später zahlen“'},
   {id:'wissen',icon:'school',label:'Wissen',title:'Sichern und wiederholen',ch:[5],render:wissenHTML,desc:'Hefteintrag, Bauchgefühl-Check, Wissenscheck mit Klassen-Quiz, Fachbegriffe und deine Merksätze'}
 ];
@@ -165,8 +165,8 @@ init(root){
 }});
 
 /* 3 Klassenbank */
-tool({id:'klassenbank',ch:3,farben:['k','d'],hinweise:HINWEISE.klassenbank,title:'Die Klassenbank',sub:'Dein Übungskonto mit Spielgeld: Überweist euch im Lernraum gegenseitig Geld, mit Empfängerprüfung, Dauerauftrag und Lastschrift',
-html(){return `<p class="task"><b>Auftrag:</b> Erledige die sechs Aufträge unter „Deine Aufträge“. Im Lernraum: Frag deinen Nachbarn nach seiner IBAN und überweis ihm Geld.</p>
+tool({id:'klassenbank',ch:3,farben:['k','d'],hinweise:HINWEISE.klassenbank,title:'Dein Konto bei Z-Invest',sub:'Ein halbes Jahr Girokonto: Geld kommt rein, Abbuchungen gehen raus, und jeden Monat passiert etwas. Im Lernraum überweist ihr euch gegenseitig Geld',
+html(){return `<p class="task"><b>Auftrag:</b> Starte den November und überstehe sechs Monate. Reagier auf alles, was passiert, und erledige nebenbei die Aufträge.</p>
 ${bank(BANK)}
 ${schreibfeld(WAND.klassenbank)}
 ${impuls(IMPULS.klassenbank)}
@@ -322,8 +322,8 @@ function startHTML(){
   <section class="zm-start">
     <div class="stack">
       <div class="zm-zahl"><p class="display-s num">${ZAHLEN.unbar} %</p><p>aller Zahlungen in Deutschland waren 2025 bargeldlos. Zum ersten Mal mehr als die Hälfte.<span class="small muted" style="display:block">Bundesbank, Zahlungsverhalten in Deutschland 2025</span></p></div>
-      <p class="body-l">Teste dein Bauchgefühl, rette dich durch sechs Kassen, überweist euch in der Klassenbank gegenseitig Geld und entlarve Fake-Nachrichten.</p>
-      <div class="cta"><button class="fab" type="button" data-zm-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-zm-tool="klassenbank"><span class="ms" aria-hidden="true">account_balance</span>Zur Klassenbank</button></div></div>
+      <p class="body-l">Teste dein Bauchgefühl, rette dich durch sechs Kassen, führ ein halbes Jahr dein Konto bei Z-Invest und entlarve Fake-Nachrichten.</p>
+      <div class="cta"><button class="fab" type="button" data-zm-tool="bauchgefuehl"><span class="ms" aria-hidden="true">bolt</span>Bauchgefühl testen</button><button class="btn outlined" type="button" data-zm-tool="klassenbank"><span class="ms" aria-hidden="true">account_balance</span>Zu deinem Konto</button></div></div>
     <div class="panel stack"><h3 class="title-m">Was du danach kannst</h3><ul class="lernziele">
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Zahlungsarten mit ihren Vor- und Nachteilen vergleichen</span></li>
       <li><span class="ms" aria-hidden="true">check_circle</span><span>Eine Überweisung sicher ausführen, Dauerauftrag und Lastschrift unterscheiden</span></li>
@@ -343,8 +343,8 @@ const QUELLEN=[
   'Unterrichtsmaterial der Lehrkraft: Skript Klasse 9, Kapitel 5.3 Zahlungsverkehr; Folien „1.5 Zahlungsmethoden“; Arbeitsblatt zu Bitcoin (Inhalte neu geschrieben)'];
 function sourcesHTML(){return `<section class="panel sources"><h3 class="title-m" style="color:var(--md-on-surface)">Quellen (Stand ${STAND})</h3><ul>${QUELLEN.map(q=>`<li>${q}</li>`).join('')}
   <li>Fotos: ${Object.values(FOTO).map(f=>`${esc(f.motiv)}: <a href="${f.link}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[0])}</a> (<a href="${f.lizenz}" rel="noopener" target="_blank">${esc(f.credit.split(', ')[1])}</a>)`).join(' · ')}</li>
-  <li>Die Klassenbank, alle Konten, Shops, Dienste und Personen sind erfunden. Die Bankleitzahl der Übungs-IBANs gibt es nicht. Der Bitcoin-Kurs in der Krypto-Achterbahn ist ein Szenario.</li></ul>
-  <p>Merksätze und Ergebnisse werden nur in diesem Browser gespeichert. Im Lernraum gehen Überweisungen der Klassenbank an die Datenbank des Raums.</p>
+  <li>Die Bank Z-Invest, alle Konten, Shops, Dienste, Apps und Personen sind erfunden. Die Bankleitzahl der Übungs-IBANs gibt es nicht. Der Bitcoin-Kurs in der Krypto-Achterbahn ist ein Szenario.</li></ul>
+  <p>Merksätze und Ergebnisse werden nur in diesem Browser gespeichert. Im Lernraum gehen Überweisungen und deine Reaktionen in der Kontosimulation (ein Buchstabe pro Monat) an die Datenbank des Raums.</p>
   <div class="row"><button class="btn outlined small" id="reset" type="button"><span class="ms" aria-hidden="true">restart_alt</span>Merksätze zurücksetzen</button><span id="reset-confirm" class="row" hidden><button class="btn primary small" id="reset-yes" type="button">Ja, alles zurücksetzen</button><button class="btn text small" id="reset-no" type="button">Abbrechen</button></span></div></section>`}
 function wissenHTML(){const alle=['b','k','d'].map(dot).join('');
   return chapterHTML(5,`<button class="card" type="button" data-open="glossar"><span class="dots">${alle}</span><h3 class="title-m">Begriffe nachschlagen</h3><p>${GLOSS.length} Fachbegriffe mit Suche</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button><button class="card" type="button" data-open="wissen"><span class="dots">${alle}</span><h3 class="title-m">Mein Bezahl-Wissen</h3><p>Alle Merksätze als Hefteintrag sammeln und kopieren</p><span class="go">Öffnen<span class="ms sm" aria-hidden="true">arrow_forward</span></span></button>`)+sourcesHTML()}

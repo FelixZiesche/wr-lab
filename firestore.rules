@@ -35,7 +35,7 @@ service cloud.firestore {
     }
 
     function validRoom(d) {
-      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','quiz','createdAt','expireAt'])
+      return d.keys().hasOnly(['owner','open','topic','gameId','round','phase','decisions','pause','ziel','zielN','gesperrt','ki','umfrage','quiz','bankMonat','createdAt','expireAt'])
         && d.keys().hasAll(['owner','open','topic','gameId','round','phase','decisions'])
         && d.owner is string
         && d.open is bool
@@ -55,6 +55,8 @@ service cloud.firestore {
             && d.umfrage.id is string && (d.umfrage.id == '' || isSlug(d.umfrage.id, 40))
             && d.umfrage.n is int && d.umfrage.n >= 0 && d.umfrage.n <= 100000 && d.umfrage.auf is bool))
         && (!('quiz' in d) || validQuiz(d.quiz))
+        // Kontosimulation der Klassenbank: Monat, den die Lehrkraft für alle gestartet hat
+        && (!('bankMonat' in d) || (d.bankMonat is int && d.bankMonat >= 0 && d.bankMonat <= 12))
         && (!('createdAt' in d) || isTime(d.createdAt))
         && (!('expireAt' in d) || isTime(d.expireAt));
     }
@@ -85,11 +87,13 @@ service cloud.firestore {
     }
 
     function validPlayer(d) {
-      return d.keys().hasOnly(['nick','ort','wc','stimme','q','team','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
+      return d.keys().hasOnly(['nick','ort','wc','bk','stimme','q','team','fig','r','ph','votes','checks','choices','stats','joinedAt','updatedAt','expireAt'])
         && d.nick is string && d.nick.size() > 0 && d.nick.size() <= 20
         && (!('ort' in d) || (d.ort is string && d.ort.size() <= 40))
         // Wissenscheck: ein Zeichen pro Aufgabe („-“ offen, „0“–„9“ Zehntel der Punkte, „a“ volle Punkte)
         && (!('wc' in d) || (d.wc is string && d.wc.size() <= 60 && d.wc.matches('^[-0-9a]*$')))
+        // Kontosimulation: ein Buchstabe pro Monat („-“ keine Reaktion, „a“ bis „c“ gewählte Reaktion)
+        && (!('bk' in d) || (d.bk is string && d.bk.size() <= 12 && d.bk.matches('^[-a-c]*$')))
         // Stimme in der Live-Abstimmung: n = Durchgang, w = Index der Antwort
         && (!('stimme' in d) || (d.stimme is map && d.stimme.keys().hasOnly(['n','w']) && d.stimme.keys().hasAll(['n','w'])
             && d.stimme.n is int && d.stimme.n >= 0 && d.stimme.n <= 100000 && d.stimme.w is int && d.stimme.w >= 0 && d.stimme.w <= 9))

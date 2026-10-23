@@ -91,17 +91,75 @@ export const KONTEN=[
 const mia=ibanVon('fiktiv:'+KONTEN[0].name);
 const i=12+mia.slice(12).search(/(\d)(?!\1)\d/);
 export const MIA_FALSCH=(mia.slice(0,i)+mia[i+1]+mia[i]+mia.slice(i+2)).replace(/(.{4})/g,'$1 ').trim();
-export const BANK={id:'klassenbank',name:'Klassenbank (fiktiv)',start:25000,konten:KONTEN,
-  titel:'Dein Übungskonto mit 250 € Spielgeld. Im Lernraum überweist ihr euch gegenseitig Geld, sonst übst du mit den Vorlagen.',
-  eingang:{name:'Mama und Papa',betrag:4000,zweck:'Taschengeld'},
-  lastschrift:{name:'Saale-Fit Fitnessstudio (fiktiv)',betrag:3990,zweck:'Mitgliedsbeitrag, Mandat SF-2291'},
+// Kontosimulation: sechs Monate Girokonto bei Z-Invest (fiktiv). Jeden Monat kommt Geld rein (ein), es gehen
+// Lastschriften und Kartenzahlungen raus (aus) und es passiert etwas (event). Jede Reaktion ändert Kontostand,
+// Sicherheit (s) und Überblick (u). Felder: siehe shared/js/bank.js. Alle Personen, Firmen und Apps sind erfunden.
+const TASCHENGELD={name:'Mama und Papa',betrag:4000,zweck:'Taschengeld'},LOHN={name:'Café Saalestrand Apolda (fiktiv)',betrag:16000,zweck:'Lohn Aushilfe'};
+export const BANK={id:'klassenbank',name:'Z-Invest (fiktiv)',start:25000,konten:KONTEN,
+  titel:'Du bist 16, jobbst als Aushilfe im Café und hast dein Girokonto bei Z-Invest. Spiel sechs Monate: Geld kommt rein, Abbuchungen gehen raus, und jeden Monat passiert etwas. Im Lernraum überweist ihr euch gegenseitig Geld.',
+  eingang:TASCHENGELD,
+  monate:[
+    {name:'November',ein:[TASCHENGELD,LOHN],
+      aus:[{id:'saalefit',name:'Saale-Fit Fitnessstudio (fiktiv)',betrag:3990,zweck:'Mitgliedsbeitrag, Mandat SF-2291',typ:'lastschrift'},{name:'Dönerladen am Holzmarkt Jena',betrag:750,zweck:'Kartenzahlung',typ:'karte'}],
+      event:{id:'fremd',icon:'receipt_long',kanal:'Z-Invest App',titel:'Unbekannte Abbuchung',
+        text:'Neue Lastschrift: −39,90 € an Saale-Fit Fitnessstudio. Du warst noch nie bei Saale-Fit und hast nichts unterschrieben.',
+        frage:'Was tust du?',
+        wahl:[
+          {t:'Lastschrift in der App zurückgeben',art:'ok',s:1,u:2,rueck:'saalefit',auftrag:'lastschrift',folge:'Richtig! Ohne Erlaubnis (Mandat) kannst du eine Lastschrift sogar 13 Monate lang zurückgeben. Die 39,90 € sind sofort wieder da.'},
+          {t:'Abwarten, wird schon stimmen',art:'bad',u:-2,abo:{name:'Saale-Fit Fitnessstudio (fiktiv)',betrag:3990,zweck:'Mitgliedsbeitrag, Mandat SF-2291',mal:5},folge:'Teuer: Saale-Fit bucht jetzt jeden Monat ab. Wer seine Umsätze nicht prüft, merkt so etwas oft erst nach Monaten.'},
+          {t:'Bei Saale-Fit anrufen und nachfragen',art:'amb',s:1,u:1,buchung:{name:'Saale-Fit Fitnessstudio (fiktiv)',betrag:3990,zweck:'Erstattung: Verwechslung'},folge:'Klappt: Es war eine Verwechslung, du bekommst das Geld zurück. Schneller und sicherer ist aber die Rückgabe direkt bei deiner Bank.'}]}},
+    {name:'Dezember',ein:[TASCHENGELD,LOHN,{name:'Oma Gitti',betrag:5000,zweck:'Frohe Weihnachten!'}],
+      aus:[{name:'Goethe Galerie Jena',betrag:4590,zweck:'Kartenzahlung Geschenke',typ:'karte'}],
+      event:{id:'phishing',icon:'sms',kanal:'SMS',titel:'Dein Konto wird gesperrt!',
+        text:'Z-Invest: Ihr Konto wird heute gesperrt. Bestätigen Sie jetzt Ihre Daten unter z-invest-sicherheit.info',
+        frage:'Was tust du?',
+        wahl:[
+          {t:'Link öffnen, Zugangsdaten und TAN eingeben',art:'bad',s:-3,buchung:{name:'Unbekannt (Betrüger)',betrag:-15000,zweck:'Echtzeitüberweisung',alles:true},folge:'Betrug! Mit deinen Daten und der TAN haben Betrüger per Echtzeitüberweisung Geld abgeräumt. Zurückholen ist kaum möglich. Banken fragen nie per SMS nach Zugangsdaten.'},
+          {t:'Löschen und in der echten Z-Invest-App nachsehen',art:'ok',s:2,u:1,folge:'Genau richtig. In der App ist alles in Ordnung. Die SMS war Phishing: falscher Link, Zeitdruck, Drohung.'},
+          {t:'Link öffnen, aber nichts eingeben',art:'amb',s:-1,folge:'Glück gehabt, aber riskant: Gefälschte Seiten können Schadsoftware laden. Besser gar nicht erst klicken.'}]}},
+    {name:'Januar',ein:[TASCHENGELD,LOHN],
+      aus:[{name:'Kino in Erfurt',betrag:1200,zweck:'Kartenzahlung',typ:'karte'}],
+      event:{id:'karte',icon:'credit_card',kanal:'Nach dem Eislaufen',titel:'Karte weg!',
+        text:'Nach dem Eislaufen in Erfurt merkst du: Deine Girocard ist weg. Mit ihr kann man kontaktlos bezahlen, bei kleinen Beträgen ohne PIN.',
+        frage:'Was tust du?',
+        wahl:[
+          {t:'Sofort in der App sperren oder den Sperr-Notruf 116 116 anrufen',art:'ok',s:2,u:1,buchung:{name:'Z-Invest (fiktiv)',betrag:-1000,zweck:'Ersatzkarte'},folge:'Richtig. Die Karte ist gesperrt, niemand kann mehr damit zahlen. Z-Invest berechnet 10 € für die neue Karte.'},
+          {t:'Bis morgen warten, vielleicht taucht sie wieder auf',art:'bad',s:-2,buchung:{name:'Fremde Kartenzahlungen',betrag:-5000,zweck:'Haftung bis zur Sperre'},folge:'Ein Finder hat mehrmals kontaktlos bezahlt. Bis zur Sperre haftest du mit bis zu 50 €. Danach zahlt die Bank. Darum: sofort sperren.'},
+          {t:'Egal, die PIN steht ja auf einem Zettel im Portemonnaie',art:'bad',s:-3,buchung:{name:'Fremde Abhebungen',betrag:-12000,zweck:'Geldautomat',alles:true},folge:'Das ist grob fahrlässig: PIN und Karte zusammen. Der Finder hebt am Automaten ab, und die Bank muss dir nichts ersetzen.'}]}},
+    {name:'Februar',ein:[TASCHENGELD,LOHN],
+      aus:[{id:'fitboost',name:'FitBoost-App (fiktiv)',betrag:1299,zweck:'Abo nach Gratismonat',typ:'lastschrift'}],
+      event:{id:'abo',icon:'event_repeat',kanal:'Z-Invest App',titel:'Der Gratismonat ist vorbei',
+        text:'Neue Lastschrift: −12,99 € an FitBoost-App. Die Workout-App war einen Monat gratis, jetzt kostet sie jeden Monat. Du nutzt sie nicht mehr.',
+        frage:'Was tust du?',
+        wahl:[
+          {t:'In der App kündigen und die Bestätigung speichern',art:'ok',s:1,u:2,folge:'Richtig. Ab jetzt wird nichts mehr abgebucht. Die Kündigungsbestätigung ist dein Beweis.'},
+          {t:'Weiterlaufen lassen, sind ja nur 12,99 €',art:'bad',u:-2,abo:{name:'FitBoost-App (fiktiv)',betrag:1299,zweck:'Abo',mal:2},folge:'Kleine Abos fressen viel Geld: 12,99 € im Monat sind über 155 € im Jahr.'},
+          {t:'Nur die Lastschrift zurückgeben, nicht kündigen',art:'amb',u:-1,rueck:'fitboost',abo:{name:'FitBoost-App (fiktiv)',betrag:1799,zweck:'Abo und Mahngebühr',mal:2},folge:'Das Geld ist erst mal zurück, aber der Vertrag läuft weiter. FitBoost bucht wieder ab, jetzt mit Mahngebühr. Erst kündigen, dann zurückgeben.'}]}},
+    {name:'März',ein:[TASCHENGELD,LOHN],
+      aus:[{name:'Bäckerei in Weimar',betrag:480,zweck:'Kartenzahlung',typ:'karte'}],
+      event:{id:'spaeter',icon:'schedule',kanal:'E-Mail',titel:'Rechnung fällig',
+        text:'Zahlspäter-App (fiktiv): Deine Rechnung über 89,00 € für den Hoodie ist in 3 Tagen fällig.',
+        frage:'Was tust du?',
+        wahl:[
+          {t:'Gleich überweisen',art:'ok',u:2,buchung:{name:'Zahlspäter-App (fiktiv)',betrag:-8900,zweck:'Rechnung Hoodie'},folge:'Pünktlich bezahlt, keine Kosten. „Später zahlen“ bleibt nur dann kostenlos.'},
+          {t:'Ignorieren, ist ja noch Zeit',art:'bad',u:-2,buchung:{name:'Zahlspäter-App (fiktiv)',betrag:-9400,zweck:'Rechnung und Mahngebühr'},folge:'Frist verpasst: Jetzt kommen 5 € Mahngebühr dazu. Beim nächsten Mal droht Inkasso.'},
+          {t:'Auf Ratenzahlung umstellen',art:'amb',u:-1,buchung:{name:'Zahlspäter-App (fiktiv)',betrag:-3150,zweck:'Rate 1 von 3'},abo:{name:'Zahlspäter-App (fiktiv)',betrag:3150,zweck:'Rate',mal:2},folge:'Aus 89 € werden 94,50 €. Raten kosten Zinsen und binden dich noch Monate.'}]}},
+    {name:'April',ein:[TASCHENGELD,LOHN],
+      aus:[{name:'Eisdiele in Apolda',betrag:350,zweck:'Kartenzahlung',typ:'karte'}],
+      event:{id:'sparen',icon:'savings',kanal:'Z-Invest App',titel:'Dein Halbjahr ist um',
+        text:'Z-Invest: Du hast ein halbes Jahr geschafft! Willst du ab jetzt jeden Monat etwas zurücklegen?',
+        frage:'Was machst du mit deinem Geld?',
+        wahl:[
+          {t:'Dauerauftrag: 30 € im Monat aufs eigene Sparkonto',art:'ok',s:1,u:2,buchung:{name:'Dein Sparkonto bei Z-Invest',betrag:-3000,zweck:'Sparen, erste Rate'},folge:'Stark! Erst sparen, dann ausgeben. Das Geld ist nicht weg, es liegt auf deinem Sparkonto.'},
+          {t:'Alles auf dem Girokonto lassen',art:'amb',folge:'Geht, aber was auf dem Girokonto liegt, gibt man leichter aus.'},
+          {t:'Alles in den Coin aus dem TikTok-Video stecken',art:'bad',s:-2,buchung:{name:'Krypto-Börse (fiktiv)',betrag:-10000,zweck:'Coin-Kauf',alles:true},folge:'Riskant: Der Coin verliert in einer Woche 80 %. Was dir ein Video verspricht, ist keine Anlageberatung.'}]}}],
   auftraege:[
     {id:'pizza',art:'zweck',betrag:650,wort:'pizza',t:'<b>Pizza teilen:</b> Überweise 6,50 € mit dem Verwendungszweck „Pizza“. Im Lernraum an jemanden aus deiner Klasse, sonst an Mia.'},
     {id:'echtzeit',art:'echtzeit',t:'<b>Blitzschnell:</b> Schick eine Echtzeitüberweisung.'},
     {id:'tippfehler',art:'pruefziffer',t:`<b>Zahlendreher:</b> Mia hat dir ihre IBAN diktiert: <span class="mono">${MIA_FALSCH}</span>. Versuch, ihr 1 € zu überweisen.`},
     {id:'name',art:'empfaenger',t:'<b>Wer ist das?</b> Überweise an die Pizzeria, schreib als Empfänger aber nur „Pizza Saale“. Was sagt die Empfängerprüfung?'},
     {id:'dauer',art:'dauerauftrag',t:'<b>Handyvertrag:</b> Richte einen Dauerauftrag über 9,99 € an Handyfuchs ein.'},
-    {id:'lastschrift',art:'lastschrift',t:'<b>Fremde Abbuchung:</b> Spul einen Monat vor und prüf deine Umsätze. Holst du dir unberechtigtes Geld zurück?'}]
+    {id:'lastschrift',art:'lastschrift',t:'<b>Fremde Abbuchung:</b> Starte den November und reagier richtig auf die Abbuchung, die du nicht kennst.'}]
 };
 
 /* ---------- Fake-Detektor ----------
