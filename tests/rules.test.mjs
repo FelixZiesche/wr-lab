@@ -328,3 +328,15 @@ test('Klassenbank: Konto nur für sich, finden nur mit IBAN, Überweisung nur vo
   await assertSucceeds(konto('schueler', IBAN_S).delete());
   await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}/buchungen/schueler_1`).delete());
 });
+
+test('Kontosimulation: Monat nur von der Lehrkraft, Reaktionen nur als kurze Buchstabenfolge', async () => {
+  await assertSucceeds(db('lehrkraft').doc(`rooms/${CODE}`).update({ bankMonat: 3 }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ bankMonat: 13 }));
+  await assertFails(db('lehrkraft').doc(`rooms/${CODE}`).update({ bankMonat: '3' }));
+  await assertFails(db('schueler').doc(`rooms/${CODE}`).update({ bankMonat: 4 }));
+  const ich = db('schueler').doc(`rooms/${CODE}/players/schueler`);
+  await assertSucceeds(ich.set({ bk: 'ab-c--' }, { merge: true }));
+  await assertFails(ich.set({ bk: 'abd' }, { merge: true }));
+  await assertFails(ich.set({ bk: 'Ich habe den Link geklickt' }, { merge: true }));
+  await assertFails(ich.set({ bk: 'a'.repeat(13) }, { merge: true }));
+});

@@ -11,13 +11,13 @@
 //   live.createRoom(topic, gameId) → neuer Raumcode (6 Zeichen aus ABCDEFGHJKLMNPQRSTUVWXYZ23456789)
 //   live.getRoom(code)             → Raumdaten oder null: {owner, open, topic, gameId, round, phase, decisions}
 //                                    und für den Lernraum {pause, ziel, zielN, gesperrt, ki, umfrage:{id, n, auf},
-//                                    quiz:{id, n, ph, i, nr, von, t, s, team, pkt, teams}}
+//                                    quiz:{id, n, ph, i, nr, von, t, s, team, pkt, teams}, bankMonat}
 //   live.raumStatus(code)          → {raum} wie getRoom, {fehlt: true}, wenn es den Raum sicher nicht gibt,
 //                                    oder {fehler: true} bei einem Verbindungsproblem (dann nichts verwerfen)
 //   live.updateRoom(code, patch)   → nur das Gerät, das den Raum erstellt hat
 //   live.watchRoom(code, cb)       → cb(raum oder null), gibt eine Abmeldefunktion zurück (null nur, wenn der Server
 //                                    meldet, dass es den Raum nicht mehr gibt, nicht bei Verbindungsproblemen)
-//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, stimme:{n, w}, q:{n, w, at}, team, fig, r, ph, votes, checks, choices, stats, joinedAt}])
+//   live.watchPlayers(code, cb)    → cb([{uid, nick, ort, wc, bk, stimme:{n, w}, q:{n, w, at}, team, fig, r, ph, votes, checks, choices, stats, joinedAt}])
 //   live.watchMe(code, cb)         → cb(eigener Eintrag existiert: true/false)
 //   live.joinRoom(code, data)      → eigenen Eintrag anlegen
 //   live.updatePlayer(code, data)  → eigenen Eintrag ändern

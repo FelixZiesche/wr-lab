@@ -1,9 +1,10 @@
 // Klassenbank: ein Übungskonto mit Spielgeld, wie im Online-Banking. Die Schüler überweisen sich im Lernraum
 // gegenseitig Geld (Standard- und Echtzeitüberweisung), mit Prüfziffer der IBAN, Empfängerprüfung und Freigabe.
-// Dazu kommen Daueraufträge und Lastschriften, die nur auf dem eigenen Gerät laufen („Einen Monat vorspulen“).
-// Ohne Lernraum überweist man an erfundene Konten (konten), dann bleibt alles auf dem Gerät.
+// Dazu kommt die Kontosimulation: Monat für Monat kommt Geld rein, Daueraufträge, Lastschriften und Kartenzahlungen
+// gehen raus, und in jedem Monat passiert etwas (Event), auf das die Schüler reagieren. Sicherheit und Überblick
+// zeigen, wie gut sie reagiert haben. Ohne Lernraum überweist man an erfundene Konten (konten), alles bleibt auf dem Gerät.
 //
-//   bank({id, titel, name, start, konten, auftraege, eingang, lastschrift, verzoegerung})
+//   bank({id, titel, name, start, konten, auftraege, eingang, monate, verzoegerung})
 //     name       Name der Bank, z. B. 'Klassenbank (fiktiv)'
 //     start      Startguthaben in Cent (Spielgeld)
 //     konten     erfundene Konten [{name, iban, icon, info}]; ohne iban bekommt das Konto eine aus seinem Namen
@@ -11,14 +12,19 @@
 //                art: 'zweck' (Überweisung mit betrag in Cent und wort im Verwendungszweck), 'echtzeit', 'pruefziffer'
 //                (eine IBAN mit Tippfehler wurde erkannt), 'empfaenger' (Warnung der Empfängerprüfung richtig beachtet),
 //                'dauerauftrag', 'lastschrift' (unberechtigte Lastschrift zurückgegeben)
-//     eingang    Dauerauftrag an dich, der jeden Monat kommt {name, betrag, zweck}, z. B. Taschengeld
-//     lastschrift Lastschrift, die beim ersten Vorspulen ohne Erlaubnis abbucht {name, betrag, zweck}
+//     eingang    Dauerauftrag an dich, der in der Liste der Daueraufträge steht {name, betrag, zweck}, z. B. Taschengeld
+//     monate     Kontosimulation [{name, ein:[{name, betrag, zweck}], aus:[{id?, name, betrag, zweck, typ:'lastschrift'|'karte'}],
+//                event:{id, icon, kanal, titel, text, frage, wahl:[{t, art:'ok'|'amb'|'bad', folge, s?, u?, buchung?, abo?, rueck?, auftrag?}]}}]
+//                buchung {name, betrag (Cent, + oder −), zweck, alles?: höchstens der Kontostand}, abo {name, betrag, zweck, mal}
+//                bucht ab dem nächsten Monat mal-mal ab, rueck gibt die Lastschrift aus diesem Monat mit dieser id zurück,
+//                s und u ändern Sicherheit und Überblick (0 bis 10, Start 5), auftrag hakt einen Auftrag ab
 //     verzoegerung Sekunden, bis eine Standardüberweisung ankommt (Standard 60, „ein Bankarbeitstag“)
 // Im Lernraum: Jeder Teilnehmer bekommt ein Konto mit seinem Spitznamen als Kontoinhaber. Die IBAN kommt aus der
 // Kennung des Geräts. Überweisungen gehen über live.js (konten, buchungen), siehe firestore.rules. Die Lehrkraft sieht
-// den Bank-Monitor (im Beamer-Modus ohne Spitznamen) und hat kein eigenes Konto.
+// den Bank-Monitor (im Beamer-Modus ohne Spitznamen) und hat kein eigenes Konto. Mit „Monat starten“ steuert sie die
+// Kontosimulation für alle (Raumfeld bankMonat), jede Reaktion geht als Buchstabe a bis c an sie (Feld bk, ohne Texte).
 // Icons, die das Thema in icons.txt braucht: account_balance, bolt, check_circle, content_copy, event_repeat, fast_forward,
-// hourglass_top, lock, person_search, receipt_long, send, undo, verified, warning.
+// hourglass_top, lock, person_search, receipt_long, send, undo, verified, warning, calendar_month, shield, visibility.
 import { $, $$, esc, fmt, store, kopieren, zeigeHinweis } from './ui.js';
 import { raum, registriere } from './lernraum.js';
 
@@ -72,6 +78,10 @@ export function bank(def){
           <p class="title-m" data-bank-inhaber></p>
           <p class="row bank-iban"><span class="mono small" data-bank-iban></span><button class="icon-btn" type="button" data-bank-kopie aria-label="IBAN kopieren" title="IBAN kopieren"><span class="ms" aria-hidden="true">content_copy</span></button></p>
           <p class="eyebrow">Kontostand</p><p class="big-num num" data-bank-saldo aria-live="polite"></p></div>
+        ${def.monate?`<div class="bank-monat row"><p class="title-s"><span class="ms sm" aria-hidden="true">calendar_month</span> <span data-bank-mname></span></p>
+          <button class="btn primary small" type="button" data-bank-monat><span class="ms" aria-hidden="true">fast_forward</span><span data-bank-mtext>Nächster Monat</span></button>
+          <p class="small muted" data-bank-mhinweis hidden></p></div>
+        <div class="stack" data-bank-events></div>`:''}
         <div class="seg bank-tabs" role="tablist" aria-label="Banking">
           <button type="button" role="tab" data-bank-tab="ueberweisen" aria-selected="true"><span class="ms sm" aria-hidden="true">send</span>Überweisen</button>
           <button type="button" role="tab" data-bank-tab="umsaetze" aria-selected="false"><span class="ms sm" aria-hidden="true">receipt_long</span>Umsätze</button>
@@ -99,11 +109,10 @@ export function bank(def){
               <span class="stack" style="flex:1"><label class="small" for="${def.id}-dzweck">Verwendungszweck</label><input id="${def.id}-dzweck" data-bank-dzweck maxlength="140" autocomplete="off"></span></div>
             <div class="row"><button class="btn" type="submit"><span class="ms" aria-hidden="true">event_repeat</span>Dauerauftrag einrichten</button></div>
             <p class="small" data-bank-dfb role="status"></p></form>
-          <div class="row"><button class="btn primary" type="button" data-bank-monat><span class="ms" aria-hidden="true">fast_forward</span>Einen Monat vorspulen</button></div>
-          <p class="small" data-bank-monatfb role="status"></p>
         </div>
       </div>
       <div class="stack bank-seitenleiste"><p class="title-s">Deine Aufträge <span class="num small muted" data-bank-n></span></p><ul class="bank-auftraege" data-bank-auftraege></ul>
+        ${def.monate?`<div class="stack bank-werte" data-bank-werte></div>`:''}
         <div class="row"><button class="btn small text" type="button" data-bank-neu><span class="ms" aria-hidden="true">restart_alt</span>Konto zurücksetzen</button></div></div>
     </div></section>`;
 }
@@ -111,7 +120,11 @@ export function bank(def){
 /* ---------- Zustand ----------
    Gespeichert pro Gerät: lokale Umsätze (erfundene Konten, Daueraufträge, Lastschriften), Daueraufträge, erledigte Aufträge,
    die letzte Nummer im Lernraum und der Monat. Live-Buchungen kommen aus dem Raum. */
-const leer=()=>({lokal:[],dauer:[],erledigt:{},nr:0,monat:0,ls:0,eigen:''});
+const leer=()=>({lokal:[],dauer:[],erledigt:{},nr:0,monat:0,abos:[],ev:{},s:5,u:5,eigen:''});
+const ICON={lastschrift:'receipt_long',dauer:'event_repeat',ein:'payments',karte:'credit_card',rueck:'undo',geplatzt:'warning',event:'account_balance'};
+const ART={lastschrift:'SEPA-Lastschrift',dauer:'Dauerauftrag',ein:'Gutschrift',karte:'Kartenzahlung',rueck:'Rückgabe der Lastschrift',geplatzt:'Nicht ausgeführt',event:'Buchung'};
+const grenze=x=>Math.max(0,Math.min(10,x));
+const BUCHST='abc';
 // „6,50“, „6.50“, „1.000“ und „1.000,50“ sind erlaubt, Ergebnis in Cent (NaN bei ungültiger Eingabe)
 const betragAus=s=>{const t=String(s||'').replace(/[\s€]/g,'').replace(/\.(?=\d{3}(?:,|$))/g,'');
   return /^\d{1,6}([.,]\d{1,2})?$/.test(t)?Math.round(parseFloat(t.replace(',','.'))*100):NaN};
@@ -120,7 +133,7 @@ export function bindBank(box){
   const def=DEFS.get(box.dataset.bank);if(!def)return;
   const key=`${raum.speicher()}-bank-${def.id}`,verz=(def.verzoegerung??60)*1000;
   let st={...leer(),...(store(key)||{})},live=[],stopp=null,ich=null,offen=null,ticker=null;
-  const fikt=def.konten.map(k=>({...k,iban:k.iban||ibanVon('fiktiv:'+k.name)}));
+  const B=def.name.replace(/\s*\(.*?\)/g,''),fikt=def.konten.map(k=>({...k,iban:k.iban||ibanVon('fiktiv:'+k.name)}));
   const sichern=()=>store(key,st);
   const L=()=>raum.live(),code=()=>raum.sitzung()&&raum.sitzung().code;
   const imRaum=()=>raum.istSchueler()&&!!L()&&!!code();
@@ -149,13 +162,13 @@ export function bindBank(box){
     $('[data-bank-iban]',box).textContent=ibanSchoen(iban);
     $('[data-bank-saldo]',box).textContent=eur(saldo());
     $$('[data-bank-kontakte]',box).forEach(el=>el.innerHTML=`<span class="small muted">Vorlagen:</span>`+fikt.map((k,i)=>`<button class="chip" type="button" data-bank-k="${i}"><span class="ms sm" aria-hidden="true">${k.icon||'person'}</span>${esc(k.name)}</button>`).join(''));
-    zeichneListe();zeichneDauer();zeichneAuftraege();
+    zeichneListe();zeichneDauer();zeichneAuftraege();zeichneSim();
   }
   function zeichneListe(){const l=umsaetze();
     $('[data-bank-liste]',box).innerHTML=l.length?l.map(u=>`<li class="${u.betrag<0?'raus':'rein'}">
-      <span class="ms" aria-hidden="true">${u.typ==='lastschrift'?'receipt_long':u.typ==='dauer'?'event_repeat':u.echtzeit?'bolt':u.unterwegs?'hourglass_top':'account_balance'}</span>
+      <span class="ms" aria-hidden="true">${ICON[u.typ]||(u.echtzeit?'bolt':u.unterwegs?'hourglass_top':'account_balance')}</span>
       <span class="bank-u-text"><b>${esc(u.name)}</b><span class="small">${esc(u.zweck||'ohne Verwendungszweck')}</span>
-        <span class="small muted">${u.typ==='lastschrift'?'SEPA-Lastschrift':u.typ==='dauer'?'Dauerauftrag':u.typ==='rueck'?'Rückgabe der Lastschrift':u.echtzeit?'Echtzeitüberweisung':'Überweisung'}${u.unterwegs?(u.betrag<0?' · unterwegs, kommt nach einem Bankarbeitstag an':' · unterwegs'):''}${u.monat?` · Monat ${u.monat}`:''}</span>
+        <span class="small muted">${ART[u.typ]||(u.echtzeit?'Echtzeitüberweisung':'Überweisung')}${u.unterwegs?(u.betrag<0?' · unterwegs, kommt nach einem Bankarbeitstag an':' · unterwegs'):''}${u.monat?` · Monat ${u.monat}`:''}</span>
         ${u.typ==='lastschrift'&&!u.zurueck?`<button class="btn small" type="button" data-bank-rueck="${esc(u.id)}"><span class="ms" aria-hidden="true">undo</span>Lastschrift zurückgeben</button>`:''}</span>
       <span class="num bank-betrag">${vorz(u.betrag)}</span></li>`).join(''):'<li class="small muted">Noch keine Umsätze.</li>';
     $$('[data-bank-rueck]',box).forEach(b=>b.addEventListener('click',()=>zurueck(b.dataset.bankRueck)));
@@ -182,7 +195,21 @@ export function bindBank(box){
     mon.innerHTML=`<p class="title-m"><span class="ms" aria-hidden="true">account_balance</span> Bank-Monitor</p>
       <div class="row"><span class="pill neu num">${l.length} ${l.length===1?'Überweisung':'Überweisungen'}</span><span class="pill neu num">${eur(summe)} bewegt</span><span class="pill neu num">${echt} in Echtzeit</span></div>
       ${l.length?`<ul class="bank-umsaetze">${l.slice(0,12).map(b=>`<li><span class="ms" aria-hidden="true">${b.echtzeit?'bolt':'account_balance'}</span><span class="bank-u-text"><b>${namen?`${esc(b.vonName)} → ${esc(b.anName)}`:'Überweisung'}</b><span class="small">${esc(b.zweck||'ohne Verwendungszweck')}</span></span><span class="num bank-betrag">${eur(b.betrag)}</span></li>`).join('')}</ul>`
-        :'<p class="small muted">Noch keine Überweisungen. Die Schüler sehen ihr Konto, sobald sie die Klassenbank öffnen.</p>'}`;
+        :'<p class="small muted">Noch keine Überweisungen. Die Schüler sehen ihr Konto, sobald sie die Werkstatt öffnen.</p>'}
+      ${N?simMonitor():''}`;
+    $('[data-bank-lkmonat]',mon)?.addEventListener('click',e=>{const m=+e.currentTarget.dataset.bankLkmonat;raum.setzeBankMonat(m)});
+  }
+
+  // Kontosimulation im Lernraum: Monat für alle starten, Reaktionen der Klasse als Balken (ohne Spitznamen)
+  function simMonitor(){
+    const bm=raum.bankMonat(),m=bm||0,sp=raum.zustand().spieler||[],lk=raum.istLehrkraft();
+    const reak=i=>{const n=[0,0,0];let k=0;sp.forEach(p=>{const c=String(p.bk||'')[i-1];const j=BUCHST.indexOf(c);if(j>=0){n[j]++;k++}});return {n,k}};
+    const zeile=i=>{const E=def.monate[i-1].event,{n,k}=reak(i);
+      return `<div class="stack bank-reak"><p class="small"><b>${esc(def.monate[i-1].name)}: ${esc(E.titel)}</b> <span class="muted num">${k} von ${sp.length} haben reagiert</span></p>
+        ${E.wahl.map((w,j)=>`<div class="bank-reak-zeile"><span class="small">${esc(w.t)}</span><div class="bank-balken ${w.art}" aria-hidden="true"><span style="width:${k?Math.round(n[j]/k*100):0}%"></span></div><span class="num small">${n[j]}</span></div>`).join('')}</div>`};
+    return `<div class="stack bank-steuer"><p class="title-s"><span class="ms sm" aria-hidden="true">calendar_month</span> Kontosimulation: ${bm==null?'Jeder spielt in seinem Tempo':`${esc(m?def.monate[m-1].name:'Start')}, Monat ${m} von ${N}`}</p>
+      ${lk&&m<N?`<div class="row"><button class="btn primary small" type="button" data-bank-lkmonat="${m+1}"><span class="ms" aria-hidden="true">fast_forward</span>${esc(def.monate[m].name)} für alle starten</button>${bm==null?'<span class="small muted">Danach starten die Monate nur noch für alle gemeinsam.</span>':''}</div>`:''}
+      ${Array.from({length:m},(_,i)=>zeile(m-i)).join('')}</div>`;
   }
 
   /* ---------- Lernraum ---------- */
@@ -197,13 +224,16 @@ export function bindBank(box){
       if(!iban)throw new Error('Keine freie IBAN');
       const v=await l.konto(c,iban);if(!v||v.name!==nick)await l.oeffneKonto(c,iban,nick);
       ich={iban,name:nick};
-      if(st.raum!==c){st={...st,raum:c,nr:0};sichern()}
+      // Neuer Lernraum: neues Konto für diese Stunde, dann zu dem Monat aufholen, den die Lehrkraft gestartet hat
+      if(st.raum!==c){st={...leer(),eigen:st.eigen,raum:c};sichern()}
+      aufholen();sendeReaktionen();
       stopp=l.watchBuchungen(c,b=>{live=b;zeichneKonto()});
-    }catch(e){console.warn('Klassenbank',e);ich=null;zeigeHinweis('Dein Konto in der Klassenbank konnte nicht geöffnet werden. Du übst jetzt mit den Vorlagen.')}
+    }catch(e){console.warn('Klassenbank',e);ich=null;zeigeHinweis(`Dein Konto bei ${B} konnte nicht geöffnet werden. Du übst jetzt mit den Vorlagen.`)}
     zeichneKonto();
   }
   raum.beimVerlassen((l,c)=>ich?l.loescheKonto(c,ich.iban):null);
-  const aus=raum.on(art=>{if(!box.isConnected){aus();if(stopp)stopp();clearInterval(ticker);return}if(['verbunden','ende','start','beamer'].includes(art))verbinde()});
+  const aus=raum.on(art=>{if(!box.isConnected){aus();if(stopp)stopp();clearInterval(ticker);return}if(['verbunden','ende','start','beamer'].includes(art))return verbinde();
+    if(art==='raum'||art==='spieler'){if(raum.istLehrkraft()||raum.praesentation())zeichneMonitor();else if(art==='raum'&&ich){aufholen();zeichneKonto()}}});
   // Standardüberweisungen kommen nach der Verzögerung an: Anzeige regelmäßig auffrischen
   ticker=setInterval(()=>{if(!box.isConnected){clearInterval(ticker);return}if(umsaetze().some(u=>u.unterwegs))zeichneKonto()},5000);
 
@@ -220,14 +250,14 @@ export function bindBank(box){
     const f=ibanFehler(iban);
     if(!name)return meldung('Gib den Namen des Empfängers ein.','bad');
     if(f==='pruefziffer'){erledige('pruefziffer');return meldung('<b>Diese IBAN gibt es nicht.</b> Die Prüfziffer passt nicht: Wahrscheinlich ist eine Ziffer falsch oder vertauscht. Frag beim Empfänger noch einmal nach.','bad')}
-    if(f)return meldung(f==='land'?'Die Klassenbank kennt nur deutsche IBANs. Sie beginnen mit DE.':'Eine deutsche IBAN hat 22 Zeichen: DE und 20 Ziffern.','bad');
+    if(f)return meldung(f==='land'?`${B} kennt nur deutsche IBANs. Sie beginnen mit DE.`:'Eine deutsche IBAN hat 22 Zeichen: DE und 20 Ziffern.','bad');
     if(!(betrag>0))return meldung('Gib einen Betrag ein, zum Beispiel 6,50.','bad');
-    if(betrag>100000)return meldung('In der Klassenbank geht höchstens 1.000 € pro Überweisung.','bad');
+    if(betrag>100000)return meldung(`Bei ${B} geht höchstens 1.000 € pro Überweisung.`,'bad');
     if(betrag>saldo())return meldung(`<b>Abgelehnt: nicht genug Geld auf dem Konto.</b> Du hast noch ${eur(saldo())}. Ein Schülerkonto kann man nicht überziehen.`,'bad');
     const z=await finde(iban);
     if(z&&z.selbst)return meldung('Das ist deine eigene IBAN.','bad');
-    if(z&&z.fehler)return meldung('Keine Verbindung zur Klassenbank. Prüfe das WLAN und versuch es noch einmal.','bad');
-    if(!z)return meldung(`Zu dieser IBAN gibt es kein Konto in der Klassenbank.${ich?' Frag deinen Mitschüler, ob er die Klassenbank schon geöffnet hat.':''}`,'bad');
+    if(z&&z.fehler)return meldung(`Keine Verbindung zu ${B}. Prüfe das WLAN und versuch es noch einmal.`,'bad');
+    if(!z)return meldung(`Zu dieser IBAN gibt es kein Konto bei ${B}.${ich?' Frag deinen Mitschüler, ob er sein Konto schon geöffnet hat.':''}`,'bad');
     const pr=empfaengerPruefen(name,z.name);
     offen={name,iban,betrag,zweck,echtzeit,z,pr};
     if(pr==='ok'){offen.name=z.name;return freigabe()}
@@ -263,7 +293,7 @@ export function bindBank(box){
     erledige('zweck',o);if(o.echtzeit)erledige('echtzeit');
     form.reset();zeichneKonto();
     meldung(o.echtzeit?`<b>Erledigt!</b> ${eur(o.betrag)} sind in Sekunden bei ${esc(o.name)}. Zurückholen geht nicht mehr.`
-      :`<b>Auftrag angenommen.</b> ${eur(o.betrag)} gehen an ${esc(o.name)}. Eine normale Überweisung braucht einen Bankarbeitstag, in der Klassenbank ${Math.round(verz/1000)} Sekunden.`,'ok');
+      :`<b>Auftrag angenommen.</b> ${eur(o.betrag)} gehen an ${esc(o.name)}. Eine normale Überweisung braucht einen Bankarbeitstag, bei ${B} ${Math.round(verz/1000)} Sekunden.`,'ok');
   }
   // Vorlagen füllen Empfänger und IBAN, in der Überweisung oder im Dauerauftrag
   box.addEventListener('click',e=>{const k=e.target.closest('[data-bank-k]');if(!k)return;const f=fikt[+k.dataset.bankK],d=k.closest('[data-bank-kontakte]').dataset.bankKontakte;
@@ -278,29 +308,85 @@ export function bindBank(box){
     t.addEventListener('keydown',e=>{const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!d)return;e.preventDefault();tab(tabs[(i+d+tabs.length)%tabs.length].dataset.bankTab,true)})});
   tab('ueberweisen');
 
-  /* ---------- Daueraufträge, Monat vorspulen, Lastschrift ---------- */
+  /* ---------- Daueraufträge und Rückgabe einer Lastschrift ---------- */
   $('[data-bank-dauerform]',box).addEventListener('submit',e=>{e.preventDefault();
     const name=feld('[data-bank-dname]').value.trim(),iban=ibanNorm(feld('[data-bank-diban]').value),betrag=betragAus(feld('[data-bank-dbetrag]').value),zweck=feld('[data-bank-dzweck]').value.trim().slice(0,140),fb=feld('[data-bank-dfb]');
     const f=fikt.find(k=>k.iban===iban);
     if(!name||!(betrag>0))return fb.textContent='Gib Empfänger und Betrag ein.';
     if(ibanFehler(iban))return fb.textContent=ibanFehler(iban)==='pruefziffer'?'Diese IBAN gibt es nicht: Die Prüfziffer passt nicht.':'Prüf die IBAN: DE und 20 Ziffern.';
-    if(!f)return fb.textContent='Daueraufträge gehen in der Klassenbank nur an die Vorlagen.';
+    if(!f)return fb.textContent=`Daueraufträge gehen bei ${B} nur an die Vorlagen.`;
     if(empfaengerPruefen(name,f.name)!=='ok')return fb.textContent=`Empfängerprüfung: Das Konto gehört ${f.name}.`;
     st.dauer.push({name:f.name,iban,betrag,zweck});sichern();e.target.reset();fb.textContent=`Eingerichtet: Jeden Monat gehen ${eur(betrag)} an ${f.name}.`;
     erledige('dauerauftrag');zeichneDauer();
   });
-  $('[data-bank-monat]',box).addEventListener('click',()=>{
-    st.monat++;const m=st.monat,t=Date.now(),info=[];
-    if(def.eingang){st.lokal.push({id:`e${m}`,t,name:def.eingang.name,betrag:def.eingang.betrag,zweck:def.eingang.zweck,typ:'dauer',monat:m});info.push(`${vorz(def.eingang.betrag)} ${def.eingang.name}`)}
-    st.dauer.forEach((d,i)=>{if(d.betrag<=saldo()){st.lokal.push({id:`d${m}-${i}`,t:t+1+i,name:d.name,iban:d.iban,betrag:-d.betrag,zweck:d.zweck,typ:'dauer',monat:m});info.push(`${vorz(-d.betrag)} ${d.name}`)}else info.push(`${d.name}: nicht ausgeführt, zu wenig Geld`)});
-    if(def.lastschrift&&!st.ls){st.ls=1;st.lokal.push({id:`ls${m}`,t:t+50,name:def.lastschrift.name,betrag:-def.lastschrift.betrag,zweck:def.lastschrift.zweck,typ:'lastschrift',monat:m});info.push(`${vorz(-def.lastschrift.betrag)} ${def.lastschrift.name} (Lastschrift)`)}
-    sichern();zeichneKonto();
-    feld('[data-bank-monatfb]').innerHTML=`<b>Monat ${m}:</b> ${info.map(esc).join(' · ')||'keine Buchungen'}.${st.ls===1&&def.lastschrift?' Schau in deine Umsätze: Kennst du jede Abbuchung?':''}`;
-  });
-  function zurueck(id){const u=st.lokal.find(x=>x.id===id);if(!u||u.zurueck)return;u.zurueck=true;
-    st.lokal.push({id:'r'+id,t:Date.now(),name:u.name,betrag:-u.betrag,zweck:`Rückgabe: ${u.zweck}`,typ:'rueck'});st.ls=2;sichern();
-    erledige('lastschrift');zeichneKonto();tab('umsaetze');zeigeHinweis(`${eur(-u.betrag)} sind zurück auf deinem Konto.`)}
-  $('[data-bank-neu]',box).addEventListener('click',()=>{const eigen=st.eigen,r=st.raum,nr=st.nr;st={...leer(),eigen,raum:r,nr};sichern();schritt.innerHTML='';feld('[data-bank-monatfb]').textContent='';zeichneKonto()});
+  /* ---------- Kontosimulation: Monate und Events ---------- */
+  const N=(def.monate||[]).length;
+  const gesteuert=()=>imRaum()&&raum.bankMonat()!=null;
+  // Bucht einen Monat: Einnahmen, Daueraufträge, laufende Abos, Lastschriften und Kartenzahlungen.
+  // Was nicht gedeckt ist, wird nicht ausgeführt (ein Schülerkonto kann man nicht überziehen).
+  function monatBuchen(){
+    if(st.monat>=N)return;
+    st.monat++;const m=st.monat,M=def.monate[m-1];let t=Date.now();
+    const buche=(x,betrag,typ,id)=>{st.lokal.push({id:id||`m${m}-${st.lokal.length}`,t:t++,name:x.name,iban:x.iban,betrag,zweck:x.zweck,typ,monat:m})};
+    const raus=(x,typ,id)=>{if(x.betrag<=saldo())buche(x,-x.betrag,typ,id);else{buche({...x,zweck:`Nicht ausgeführt, zu wenig Geld: ${x.zweck||''}`},0,'geplatzt');st.u=grenze(st.u-1)}};
+    (M.ein||[]).forEach(x=>buche(x,x.betrag,'ein'));
+    st.dauer.forEach(d=>raus(d,'dauer'));
+    st.abos.forEach(a=>{if(a.mal>0){a.mal--;raus(a,'lastschrift')}});st.abos=st.abos.filter(a=>a.mal>0);
+    (M.aus||[]).forEach(x=>raus(x,x.typ==='karte'?'karte':'lastschrift',x.id?`m${m}-${x.id}`:undefined));
+    sichern();
+  }
+  function reagiere(m,i){const M=def.monate[m-1],w=M&&M.event.wahl[i];if(!w||st.ev[m])return;
+    st.ev[m]=BUCHST[i];st.s=grenze(st.s+(w.s||0));st.u=grenze(st.u+(w.u||0));
+    if(w.rueck)zurueck(`m${m}-${w.rueck}`,true);
+    if(w.buchung){const b=w.buchung,betrag=b.alles?-Math.min(-b.betrag,Math.max(0,saldo())):b.betrag;
+      st.lokal.push({id:`ev${m}`,t:Date.now(),name:b.name,betrag,zweck:b.zweck,typ:'event',monat:m})}
+    if(w.abo)st.abos.push({...w.abo,mal:w.abo.mal??99});
+    if(w.auftrag)erledige(w.auftrag);
+    sichern();sendeReaktionen();zeichneKonto();
+    const fb=$(`[data-bank-ev="${m}"] .fb`,box);if(fb)fb.focus();
+  }
+  // Im Lernraum: Reaktionen als Buchstaben an die Lehrkraft (ein Zeichen pro Monat, „-“ = noch keine)
+  const reaktionen=()=>Array.from({length:N},(_,i)=>st.ev[i+1]||'-').join('');
+  function sendeReaktionen(){if(N&&imRaum())raum.sendeBank(reaktionen())}
+  // Gesteuert: bis zu dem Monat aufholen, den die Lehrkraft gestartet hat
+  function aufholen(){if(!N||!gesteuert())return false;let neu=false;while(st.monat<Math.min(N,raum.bankMonat())){monatBuchen();neu=true}return neu}
+  function zeichneSim(){if(!N)return;
+    const m=st.monat,offen=m>0&&!st.ev[m],fertig=m>=N&&!offen,g=gesteuert();
+    $('[data-bank-mname]',box).textContent=m?`${def.monate[m-1].name} · Monat ${m} von ${N}`:`Start · noch ${N} Monate`;
+    const knopf=$('[data-bank-monat]',box),hw=$('[data-bank-mhinweis]',box);
+    knopf.hidden=g||m>=N;knopf.disabled=offen;
+    if(m<N)$('[data-bank-mtext]',box).textContent=`${def.monate[m].name} starten`;
+    hw.hidden=!(g&&m<N)&&!(offen&&!g);
+    hw.textContent=g?'Den nächsten Monat startet eure Lehrkraft.':'Reagier erst auf das, was diesen Monat passiert ist.';
+    // Events: alle ohne Reaktion und das aus dem aktuellen Monat
+    const ev=[];for(let i=1;i<=m;i++)if(!st.ev[i]||i===m)ev.push(i);
+    neuZeichnenEv(ev);
+    zeichneWerte(fertig);
+  }
+  function neuZeichnenEv(liste){
+    const el=$('[data-bank-events]',box),html=liste.map(i=>{const E=def.monate[i-1].event,r=st.ev[i],w=r?E.wahl[BUCHST.indexOf(r)]:null;
+      return `<div class="bank-event${r?' fertig':''}" data-bank-ev="${i}"><p class="bank-ev-kopf small"><span class="ms sm" aria-hidden="true">${E.icon||'notifications'}</span><b>${esc(E.kanal||'')}</b><span class="muted">${esc(def.monate[i-1].name)}</span></p>
+        <p class="title-s">${esc(E.titel)}</p><p>${esc(E.text)}</p>
+        ${w?`<div class="fb ${w.art}" tabindex="-1"><b>${esc(w.t)}.</b> ${esc(w.folge)}</div>`
+          :`<p class="small"><b>${esc(E.frage||'Was tust du?')}</b></p><div class="bank-ev-wahl" role="group" aria-label="${esc(E.frage||'Was tust du?')}">${E.wahl.map((x,j)=>`<button class="btn" type="button" data-bank-w="${i}:${j}">${esc(x.t)}</button>`).join('')}</div>`}</div>`}).join('');
+    if(el._html!==html){el.innerHTML=html;el._html=html}
+  }
+  function zeichneWerte(fertig){
+    const el=$('[data-bank-werte]',box);if(!el)return;
+    const balken=(t,icon,v)=>`<div class="bank-wert"><p class="small row"><span class="ms sm" aria-hidden="true">${icon}</span><b>${t}</b><span class="num muted">${v} von 10</span></p><div class="bank-balken" aria-hidden="true"><span style="width:${v*10}%"></span></div></div>`;
+    const plus=saldo()-def.start;
+    el.innerHTML=`<p class="title-s">${fertig?'Dein Halbjahr bei '+esc(def.name):'So läuft dein Konto'}</p>
+      ${balken('Sicherheit','shield',st.s)}${balken('Überblick','visibility',st.u)}
+      ${fertig?`<div class="fb ${st.s+st.u>=15?'ok':st.s+st.u>=10?'amb':'bad'}"><p><b>Kontostand ${eur(saldo())}</b> (${vorz(plus)} seit dem Start).</p><p>${st.s+st.u>=15?'Stark: Du hast Betrug erkannt, Abbuchungen geprüft und den Überblick behalten.':st.s+st.u>=10?'Ganz gut, aber an manchen Stellen hat es dich Geld gekostet. Schau in deine Umsätze.':'Das Halbjahr war teuer. Schau in deine Umsätze, was schiefging, und spiel noch einmal.'}</p></div>`:''}`;
+  }
+  $('[data-bank-monat]',box)?.addEventListener('click',()=>{if(gesteuert()||(st.monat>0&&!st.ev[st.monat]))return;
+    monatBuchen();zeichneKonto();const e=$(`[data-bank-ev="${st.monat}"]`,box);if(e){const b=$('button',e);if(b)b.focus()}});
+  box.addEventListener('click',e=>{const b=e.target.closest('[data-bank-w]');if(!b)return;const [m,i]=b.dataset.bankW.split(':').map(Number);reagiere(m,i)});
+  function zurueck(id,still){const u=st.lokal.find(x=>x.id===id);if(!u||u.zurueck||u.typ!=='lastschrift')return;u.zurueck=true;
+    st.lokal.push({id:'r'+id,t:Date.now(),name:u.name,betrag:-u.betrag,zweck:`Rückgabe: ${u.zweck}`,typ:'rueck',monat:u.monat});sichern();
+    erledige('lastschrift');if(still)return;zeichneKonto();tab('umsaetze');zeigeHinweis(`${eur(-u.betrag)} sind zurück auf deinem Konto.`)}
+  $('[data-bank-neu]',box).addEventListener('click',()=>{const eigen=st.eigen,r=st.raum,nr=st.nr;st={...leer(),eigen,raum:r,nr};sichern();schritt.innerHTML='';
+    aufholen();sendeReaktionen();zeichneKonto()});
 
   verbinde();
 }

@@ -196,6 +196,11 @@ export const raum={
   gesendet:aufgabe=>s&&s.gesendet?s.gesendet[aufgabe]:undefined,
   /** Schüler: Punkte aus dem Wissenscheck melden, ein Zeichen pro Aufgabe (siehe aufgaben.js). */
   sendeErgebnis(code){if(!s||s.rolle!=='schueler'||!L)return;clearTimeout(ergT);ergT=setTimeout(()=>{if(!s||code===ergGemeldet)return;ergGemeldet=code;L.updatePlayer(s.code,{wc:String(code).slice(0,60)}).catch(e=>console.warn('Wissenscheck',e))},800)},
+  /** Kontosimulation (bank.js): Monat, den die Lehrkraft für alle gestartet hat (null = jeder in seinem Tempo) */
+  bankMonat:()=>(z.raum&&Number.isInteger(z.raum.bankMonat))?z.raum.bankMonat:null,
+  setzeBankMonat:m=>steuern({bankMonat:m}),
+  /** Schüler: Reaktionen in der Kontosimulation melden, ein Buchstabe pro Monat („-“ = keine) */
+  sendeBank(code){if(!s||s.rolle!=='schueler'||!L)return;L.updatePlayer(s.code,{bk:String(code).slice(0,12)}).catch(e=>console.warn('Kontosimulation',e))},
   /** Link zum geteilten Lernszenario in AIS.chat, den die Lehrkraft im Dashboard einträgt. */
   kiLink:()=>(s&&z.raum&&z.raum.ki)||'',
   setzeKi:url=>steuern({ki:url}),

@@ -828,3 +828,26 @@ button.qz-feld:disabled{cursor:default}
 .bank-auftraege li.ok>.ms{color:inherit}
 .bank-monitor{border:1px solid var(--md-outline-variant);border-radius:var(--r-xl);padding:16px}
 .bank-monitor .title-m{display:flex;align-items:center;gap:8px}
+/* Kontosimulation: Monatsleiste, Events, Sicherheit und Überblick, Steuerung und Reaktionen im Bank-Monitor */
+.bank-monat{justify-content:space-between;gap:8px}
+.bank-monat .title-s{display:flex;align-items:center;gap:6px}
+.bank-monat [data-bank-mhinweis]{flex-basis:100%}
+.bank-event{border:2px solid var(--md-primary);border-radius:var(--r-l);background:var(--md-surface-container);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.bank-event.fertig{border-color:var(--md-outline-variant)}
+.bank-event p{margin:0}
+.bank-ev-kopf{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.bank-ev-kopf .ms{color:var(--md-primary)}
+.bank-ev-wahl{display:flex;flex-direction:column;gap:8px}
+.bank-ev-wahl .btn{justify-content:flex-start;text-align:left;white-space:normal;height:auto;min-height:44px;padding:8px 16px}
+.bank-werte{border-radius:var(--r-l);background:var(--md-surface-container-low);padding:12px 16px}
+.bank-wert p{gap:6px}
+.bank-wert .num{margin-left:auto}
+.bank-balken{height:10px;border-radius:var(--r-full);background:var(--md-surface-container-highest);overflow:hidden}
+.bank-balken>span{display:block;height:100%;border-radius:inherit;background:var(--md-primary);transition:width .4s var(--ease)}
+.bank-balken.ok>span{background:var(--md-ok)}.bank-balken.amb>span{background:var(--md-warn)}.bank-balken.bad>span{background:var(--md-error)}
+@media (prefers-reduced-motion: reduce){.bank-balken>span{transition:none}}
+.bank-steuer{border-top:1px solid var(--md-outline-variant);padding-top:12px}
+.bank-steuer .title-s{display:flex;align-items:center;gap:6px}
+.bank-reak p{margin:0}
+.bank-reak-zeile{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 2.5em;gap:8px;align-items:center}
+.bank-reak-zeile .num{text-align:right}

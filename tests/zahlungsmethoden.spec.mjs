@@ -5,7 +5,7 @@ import { test, expect, device } from './helpers.mjs';
 
 const ZM = '/zahlungsmethoden/';
 const TITEL = {
-  bauchgefuehl: 'Stimmt das?', kassenrush: 'Kassen-Rush', klassenbank: 'Die Klassenbank', fake: 'Fake-Detektor',
+  bauchgefuehl: 'Stimmt das?', kassenrush: 'Kassen-Rush', klassenbank: 'Dein Konto bei Z-Invest', fake: 'Fake-Detektor',
   krypto: 'Die Krypto-Achterbahn', paylater: 'Jetzt kaufen, später zahlen', sichern: 'Hefteintrag und Bauchgefühl-Check', wissenscheck: 'Wissenscheck'
 };
 const regler = (loc, v) => loc.evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }, String(v));
@@ -79,7 +79,7 @@ test('Krypto-Achterbahn: Zeitpunkt wählen, bezahlen, Key aufbewahren', async ({
   await expect(page.locator('#kb-t')).toBeEnabled();
 });
 
-test('Klassenbank allein: alle sechs Aufträge mit den Vorlagen', async ({ page }) => {
+test('Konto allein: Aufträge mit den Vorlagen und sechs Monate Kontosimulation', async ({ page }) => {
   await page.goto(`${ZM}#klassenbank`);
   const b = page.locator('[data-bank="klassenbank"]');
   const saldo = b.locator('[data-bank-saldo]');
@@ -127,19 +127,39 @@ test('Klassenbank allein: alle sechs Aufträge mit den Vorlagen', async ({ page 
   await expect(b.locator('[data-bank-schritt] .fb.ok')).toContainText('in Sekunden');
   await expect(saldo).toHaveText('240,00 €');
 
-  // Dauerauftrag an Handyfuchs, Monat vorspulen, unberechtigte Lastschrift zurückgeben
+  // Dauerauftrag an Handyfuchs, dann startet der November mit einer unbekannten Lastschrift
   await b.locator('[data-bank-tab="dauer"]').click();
   await b.locator('[data-bank-kontakte="d"] [data-bank-k="2"]').click();
   await b.locator('[data-bank-dbetrag]').fill('9,99');
   await b.locator('[data-bank-dauerform] button[type=submit]').click();
   await expect(b.locator('[data-bank-dfb]')).toContainText('Eingerichtet');
-  await b.locator('[data-bank-monat]').click();
-  await expect(b.locator('[data-bank-monatfb]')).toContainText('Saale-Fit');
-  await expect(saldo).toHaveText('230,11 €');
-  await b.locator('[data-bank-tab="umsaetze"]').click();
-  await b.locator('[data-bank-rueck]').click();
-  await expect(saldo).toHaveText('270,01 €');
+  const monat = b.locator('[data-bank-monat]');
+  await expect(monat).toContainText('November starten');
+  await monat.click();
+  await expect(b.locator('[data-bank-mname]')).toHaveText('November · Monat 1 von 6');
+  await expect(saldo).toHaveText('382,61 €');
+  await expect(monat).toBeDisabled();
+  const nov = b.locator('[data-bank-ev="1"]');
+  await expect(nov).toContainText('Unbekannte Abbuchung');
+  await expect(nov.locator('[data-bank-w="1:0"]')).toBeFocused();
+  await nov.locator('[data-bank-w="1:0"]').click();
+  await expect(nov.locator('.fb.ok')).toContainText('13 Monate');
+  await expect(saldo).toHaveText('422,51 €');
   await expect(b.locator('[data-bank-n]')).toHaveText('6 von 6');
+  await b.locator('[data-bank-tab="umsaetze"]').click();
+  await expect(b.locator('[data-bank-liste]')).toContainText('Rückgabe der Lastschrift');
+
+  // Dezember: Phishing-SMS erkannt, Sicherheit und Überblick steigen
+  await monat.click();
+  await b.locator('[data-bank-ev="2"] [data-bank-w="2:1"]').click();
+  await expect(b.locator('[data-bank-ev="2"] .fb.ok')).toContainText('Phishing');
+  await expect(saldo).toHaveText('616,62 €');
+  await expect(b.locator('[data-bank-werte]')).toContainText('Sicherheit8 von 10');
+  // Bis April durchspielen, dann kommt die Auswertung
+  for (let m = 3; m <= 6; m++) { await monat.click(); await b.locator(`[data-bank-w="${m}:0"]`).click(); }
+  await expect(monat).toBeHidden();
+  await expect(b.locator('[data-bank-werte]')).toContainText('Dein Halbjahr bei Z-Invest');
+  const ende = await saldo.textContent();
 
   // Tastatur: Pfeiltasten wechseln die Tabs
   await b.locator('[data-bank-tab="umsaetze"]').focus();
@@ -149,10 +169,11 @@ test('Klassenbank allein: alle sechs Aufträge mit den Vorlagen', async ({ page 
 
   // Der Kontostand bleibt nach dem Neuladen
   await page.reload();
-  await expect(page.locator('[data-bank-saldo]')).toHaveText('270,01 €');
+  await expect(page.locator('[data-bank-saldo]')).toHaveText(ende);
+  await expect(page.locator('[data-bank-ev="6"] .fb')).toBeVisible();
 });
 
-test('Lernraum: Klassenbank live, Bank-Monitor, Wand und Lehrerpanel', async ({ page: lk, browser }) => {
+test('Lernraum: Überweisungen live, Monate für alle, Bank-Monitor, Wand und Lehrerpanel', async ({ page: lk, browser }) => {
   test.setTimeout(120_000);
   await lk.goto(ZM);
   await lk.locator('#btn-raum').click();
@@ -211,7 +232,25 @@ test('Lernraum: Klassenbank live, Bank-Monitor, Wand und Lehrerpanel', async ({ 
   await expect(kim.locator('[data-bank-monitor]')).toBeHidden();
   const panel = lk.locator('#modal-body > .lehrerpanel');
   await panel.locator('summary').click();
-  await expect(panel).toContainText('Banking-Simulator für die ganze Klasse');
+  await expect(panel).toContainText('Kontosimulation bei Z-Invest');
+
+  // Die Lehrkraft startet den November für alle, die Klasse reagiert, der Monitor zählt ohne Spitznamen
+  await expect(kim.locator('[data-bank-monat]')).toBeVisible();
+  await mon.locator('[data-bank-lkmonat="1"]').click();
+  await expect(mon).toContainText('November, Monat 1 von 6');
+  for (const s of schueler) {
+    await expect(s.locator('[data-bank-mname]')).toHaveText('November · Monat 1 von 6');
+    await expect(s.locator('[data-bank-monat]')).toBeHidden();
+    await expect(s.locator('[data-bank-mhinweis]')).toContainText('startet eure Lehrkraft');
+  }
+  await kim.locator('[data-bank-w="1:1"]').click();
+  await expect(kim.locator('[data-bank-ev="1"] .fb.bad')).toBeVisible();
+  await expect(mon.locator('.bank-reak')).toContainText('1 von 2 haben reagiert');
+  await expect(mon.locator('.bank-reak')).not.toContainText('Kim');
+  await mon.locator('[data-bank-lkmonat="2"]').click();
+  await expect(luca.locator('[data-bank-ev="2"]')).toContainText('Dein Konto wird gesperrt');
+  // Luca hat im November noch nicht reagiert: Das Ereignis bleibt offen
+  await expect(luca.locator('[data-bank-ev="1"] [data-bank-w]')).toHaveCount(3);
 
   const feld = kim.locator('[data-schreib="zm-bank-wand"]');
   await feld.locator('textarea').fill('Die Empfängerprüfung hat gemerkt, dass der Name nicht passt.');

@@ -18,6 +18,7 @@ block
 bolt
 cake
 calculate
+calendar_month
 cancel
 car_crash
 cases
@@ -112,6 +113,7 @@ money_off
 more_horiz
 more_time
 no_accounts
+notifications
 open_in_full
 pause
 payments
