@@ -321,14 +321,18 @@ div.opt::before{display:none}
 /* WR-Lab-Startseite */
 .wr{max-width:1200px;margin:0 auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:32px}
 .wr-top{display:flex;align-items:center;gap:16px;min-height:72px;padding-top:8px}
-.wr-logo{width:48px;height:48px;border-radius:var(--r-l);display:grid;place-items:center;background:var(--md-primary);color:var(--md-on-primary);flex:none}
+.wr-logo{box-sizing:border-box;height:48px;padding:4px 8px;border-radius:var(--r-l);display:grid;place-items:center;background:var(--md-surface-container-lowest);flex:none}
+.wr-logo img{display:block;height:40px;width:auto}
+/* Logo braucht hellen Grund: im Dunkelmodus helle Fläche statt dunkler */
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wr-logo{background:var(--md-inverse-surface)}}
+:root[data-theme="dark"] .wr-logo{background:var(--md-inverse-surface)}
 .wr-main{display:flex;flex-direction:column;gap:40px}
 .wr-hero{display:flex;flex-direction:column;gap:12px;max-width:62ch}
 .wr-section{display:flex;flex-direction:column;gap:16px}
 /* Startseite: Foto-Bühne, schwebende Info-Karten, Themen als Fotokarten mit Filter nach Klasse und Bereich */
 .st{max-width:1280px;gap:40px}
 .st-bar{display:flex;align-items:center;gap:12px;min-height:72px}
-.st-bar .wr-logo{width:40px;height:40px;border-radius:var(--r-m)}
+.st-bar .wr-logo{border-radius:var(--r-m)}
 .st-bar nav{margin-left:auto;display:flex;gap:4px}
 .st-bar nav a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:var(--r-full);color:var(--md-on-surface-variant);text-decoration:none;font-size:.875rem;font-weight:500}
 .st-bar nav a:hover{background:var(--md-surface-container-high)}
