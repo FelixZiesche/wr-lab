@@ -83,7 +83,8 @@ test('Falsche Adresse: deutsche Fehlerseite mit Weg zur Startseite', async ({ pa
     await expect(page).toHaveTitle('Seite nicht gefunden – WR-Lab');
     await expect(page.locator('h1')).toHaveText('Diese Seite gibt es nicht.');
     // Auch tief in einem Ordner: Stil und Icons laden über absolute Pfade
-    expect(await page.locator('.wr-logo').evaluate(e => getComputedStyle(e).width), url).toBe('48px');
+    expect(await page.locator('.wr-logo').evaluate(e => getComputedStyle(e).height), url).toBe('48px');
+    expect(await page.locator('.wr-logo img').evaluate(i => i.complete && i.naturalWidth), url).toBeGreaterThan(0);
   }
   await page.getByRole('link', { name: 'Zur Startseite' }).click();
   await expect(page).toHaveTitle('WR-Lab');
