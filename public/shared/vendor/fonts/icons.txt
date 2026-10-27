@@ -64,6 +64,7 @@ family_restroom
 fast_forward
 favorite
 fence
+fitness_center
 flag
 folder
 folder_open
@@ -112,6 +113,7 @@ menu_book
 money_off
 more_horiz
 more_time
+music_note
 no_accounts
 notifications
 open_in_full

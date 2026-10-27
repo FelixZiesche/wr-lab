@@ -34,6 +34,19 @@ export const THEMEN = [
     lizenzLink: 'https://creativecommons.org/licenses/by/2.0/'
   },
   {
+    id: 'haushalt',
+    titel: 'Haushaltsplan und Schulden',
+    stufe: 9,
+    bereich: 'BWL',
+    text: 'Erste eigene Wohnung: Plane vier Monate für Azubi Benjamin aus Jena, allein oder live mit der Klasse. Dazu Schätzduell, Lohnzettel, Dispo-Rechner und Wege aus den Schulden.',
+    stichworte: ['Brutto und Netto', 'Haushaltsplan', 'Dispo', 'Lernraum'],
+    bild: 'haushalt/img/gotha.jpg',
+    alt: 'Verschneiter Neumarkt in Gotha mit der Margarethenkirche und Wohnhäusern',
+    foto: 'Roeland P. / Wikimedia Commons, CC0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:2026-01-26-Neumarkt-Gotha-Schnee.jpg',
+    lizenzLink: 'https://creativecommons.org/publicdomain/zero/1.0/'
+  },
+  {
     id: 'geschaeftsfaehigkeit',
     titel: 'Geschäftsfähigkeit',
     stufe: 10,

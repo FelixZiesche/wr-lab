@@ -1,0 +1,140 @@
+/* Lernwerkstatt Haushaltsplan und Schulden: Farben der drei Bereiche (M3 Custom Colors, harmonisiert),
+   Lohnzettel, Schätzregler, Dispo-Rechner und das Haushaltsspiel „Benjamins Monat“ (monat.js).
+   e = Einnahmen (grün), a = Ausgaben (blau), s = Schulden (rot) */
+:root{--md-hh-e:#3b6939;--md-on-hh-e:#ffffff;--md-hh-e-container:#bcf0b4;--md-on-hh-e-container:#002204;
+  --md-hh-a:#0061a6;--md-on-hh-a:#ffffff;--md-hh-a-container:#d2e4ff;--md-on-hh-a-container:#001c37;
+  --md-hh-s:#904a43;--md-on-hh-s:#ffffff;--md-hh-s-container:#ffdad5;--md-on-hh-s-container:#3b0907;
+  --hh-e:var(--md-hh-e);--hh-a:var(--md-hh-a);--hh-s:var(--md-hh-s)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-hh-e:#a1d39a;--md-on-hh-e:#0a390f;--md-hh-e-container:#235024;--md-on-hh-e-container:#bcf0b4;--md-hh-a:#a0c9ff;--md-on-hh-a:#00325a;--md-hh-a-container:#00497f;--md-on-hh-a-container:#d2e4ff;--md-hh-s:#ffb4a9;--md-on-hh-s:#561e19;--md-hh-s-container:#73332d;--md-on-hh-s-container:#ffdad5}}
+:root[data-theme="dark"]{--md-hh-e:#a1d39a;--md-on-hh-e:#0a390f;--md-hh-e-container:#235024;--md-on-hh-e-container:#bcf0b4;--md-hh-a:#a0c9ff;--md-on-hh-a:#00325a;--md-hh-a-container:#00497f;--md-on-hh-a-container:#d2e4ff;--md-hh-s:#ffb4a9;--md-on-hh-s:#561e19;--md-hh-s-container:#73332d;--md-on-hh-s-container:#ffdad5}
+
+/* Farbpunkte auf den Werkstatt-Karten */
+.hh-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.hh-dot.e{background:var(--hh-e)}.hh-dot.a{background:var(--hh-a)}.hh-dot.s{background:var(--hh-s)}
+
+/* Startseite */
+.hh-start-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.hh-start-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.banner .credit a{color:inherit}
+.hh-zahl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;background:var(--md-hh-s-container);color:var(--md-on-hh-s-container);border-radius:var(--r-xl);padding:16px 20px}
+.hh-zahl .display-s{font-weight:600}
+.hh-zahl .muted{color:inherit;opacity:.85}
+@media (max-width:599px){.hh-zahl{grid-template-columns:1fr;gap:4px}}
+
+/* Fotos mit Bildnachweis */
+.hh-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.hh-fig img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.hh-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+.hh-fig figcaption a{color:inherit}
+.hh-fig-klein{max-width:320px}
+.hh-fakten ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.hh-fakten .title-s{display:flex;align-items:center;gap:6px}
+
+/* Lohnzettel */
+.hh-lohn td .ms{vertical-align:-3px;color:var(--md-hh-e)}
+.hh-lohn tfoot td{border-top:2px solid var(--md-outline)}
+.hh-lohnbalken{display:flex;height:28px;border-radius:var(--r-full);overflow:hidden;font-size:.75rem;font-weight:500}
+.hh-lohnbalken span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.hh-lohnbalken .netto{background:var(--md-hh-e-container);color:var(--md-on-hh-e-container)}
+.hh-lohnbalken .ab{background:var(--md-surface-container-highest);color:var(--md-on-surface)}
+
+/* Wohin fließt das Geld? Schätzregler mit Vergleich */
+.hh-fluss-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.hh-fluss-grid{grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr)}}
+.hh-schaetz{display:flex;flex-direction:column;gap:4px}
+.hh-schaetz label .ms{vertical-align:-3px;color:var(--md-hh-a)}
+.hh-vergleich p{margin:0}
+.hh-balken2{display:flex;flex-direction:column;gap:3px}
+.hh-balken2 span{display:block;height:8px;border-radius:var(--r-full)}
+.hh-balken2 .tipp{background:var(--md-outline)}
+.hh-balken2 .echt{background:var(--md-hh-a)}
+
+/* Schulden: drei Stufen, Dispo-Rechner, Gläubiger, Wege heraus */
+.hh-stufen,.hh-wege{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.hh-stufen{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.hh-stufen li{display:flex;flex-direction:column;gap:4px;padding:12px 16px;border-radius:var(--r-l);background:var(--md-hh-s-container);color:var(--md-on-hh-s-container)}
+.hh-stufen li:nth-child(1){background:var(--md-surface-container-high);color:var(--md-on-surface)}
+.hh-stufen li:nth-child(2){background:var(--md-warn-container);color:var(--md-on-warn-container)}
+.hh-dispo .big-num{color:var(--md-hh-s)}
+.hh-doener{display:flex;flex-wrap:wrap;gap:2px;color:var(--md-hh-s)}
+.hh-rang{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.hh-platz{margin-left:auto;font-weight:600;font-size:1.25rem}
+.hh-glist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.hh-glist li{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,30%) 3em;gap:8px;align-items:center}
+.hh-wege li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 14px;border-radius:var(--r-l);background:var(--md-surface-container-low)}
+.hh-wege-nr{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--md-hh-s-container);color:var(--md-on-hh-s-container);font-weight:600}
+.hh-wege .ms{color:var(--md-hh-s);margin-top:2px}
+
+/* ---------- Benjamins Monat ---------- */
+.hh-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.hh-grid{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}}
+.hh-seite{border-radius:var(--r-l);background:var(--md-surface-container-low);padding:12px 16px}
+@media (min-width:900px){.hh-seite{position:sticky;top:8px}}
+.hh-kopf{display:flex;flex-direction:column;gap:6px}
+.hh-kopf .eyebrow,.hh-kopf .title-l{margin:0}
+.hh-schritte{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap}
+.hh-schritte li{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--md-surface-container-highest);color:var(--md-on-surface-variant)}
+.hh-schritte li.ok{background:var(--md-hh-e-container);color:var(--md-on-hh-e-container)}
+.hh-schritte li.jetzt{background:var(--md-primary);color:var(--md-on-primary)}
+.hh-intro{margin:0;padding:10px 14px;border-radius:var(--r-m);background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+.hh-frage .title-m,.hh-frage p{margin:0}
+.hh-art{display:flex;align-items:center;gap:6px;color:var(--md-on-surface-variant)}
+.hh-optionen{display:grid;grid-template-columns:1fr;gap:8px}
+.hh-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;min-height:56px;padding:12px 16px;border:1px solid var(--md-outline-variant);border-radius:var(--r-l);background:var(--md-surface-container-lowest);color:var(--md-on-surface);font:inherit;cursor:pointer;position:relative;isolation:isolate}
+.hh-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:0;transition:opacity .2s var(--ease);pointer-events:none;z-index:-1}
+.hh-opt:hover::before{opacity:.08}.hh-opt:focus-visible::before{opacity:.1}
+.hh-opt>.ms{color:var(--md-primary);margin-top:2px}
+.hh-opt:disabled{cursor:default}
+.hh-opt[aria-pressed="true"]{background:var(--md-secondary-container);color:var(--md-on-secondary-container);border-color:transparent}
+.hh-opt-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hh-preis{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:2px}
+.hh-kliste{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.hh-kfb{list-style:none;margin:0;padding:0}
+.hh-ev .fb{margin-top:4px}
+.hh-auszug{display:flex;flex-direction:column;gap:8px}
+.hh-auszug .title-m{display:flex;align-items:center;gap:6px;margin:0}
+.hh-auszug th{text-align:left;padding-top:10px;font-size:.75rem;letter-spacing:.03em;text-transform:uppercase;color:var(--md-on-surface-variant)}
+.hh-auszug td.num,.hh-lohn td.num{text-align:right;white-space:nowrap}
+.hh-auszug tfoot td{border-top:1px solid var(--md-outline-variant)}
+.hh-summe.a td{background:var(--md-ok-container);color:var(--md-on-ok-container)}
+.hh-summe.b td{background:var(--md-warn-container);color:var(--md-on-warn-container)}
+.hh-summe.c td{background:var(--md-error-container);color:var(--md-on-error-container)}
+.hh-start .hh-figur{display:flex;gap:16px;align-items:center}
+.hh-figur>.ms{font-size:48px;width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--md-hh-a-container);color:var(--md-on-hh-a-container)}
+.hh-figur p{margin:0}
+.hh-ein{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;margin:0;padding:12px 16px;border-radius:var(--r-l);background:var(--md-hh-e-container);color:var(--md-on-hh-e-container)}
+.hh-ein dd{margin:0;text-align:right}
+
+/* Seitenleiste: Kontostand mit Skala vom Dispo bis ins Plus, laufende Verträge */
+.hh-konto .eyebrow,.hh-konto p{margin:0}
+.hh-stand.a{color:var(--md-ok)}.hh-stand.b{color:var(--md-warn)}.hh-stand.c{color:var(--md-error)}
+.hh-meter{position:relative;height:12px;border-radius:var(--r-full);background:linear-gradient(90deg,var(--md-error-container) 0 25%,var(--md-ok-container) 25% 100%)}
+.hh-meter-null{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--md-on-surface)}
+.hh-meter-wert{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:3px solid var(--md-surface);background:var(--md-ok);transition:left .4s var(--ease)}
+.hh-meter-wert.b{background:var(--md-warn)}.hh-meter-wert.c{background:var(--md-error)}
+.hh-meter-legende{justify-content:space-between;color:var(--md-on-surface-variant)}
+.hh-vliste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.875rem}
+.hh-vliste li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--md-outline-variant)}
+.hh-vliste li.spar{color:var(--md-hh-e)}
+.hh-vliste .num{white-space:nowrap}
+
+/* Auswertung und Klassenspiegel */
+.hh-ende .title-l,.hh-ende .eyebrow{margin:0}
+.hh-kacheln{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.hh-kachel{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:var(--r-l);background:var(--md-surface-container-high);color:var(--md-on-surface)}
+.hh-kachel b{font-size:1.5rem;line-height:2rem;font-weight:500}
+.hh-kachel.a{background:var(--md-ok-container);color:var(--md-on-ok-container)}
+.hh-kachel.b{background:var(--md-warn-container);color:var(--md-on-warn-container)}
+.hh-kachel.c{background:var(--md-error-container);color:var(--md-on-error-container)}
+.hh-spiegel{padding:12px 16px;border-radius:var(--r-l);background:var(--md-surface-container-low)}
+.hh-spiegel p{margin:0}
+.hh-chart{background:var(--md-surface-container-low);border-radius:var(--r-l)}
+.hh-dispozone{fill:var(--md-error-container);opacity:.6}
+.hh-null{stroke:var(--md-on-surface-variant);stroke-width:1.5}
+.hh-grenze{stroke:var(--md-error);stroke-width:1.5;stroke-dasharray:6 4}
+.hh-achse{fill:var(--md-on-surface-variant);font-size:12px;font-family:var(--font)}
+.hh-linie{fill:none;stroke:var(--md-primary);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.hh-punkt{fill:var(--md-primary);stroke:var(--md-surface);stroke-width:2}
+.hh-punkt.minus{fill:var(--md-error)}
+.hh-regeln{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+@media (prefers-reduced-motion: reduce){.hh-meter-wert,.hh-opt::before{transition:none}}

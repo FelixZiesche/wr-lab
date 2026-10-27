@@ -12,12 +12,13 @@ export const suchtext=s=>String(s).toLowerCase().replace(/<[^>]*>/g,'').replace(
   .replace(/([aou])e/g,'$1').replace(/[^a-z0-9]/g,'');
 
 /* ---------- Geschütztes Leerzeichen ----------
-   Nach §, §§, Abs., Nr. und Art. vor einer Zahl darf die Zeile nicht umbrechen („§ 105 BGB“, DIN 5008). Statt alle
+   Nach §, §§, Abs., Nr. und Art. vor einer Zahl und zwischen Zahl und % oder € darf die Zeile nicht umbrechen
+   („§ 105 BGB“, „11 %“, DIN 5008). Statt alle
    Inhalte umzuschreiben, ersetzt ein Beobachter beim Anzeigen das Leerzeichen in jedem neuen Textknoten durch ein
    geschütztes (U+00A0). Attribute, Eingabefelder, Code und Skripte bleiben unberührt. */
-const FESTE=/(§§?|\bAbs\.|\bNr\.|\bArt\.) (?=\d)/g, NICHT_FEST='TEXTAREA,INPUT,SCRIPT,STYLE,PRE,CODE,[contenteditable]';
+const FESTE=/(§§?|\bAbs\.|\bNr\.|\bArt\.) (?=\d)|(\d) (?=[%€])/g, NICHT_FEST='TEXTAREA,INPUT,SCRIPT,STYLE,PRE,CODE,[contenteditable]';
 /** Setzt im Text s die geschützten Leerzeichen (für Texte, die nicht über das DOM laufen). */
-export const festeLeerzeichen=s=>String(s).replace(FESTE,'$1 ');
+export const festeLeerzeichen=s=>String(s).replace(FESTE,(_,a,b)=>(a||b)+' ');
 const FESTE_DA=new RegExp(FESTE.source);
 function festText(n){if(!FESTE_DA.test(n.data))return;const p=n.parentElement;if(p&&p.closest(NICHT_FEST))return;n.data=festeLeerzeichen(n.data)}
 /** Alle Textknoten in root bearbeiten */
