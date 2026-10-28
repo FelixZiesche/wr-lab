@@ -47,6 +47,19 @@ export const THEMEN = [
     lizenzLink: 'https://creativecommons.org/publicdomain/zero/1.0/'
   },
   {
+    id: 'kreislauf',
+    titel: 'Der Wirtschaftskreislauf',
+    stufe: 9,
+    bereich: 'VWL',
+    text: 'Verfolge einen Euro durch fünf Hände und bau den Kreislauf Stufe für Stufe selbst: Haushalte, Unternehmen, Banken, Staat, Ausland. Dann jagst du Schockwellen hindurch, allein oder live mit der Klasse.',
+    stichworte: ['Geld- und Güterströme', 'Sparen und Investieren', 'Schockwellen', 'Lernraum'],
+    bild: 'kreislauf/img/baeckerei-jena.jpg',
+    alt: 'Bäckerei am Johannisplatz in Jena: Schaufenster mit Brötchen und Kaffee im Erdgeschoss eines alten Hauses',
+    foto: 'Timk70 / Wikimedia Commons, CC BY-SA 4.0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:Baeckerei_Zwiebel_%26_CiZ,_Jena,_Johannisplatz_9_%26_10.jpg',
+    lizenzLink: 'https://creativecommons.org/licenses/by-sa/4.0/'
+  },
+  {
     id: 'geschaeftsfaehigkeit',
     titel: 'Geschäftsfähigkeit',
     stufe: 10,
