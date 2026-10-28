@@ -100,7 +100,7 @@ test('Startseite zeigt die Themen als Karten mit Foto und Bildnachweis', async (
   await expect(karte.locator('figcaption')).toHaveText('Foto: Lukas D. / Unsplash');
   // Fußzeile: CC-BY-Foto mit Link zur Datei und zur Lizenz
   const fotos = page.locator('#fotos');
-  await expect(fotos).toContainText('Fotos: The real Marcoman / Wikimedia Commons, CC0 · giesing / Flickr, CC BY 2.0 · Roeland P. / Wikimedia Commons, CC0 · Andreas Praefcke / Wikimedia Commons, CC BY 3.0 · ');
+  await expect(fotos).toContainText('Fotos: The real Marcoman / Wikimedia Commons, CC0 · giesing / Flickr, CC BY 2.0 · Roeland P. / Wikimedia Commons, CC0 · Timk70 / Wikimedia Commons, CC BY-SA 4.0 · Andreas Praefcke / Wikimedia Commons, CC BY 3.0 · ');
   await expect(fotos).toContainText(' · Lukas D. / Unsplash');
   await expect(fotos.getByRole('link', { name: 'Andreas Praefcke / Wikimedia Commons' })).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Jena_Goethe-Galerie_2010_1.jpg');
   await expect(fotos.getByRole('link', { name: 'CC BY 3.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');

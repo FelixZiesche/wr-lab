@@ -1,0 +1,157 @@
+/* Lernwerkstatt Der Wirtschaftskreislauf: Farben der Ströme und Sektoren (M3 Custom Colors, harmonisiert),
+   Kreislauf-Diagramm (modell.js), Euro-Reise (reise.js), Lücke und Schockwellen.
+   geld = Geldströme (gelb), gut = Güterströme (grün), plus/minus = Strom wird dicker/dünner, b/s/a = Banken, Staat, Ausland */
+:root{--md-wk-geld:#7c5800;--md-on-wk-geld:#ffffff;--md-wk-geld-container:#ffdea6;--md-on-wk-geld-container:#271900;
+  --md-wk-gut:#006a60;--md-on-wk-gut:#ffffff;--md-wk-gut-container:#9ef2e3;--md-on-wk-gut-container:#00201c;
+  --md-wk-plus:#2e6c32;--md-wk-plus-container:#b0f3ab;--md-on-wk-plus-container:#002106;
+  --md-wk-minus:#b3261e;--md-wk-minus-container:#ffdad6;--md-on-wk-minus-container:#410002;
+  --md-wk-b:#4a5c92;--md-wk-b-container:#dbe1ff;--md-on-wk-b-container:#001849;
+  --md-wk-s:#7a4f84;--md-wk-a:#8f4c2b;
+  --wk-geld:var(--md-wk-geld);--wk-gut:var(--md-wk-gut)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-wk-geld:#f7bd48;--md-on-wk-geld:#412d00;--md-wk-geld-container:#5e4200;--md-on-wk-geld-container:#ffdea6;--md-wk-gut:#82d5c7;--md-on-wk-gut:#003731;--md-wk-gut-container:#005048;--md-on-wk-gut-container:#9ef2e3;--md-wk-plus:#95d78f;--md-wk-plus-container:#14521c;--md-on-wk-plus-container:#b0f3ab;--md-wk-minus:#ffb4ab;--md-wk-minus-container:#93000a;--md-on-wk-minus-container:#ffdad6;--md-wk-b:#b4c5ff;--md-wk-b-container:#324478;--md-on-wk-b-container:#dbe1ff;--md-wk-s:#e9b4f3;--md-wk-a:#ffb691}}
+:root[data-theme="dark"]{--md-wk-geld:#f7bd48;--md-on-wk-geld:#412d00;--md-wk-geld-container:#5e4200;--md-on-wk-geld-container:#ffdea6;--md-wk-gut:#82d5c7;--md-on-wk-gut:#003731;--md-wk-gut-container:#005048;--md-on-wk-gut-container:#9ef2e3;--md-wk-plus:#95d78f;--md-wk-plus-container:#14521c;--md-on-wk-plus-container:#b0f3ab;--md-wk-minus:#ffb4ab;--md-wk-minus-container:#93000a;--md-on-wk-minus-container:#ffdad6;--md-wk-b:#b4c5ff;--md-wk-b-container:#324478;--md-on-wk-b-container:#dbe1ff;--md-wk-s:#e9b4f3;--md-wk-a:#ffb691}
+
+/* Farbpunkte auf den Werkstatt-Karten */
+.wk-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.wk-dot.g{background:var(--md-wk-geld)}.wk-dot.w{background:var(--md-wk-gut)}.wk-dot.b{background:var(--md-wk-b)}.wk-dot.s{background:var(--md-wk-s)}.wk-dot.a{background:var(--md-wk-a)}
+
+/* Startseite */
+.wk-start-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.wk-start-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.banner .credit a{color:inherit}
+.wk-zahl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;background:var(--md-wk-geld-container);color:var(--md-on-wk-geld-container);border-radius:var(--r-xl);padding:16px 20px}
+.wk-zahl .display-s{font-weight:600}
+.wk-zahl .muted{color:inherit;opacity:.85}
+@media (max-width:599px){.wk-zahl{grid-template-columns:1fr;gap:4px}}
+.wk-pfad{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+
+/* Gemeinsames Raster: Diagramm links, Karten rechts (auf dem Handy untereinander) */
+.wk-bau-grid,.wk-reise-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.wk-bau-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}.wk-reise-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.wk-dia{background:var(--md-surface-container-low);border-radius:var(--r-xl);padding:8px}
+.wk-svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto;font-family:inherit;overflow:visible}
+.wk-schritt{display:flex;align-items:center;gap:8px;min-height:40px;margin:0;font-weight:500}
+.wk-nr{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:var(--md-primary);color:var(--md-on-primary);font-size:.85rem;font-weight:600}
+
+/* Sektoren */
+.wk-sek rect{fill:var(--md-surface-container-lowest);stroke:var(--md-outline);stroke-width:2}
+.wk-sek .wk-ic,.wk-ring .wk-ic{font-family:"Material Symbols Rounded";font-feature-settings:"liga";font-size:30px;fill:var(--md-primary)}
+.wk-sek-t{font-size:19px;font-weight:600;fill:var(--md-on-surface)}
+.wk-sek-k{font-size:15px;fill:var(--md-on-surface-variant)}
+.wk-sek[tabindex="0"]{cursor:pointer}
+.wk-geist rect{fill:none;stroke:var(--md-outline-variant);stroke-width:2;stroke-dasharray:8 6}
+.wk-geist text{font-size:30px;font-weight:600;fill:var(--md-outline-variant)}
+.wk-sek[tabindex="0"]:hover rect{stroke:var(--md-primary)}
+.wk-sek:focus{outline:none}
+.wk-sek:focus-visible rect{stroke:var(--md-primary);stroke-width:5}
+.wk-sek.start rect{fill:var(--md-primary-container);stroke:var(--md-primary);stroke-width:4}
+.wk-sek.start .wk-sek-t,.wk-sek.start .wk-sek-k{fill:var(--md-on-primary-container)}
+.wk-sek.neu rect{animation:wk-neu 1.6s ease-out 2}
+@keyframes wk-neu{0%{stroke:var(--md-primary);stroke-width:8}100%{stroke-width:2}}
+
+/* Pfeile und Kürzel */
+.wk-pf path{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:stroke-width .6s ease}
+.wk-pf.geld path{stroke:var(--md-wk-geld)}.wk-pf.gut path{stroke:var(--md-wk-gut)}.wk-pf.offen path{stroke:var(--md-outline)}
+.wk-pf.plus path{stroke:var(--md-wk-plus)}.wk-pf.minus path{stroke:var(--md-wk-minus)}
+.wk-mk-geld{fill:var(--md-wk-geld)}.wk-mk-gut{fill:var(--md-wk-gut)}.wk-mk-offen{fill:var(--md-outline)}.wk-mk-plus{fill:var(--md-wk-plus)}.wk-mk-minus{fill:var(--md-wk-minus)}
+.wk-pf circle{fill:var(--md-wk-geld-container);stroke:var(--md-wk-geld);stroke-width:2}
+.wk-pf.plus circle{fill:var(--md-wk-plus-container);stroke:var(--md-wk-plus)}.wk-pf.minus circle{fill:var(--md-wk-minus-container);stroke:var(--md-wk-minus)}
+.wk-pf.neu path{stroke-dasharray:1400;stroke-dashoffset:1400;animation:wk-zeichnen .9s ease-out forwards}
+@keyframes wk-zeichnen{to{stroke-dashoffset:0}}
+.wk-pf.puls path{animation:wk-puls 1.2s ease-in-out 2}
+@keyframes wk-puls{50%{opacity:.45}}
+.wk-lab rect{fill:var(--md-surface-container-lowest);stroke-width:2}
+.wk-lab.geld rect{stroke:var(--md-wk-geld)}.wk-lab.gut rect{stroke:var(--md-wk-gut)}.wk-lab.offen rect{stroke:var(--md-outline)}
+.wk-lab.plus rect{fill:var(--md-wk-plus-container);stroke:var(--md-wk-plus)}.wk-lab.minus rect{fill:var(--md-wk-minus-container);stroke:var(--md-wk-minus)}
+.wk-lab text{font-size:19px;font-weight:600;fill:var(--md-on-surface)}
+.wk-lab.plus text{fill:var(--md-on-wk-plus-container)}.wk-lab.minus text{fill:var(--md-on-wk-minus-container)}
+.wk-lab .wk-sub{font-size:13px}
+.wk-lab .wk-wert{font-weight:400}
+/* Handy: Diagramm etwa halb so groß, darum größere Schrift und Kästen ohne Symbol */
+@media (max-width:599px){
+  .wk-dia{padding:2px;margin:0 -8px}
+  .wk-lab text{font-size:27px}.wk-lab .wk-sub{font-size:18px}
+  .wk-sek .wk-ic,.wk-sek-k{display:none}
+  .wk-sek-t{font-size:25px;transform:translate(-36px,10px)}
+}
+
+/* Karten zum Einzeichnen */
+.wk-karten{display:flex;flex-direction:column;gap:8px}
+.wk-karte{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;font:inherit;color:var(--md-on-surface);background:var(--md-surface-container-lowest);border:1px solid var(--md-outline-variant);border-radius:var(--r-l);padding:10px 14px;min-height:48px;cursor:pointer}
+.wk-karte>.ms{color:var(--md-primary);margin-top:1px}
+.wk-karte:hover:not([disabled]){background:var(--md-surface-container)}
+.wk-karte[aria-pressed="true"]{background:var(--md-primary-container);color:var(--md-on-primary-container);border:2px solid var(--md-primary);padding:9px 13px}
+.wk-karte[disabled]{cursor:default;opacity:1}
+.wk-karte.ok{background:var(--md-surface-container)}
+.wk-karte.ok>.ms{color:var(--md-wk-plus)}
+.wk-karte:not(.ok)[disabled]{opacity:.5}
+.wk-story{display:block}
+.wk-name{display:block;font-size:.875rem;margin-top:2px}
+.wk-name b{color:var(--md-on-surface)}.wk-name.geld b{color:var(--md-wk-geld)}.wk-name.gut b{color:var(--md-wk-gut)}
+.wk-art{display:flex;flex-direction:column;gap:6px}
+.wk-geld-btn{border-color:var(--md-wk-geld)!important}.wk-gut-btn{border-color:var(--md-wk-gut)!important}
+.wk-geld-btn .ms{color:var(--md-wk-geld)}.wk-gut-btn .ms{color:var(--md-wk-gut)}
+.wk-hinweis{margin:0;color:var(--md-on-surface-variant)}
+
+/* Ende einer Stufe: vereinfachen, rechnen, Waage */
+.wk-rechnen label{font-weight:500}
+.wk-gleich{font-size:1.1rem}
+
+input.wk-eingabe{width:6em;font:inherit;font-size:1.1rem;padding:8px 12px;border:1px solid var(--md-outline);border-radius:var(--r-s);background:var(--md-surface-container-lowest);color:var(--md-on-surface)}
+.wk-waage{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.wk-waage li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-l);background:var(--md-surface-container)}
+.wk-waage li>span:nth-child(2){flex:1;display:flex;flex-direction:column}
+.wk-waage .ms{color:var(--md-primary)}.wk-waage .ms.ok{color:var(--md-wk-plus)}
+
+/* Stufe 2: die Lücke */
+.wk-balken-box p{margin:8px 0 4px}
+.wk-balken{display:flex;height:36px;border-radius:var(--r-full);overflow:hidden;font-size:.85rem;font-weight:600;background:var(--md-surface-container-high)}
+.wk-balken span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:width .3s ease}
+.wk-balken .geld{background:var(--md-wk-geld-container);color:var(--md-on-wk-geld-container)}
+.wk-balken .invest{background:var(--md-wk-b-container);color:var(--md-on-wk-b-container)}
+.wk-balken .loch{background:repeating-linear-gradient(45deg,var(--md-wk-minus-container) 0 8px,var(--md-surface-container-high) 8px 16px);color:var(--md-on-wk-minus-container)}
+
+/* Schockwellen */
+.wk-chips button{display:inline-flex;align-items:center;gap:6px;min-height:40px;white-space:nowrap;flex:none}
+@media (max-width:599px){.wk-chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}}
+.wk-kette{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wk-kette li{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:var(--r-l);background:var(--md-surface-container);animation:wk-rein .4s ease-out}
+.wk-kette li.aktuell{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
+@keyframes wk-rein{from{opacity:0;transform:translateY(6px)}}
+.pill.wk-plus{background:var(--md-wk-plus-container);color:var(--md-on-wk-plus-container)}
+.pill.wk-minus{background:var(--md-wk-minus-container);color:var(--md-on-wk-minus-container)}
+
+/* Tafelbild */
+.wk-tafel{margin:0}
+.wk-legende{margin:0;padding-left:20px;columns:2 260px;font-size:.875rem}
+.wk-legende b{color:var(--md-wk-geld)}
+
+/* Euro-Reise */
+.wk-ring{display:block;width:100%;max-width:440px;height:auto;margin:0 auto;font-family:inherit;overflow:visible}
+.wk-station circle{fill:var(--md-surface-container-lowest);stroke:var(--md-outline);stroke-width:2;transition:stroke-width .3s}
+.wk-station.hier circle{fill:var(--md-primary-container);stroke:var(--md-primary);stroke-width:4}
+.wk-st-name{font-size:17px;font-weight:600;fill:var(--md-on-surface)}
+.wk-st-sek{font-size:14px;fill:var(--md-on-surface-variant)}
+.wk-muenze{transition:transform .9s cubic-bezier(.4,0,.2,1)}
+.wk-muenze circle{fill:var(--md-wk-geld-container);stroke:var(--md-wk-geld);stroke-width:3}
+.wk-muenze text{font-size:15px;font-weight:700;fill:var(--md-on-wk-geld-container)}
+.wk-weg{fill:none;stroke:var(--md-wk-geld);stroke-width:5;stroke-linecap:round}
+.wk-gegen{fill:none;stroke:var(--md-wk-gut);stroke-width:3;stroke-dasharray:7 5}
+.wk-gegen-t{font-size:14px;font-weight:600;fill:var(--md-wk-gut)}
+.wk-gut-farbe{color:var(--md-wk-gut)}
+.wk-tipps{display:flex;flex-direction:column;gap:8px}
+.wk-tipp{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--md-on-surface);background:var(--md-surface-container-lowest);border:1px solid var(--md-outline-variant);border-radius:var(--r-l);padding:10px 14px;min-height:52px;cursor:pointer}
+.wk-tipp>.ms{color:var(--md-primary)}
+.wk-tipp:hover:not([disabled]){background:var(--md-surface-container)}
+.wk-tipp[disabled]{cursor:default;opacity:1}
+.wk-tipp[disabled]:not(.richtig):not(.daneben){opacity:.6}
+.wk-tipp.richtig{background:var(--md-wk-plus-container);color:var(--md-on-wk-plus-container);border:2px solid var(--md-wk-plus)}
+.wk-tipp.richtig>.ms{color:inherit}
+.wk-tipp.daneben{border:2px dashed var(--md-wk-minus)}
+.wk-treffer{display:flex;align-items:baseline;gap:8px;margin:0}
+
+@media (prefers-reduced-motion: reduce){
+  .wk-sek.neu rect,.wk-pf.neu path,.wk-pf.puls path,.wk-kette li{animation:none}
+  .wk-pf.neu path{stroke-dasharray:none;stroke-dashoffset:0}
+  .wk-muenze,.wk-pf path,.wk-balken span{transition:none}
+}
