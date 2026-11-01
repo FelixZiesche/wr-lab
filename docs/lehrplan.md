@@ -123,4 +123,5 @@ Strafbares Verhalten analog und digital (MB); Strafrecht als öffentliches Recht
 | --- | --- | --- |
 | Geschäftsfähigkeit | 10 | Klasse 9: 2.1.4 Rechtliche Stellung des Minderjährigen; Oberstufe: 4.3.2 Rechtssubjekte (Fall-Akte mit Gutachten passt zum eA) |
 | Deliktsfähigkeit | 10 | Klasse 9: 2.1.4 Verantwortlichkeit für eigenes Handeln; Oberstufe: 4.3.1 Subsumtion der unerlaubten Handlung, 4.3.5 Deliktsfähigkeit und Strafmündigkeit |
+| Abstraktionsprinzip am Kaufvertrag | 10 | Klasse 9: 2.1.4 Vertragsrecht am Beispiel des Kaufvertrags (§ 433 BGB, Besitz und Eigentum); Oberstufe: 4.3.2 eA Verpflichtungs- und Verfügungsgeschäft, Trennungs- und Abstraktionsprinzip, Wirksamkeit einer Kaufhandlung prüfen |
 | Magisches Sechseck | 11 | Klasse 10: 2.2.1; Klasse 11/12: 4.1.1 (Planspiel und Zielkonflikte passen zur Oberstufe) |

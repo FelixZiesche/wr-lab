@@ -1,6 +1,7 @@
 # Alle Material-Symbols-Icons der Seite, alphabetisch, ein Name pro Zeile. Danach: npm run schriften
 account_balance
 account_balance_wallet
+account_tree
 add
 alt_route
 apartment
@@ -13,6 +14,7 @@ assignment
 auto_awesome
 backpack
 badge
+bakery_dining
 balance
 block
 bolt
@@ -81,6 +83,7 @@ forum
 front_hand
 fullscreen
 fullscreen_exit
+garage
 gavel
 group
 groups
@@ -94,6 +97,7 @@ how_to_vote
 info
 insights
 kebab_dining
+key
 keyboard_arrow_down
 keyboard_arrow_left
 keyboard_arrow_right
