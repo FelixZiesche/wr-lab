@@ -1,0 +1,81 @@
+/* Lernstrecke Abstraktionsprinzip: Farben der drei Rechtsgeschäfte (M3 Custom Colors, harmonisiert), Eigentums-Detektiv,
+   Stecker und Fotos. Allgemeines Design: /shared/css/m3.css, Lernstrecke: Abschnitt „Lernstrecke“ in m3.css
+   kv = Kaufvertrag (blau), ware = Übereignung der Ware (grün), geld = Übereignung des Geldes (gelb) */
+:root{--md-ap-kv:#0061a6;--md-on-ap-kv:#ffffff;--md-ap-kv-container:#d2e4ff;--md-on-ap-kv-container:#001c37;
+  --md-ap-ware:#006a60;--md-on-ap-ware:#ffffff;--md-ap-ware-container:#9ef2e3;--md-on-ap-ware-container:#00201c;
+  --md-ap-geld:#7c5800;--md-on-ap-geld:#ffffff;--md-ap-geld-container:#ffdea6;--md-on-ap-geld-container:#271900;
+  --ap-kv:var(--md-ap-kv);--ap-ware:var(--md-ap-ware);--ap-geld:var(--md-ap-geld)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--md-ap-kv:#a0c9ff;--md-on-ap-kv:#00325a;--md-ap-kv-container:#00497f;--md-on-ap-kv-container:#d2e4ff;--md-ap-ware:#82d5c7;--md-on-ap-ware:#003731;--md-ap-ware-container:#005048;--md-on-ap-ware-container:#9ef2e3;--md-ap-geld:#f7bd48;--md-on-ap-geld:#412d00;--md-ap-geld-container:#5e4200;--md-on-ap-geld-container:#ffdea6}}
+:root[data-theme="dark"]{--md-ap-kv:#a0c9ff;--md-on-ap-kv:#00325a;--md-ap-kv-container:#00497f;--md-on-ap-kv-container:#d2e4ff;--md-ap-ware:#82d5c7;--md-on-ap-ware:#003731;--md-ap-ware-container:#005048;--md-on-ap-ware-container:#9ef2e3;--md-ap-geld:#f7bd48;--md-on-ap-geld:#412d00;--md-ap-geld-container:#5e4200;--md-on-ap-geld-container:#ffdea6}
+
+/* Farbpunkte auf Karten und im Tafelbild */
+.ap-dot{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none;vertical-align:-1px}
+.ap-dot.kv{background:var(--ap-kv)}.ap-dot.ware{background:var(--ap-ware)}.ap-dot.geld{background:var(--ap-geld)}
+.banner .credit a{color:inherit}
+
+/* Fotos und Illustrationen mit Nachweis darunter */
+.ap-fig{margin:0;display:flex;flex-direction:column;gap:4px;max-width:560px}
+.ap-fig img{display:block;width:100%;height:auto;border-radius:var(--r-l);background:var(--md-surface-container-high)}
+.ap-fig figcaption{font-size:.75rem;line-height:1rem;color:var(--md-on-surface-variant)}
+.wc-material .ap-fig{margin-bottom:8px}
+.ap-fall{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.ap-fall{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}.abst .wc-material:has(.ap-fig){display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:16px;align-items:start}.abst .wc-material .ap-fig{margin-bottom:0}}
+.szenario{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:500;color:var(--md-on-surface-variant);margin:0}
+
+/* ---------- Eigentums-Detektiv ---------- */
+.dt-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.dt-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.dt-schritt{margin:0}
+.dt-szene{border-left:4px solid var(--md-primary);padding:4px 0 4px 14px}
+.dt-szene p{margin:0}
+.dt-erledigt{display:flex;gap:6px;align-items:flex-start;color:var(--md-on-surface-variant)}
+.dt-erledigt .ms{color:var(--md-ok)}
+.dt-opt{display:flex;flex-direction:column;gap:8px}
+.dt-opt .btn{justify-content:flex-start;text-align:left;min-height:44px;height:auto;padding-top:8px;padding-bottom:8px;white-space:normal}
+.dt-opt .btn.falsch{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
+.dt-brett{background:var(--md-surface-container-low);border-radius:var(--r-l);padding:16px;min-width:0}
+.dt-brett h4{display:flex;align-items:center;gap:6px;margin:0}
+.dt-schema{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dt-zeile{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center;background:var(--md-surface-container-lowest);border-radius:var(--r-m);padding:10px 12px;border:1px solid var(--md-outline-variant)}
+.dt-zeile .pill{grid-column:2;justify-self:start}
+.dt-zeile-ic{width:36px;height:36px;border-radius:var(--r-full);display:grid;place-items:center;grid-row:span 2}
+.dt-zeile-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dt-art-kv .dt-zeile-ic{background:var(--md-ap-kv-container);color:var(--md-on-ap-kv-container)}
+.dt-art-ware .dt-zeile-ic{background:var(--md-ap-ware-container);color:var(--md-on-ap-ware-container)}
+.dt-art-geld .dt-zeile-ic{background:var(--md-ap-geld-container);color:var(--md-on-ap-geld-container)}
+.dt-zeile.dt-neu .dt-zeile-ic{opacity:.6}
+.dt-zeile.dt-neu{border-style:dashed;background:transparent}
+.dt-zeile.dt-bad{border-color:var(--md-error)}
+.dt-zeile.neu{animation:dt-auf .5s var(--ease)}
+@keyframes dt-auf{from{transform:translateY(-6px);opacity:0}}
+.dt-person{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.dt-tab-wrap{overflow-x:auto}
+.dt-tab{width:100%;border-collapse:collapse;font-size:.875rem;line-height:1.25rem}
+.dt-tab th,.dt-tab td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top}
+.dt-tab thead th{font-weight:500;color:var(--md-on-surface-variant)}
+.dt-tab tbody th{font-weight:500}
+.dt-tab tbody th .ms{margin-right:4px;vertical-align:-3px}
+.dt-tab td.neu{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container);border-radius:var(--r-s);animation:dt-auf .5s var(--ease)}
+@media (prefers-reduced-motion:reduce){.dt-zeile.neu,.dt-tab td.neu{animation:none}}
+
+/* ---------- Der Stecker ---------- */
+.ap-schalter{display:flex;flex-direction:column;gap:8px}
+.ap-switch{display:flex;align-items:center;gap:12px;min-height:44px;border:0;background:transparent;color:var(--md-on-surface);font:inherit;font-size:.875rem;text-align:left;cursor:pointer;padding:4px 0;border-radius:var(--r-s)}
+.ap-switch:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px}
+.ap-switch-track{flex:none;width:52px;height:32px;border-radius:var(--r-full);background:var(--md-surface-container-highest);border:2px solid var(--md-outline);position:relative;transition:background .2s var(--ease)}
+.ap-switch-knopf{position:absolute;top:6px;left:6px;width:16px;height:16px;border-radius:50%;background:var(--md-outline);transition:transform .2s var(--ease),width .2s var(--ease),height .2s var(--ease)}
+.ap-switch[aria-checked="true"] .ap-switch-track{background:var(--md-primary);border-color:var(--md-primary)}
+.ap-switch[aria-checked="true"] .ap-switch-knopf{transform:translate(20px,-4px);width:24px;height:24px;background:var(--md-on-primary)}
+.ap-bloecke{display:grid;grid-template-columns:1fr;gap:8px;align-items:center}
+@media (min-width:700px){.ap-bloecke{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) minmax(0,1fr)}}
+.ap-block{display:flex;gap:10px;align-items:flex-start;border-radius:var(--r-m);padding:12px;transition:opacity .3s var(--ease),filter .3s var(--ease)}
+.ap-block>.ms{font-size:28px}
+.ap-block.ap-kv{background:var(--md-ap-kv-container);color:var(--md-on-ap-kv-container)}
+.ap-block.ap-ware{background:var(--md-ap-ware-container);color:var(--md-on-ap-ware-container)}
+.ap-block.ap-geld{background:var(--md-ap-geld-container);color:var(--md-on-ap-geld-container);opacity:.75;border:2px dashed var(--md-ap-geld)}
+.ap-block.tot{background:var(--md-error-container);color:var(--md-on-error-container)}
+.ap-block.tot b{text-decoration:line-through}
+.ap-kabel{justify-self:center;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r-full);background:var(--md-surface-container-highest);color:var(--md-on-surface-variant)}
+.ap-kabel.verbunden{background:var(--md-primary);color:var(--md-on-primary)}
+[data-stecker-ergebnis]{display:flex;align-items:center;gap:8px;margin:0}
+@media (prefers-reduced-motion:reduce){.ap-switch-track,.ap-switch-knopf,.ap-block{transition:none}}

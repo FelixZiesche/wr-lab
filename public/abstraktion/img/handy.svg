@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="Google Sans, Arial, sans-serif">
+<rect width="800" height="500" fill="#d2e4ff"/>
+<circle cx="400" cy="250" r="190" fill="#eceef4"/>
+<rect x="320" y="90" width="160" height="320" rx="28" fill="#191c20"/>
+<rect x="332" y="104" width="136" height="292" rx="18" fill="#35618e"/>
+<rect x="372" y="112" width="56" height="14" rx="7" fill="#191c20"/>
+<circle cx="372" cy="180" r="18" fill="#a0cafd"/><rect x="400" y="168" width="52" height="10" rx="5" fill="#a0cafd"/><rect x="400" y="184" width="36" height="8" rx="4" fill="#d1e4ff"/>
+<rect x="350" y="230" width="100" height="10" rx="5" fill="#d1e4ff"/><rect x="350" y="250" width="80" height="10" rx="5" fill="#d1e4ff"/><rect x="350" y="270" width="92" height="10" rx="5" fill="#d1e4ff"/>
+<g transform="rotate(-12 560 300)"><path d="M500 270h130a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H500l-26-32z" fill="#ffdea6" stroke="#7c5800" stroke-width="4"/><circle cx="500" cy="302" r="7" fill="#7c5800"/><text x="566" y="314" text-anchor="middle" font-size="32" font-weight="700" fill="#271900">350 €</text></g>
+<path d="M90 90h170a20 20 0 0 1 20 20v60a20 20 0 0 1-20 20h-110l-30 30v-30h-30a20 20 0 0 1-20-20v-60a20 20 0 0 1 20-20z" fill="#fff"/><text x="175" y="150" text-anchor="middle" font-size="28" fill="#191c20">Ich nehm’s!</text>
+<path d="M540 380h170a20 20 0 0 1 20 20v60a20 20 0 0 1-20 20h-30v30l-30-30h-110a20 20 0 0 1-20-20v-60a20 20 0 0 1 20-20z" transform="translate(0 -40)" fill="#fff"/><text x="625" y="400" text-anchor="middle" font-size="28" fill="#191c20">Deal!</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="Google Sans, Arial, sans-serif">
+<rect width="800" height="500" fill="#9ef2e3"/>
+<rect x="0" y="400" width="800" height="100" fill="#82d5c7"/>
+<rect x="150" y="40" width="500" height="80" rx="14" fill="#006a60"/><text x="400" y="94" text-anchor="middle" font-size="40" font-weight="700" fill="#fff">FAHRRADLADEN</text>
+<g fill="none" stroke="#191c20" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="250" cy="330" r="85"/><circle cx="550" cy="330" r="85"/>
+<path d="M250 330 340 200h170l40 130M340 200l60 130 110-130M400 330H250M330 170h40M510 200l-10-40h45"/>
+</g>
+<circle cx="250" cy="330" r="10" fill="#191c20"/><circle cx="550" cy="330" r="10" fill="#191c20"/><circle cx="400" cy="330" r="16" fill="#191c20"/>
+<g transform="rotate(10 640 200)"><path d="M590 170h120a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H590l-26-32z" fill="#ffdea6" stroke="#7c5800" stroke-width="4"/><circle cx="590" cy="202" r="7" fill="#7c5800"/><text x="652" y="214" text-anchor="middle" font-size="32" font-weight="700" fill="#271900">750 €</text></g>
+</svg>

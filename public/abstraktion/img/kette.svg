@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="Google Sans, Arial, sans-serif">
+<rect width="800" height="500" fill="#eceef4"/>
+<g font-size="26" text-anchor="middle" fill="#191c20">
+<rect x="30" y="120" width="200" height="150" rx="18" fill="#d2e4ff"/><path d="M70 230v-60l60-30 60 30v60z" fill="#0061a6"/><rect x="112" y="195" width="36" height="35" fill="#d2e4ff"/><text x="130" y="310">Großhändler</text><text x="130" y="342" font-size="22" fill="#42474e">Erfurt</text>
+<rect x="300" y="120" width="200" height="150" rx="18" fill="#9ef2e3"/><rect x="340" y="160" width="120" height="70" rx="6" fill="#006a60"/><rect x="340" y="150" width="120" height="18" rx="4" fill="#00201c"/><text x="400" y="310">Fahrradladen</text><text x="400" y="342" font-size="22" fill="#42474e">Jena</text>
+<rect x="570" y="120" width="200" height="150" rx="18" fill="#ffdea6"/><circle cx="670" cy="168" r="24" fill="#7c5800"/><path d="M626 240a44 34 0 0 1 88 0z" fill="#7c5800"/><text x="670" y="310">Ole (18)</text><text x="670" y="342" font-size="22" fill="#42474e">Kunde</text>
+</g>
+<g stroke="#191c20" stroke-width="6" fill="none" stroke-linecap="round"><path d="M238 195h50m-14-14 14 14-14 14M508 195h50m-14-14 14 14-14 14"/></g>
+<g transform="translate(400 420)" fill="none" stroke="#191c20" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><circle cx="-60" cy="0" r="38"/><circle cx="60" cy="0" r="38"/><path d="M-60 0 -20-55h70l10 55M-20-55 0 0l50-55M0 0h-60"/><rect x="-28" y="-48" width="22" height="30" rx="4" fill="#006a60" stroke="none"/></g>
+<text x="400" y="70" text-anchor="middle" font-size="30" font-weight="700" fill="#191c20">Ein E-Bike, zwei Käufe</text>
+</svg>

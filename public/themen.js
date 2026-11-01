@@ -73,6 +73,19 @@ export const THEMEN = [
     lizenzLink: 'https://creativecommons.org/licenses/by/3.0/'
   },
   {
+    id: 'abstraktion',
+    titel: 'Abstraktionsprinzip am Kaufvertrag',
+    stufe: 10,
+    bereich: 'Recht',
+    text: 'Gekauft heißt gehört? Werde zum Eigentums-Detektiv: Zerleg Käufe in ihre drei Rechtsgeschäfte, rette Kims Fahrrad, kläre einen Doppelverkauf und urteile live mit der Klasse.',
+    stichworte: ['§§ 433, 929 BGB', 'Trennungsprinzip', 'Eigentums-Detektiv', 'Lernraum'],
+    bild: 'abstraktion/img/sneaker.jpg',
+    alt: 'Ein Paar weiße Nike Air Force 1 auf dem Schuhkarton',
+    foto: 'Xanor / Wikimedia Commons, CC0',
+    fotoLink: 'https://commons.wikimedia.org/wiki/File:Air_Force_1.JPG',
+    lizenzLink: 'https://creativecommons.org/publicdomain/zero/1.0/'
+  },
+  {
     id: 'deliktsfaehigkeit',
     titel: 'Deliktsfähigkeit',
     stufe: 10,
